@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="76dp"
+    android:padding="10dp"
+    android:background="@drawable/bg_member_row_normal">
+
+    <!-- Optional checkbox (selection) -->
+    <CheckBox
+        android:id="@+id/cbSelect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <!-- Photo -->
+    <ImageView
+        android:id="@+id/ivPhoto"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="0dp"
+        android:contentDescription="Member Pic"
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <!-- BIO Badge (right) -->
+    <TextView
+        android:id="@+id/tvBioBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BIO"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:background="@drawable/bg_bio_badge_gray"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/ivPhoto"/>
+
+    <!-- Full Name -->
+    <TextView
+        android:id="@+id/tvFullName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:text="Full Name"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        app:layout_constraintStart_toEndOf="@id/ivPhoto"
+        app:layout_constraintTop_toTopOf="@id/ivPhoto"
+        app:layout_constraintEnd_toStartOf="@id/tvBioBadge"/>
+
+    <!-- Relationship -->
+    <TextView
+        android:id="@+id/tvRelationship"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Relationship"
+        android:textSize="13sp"
+        app:layout_constraintStart_toStartOf="@id/tvFullName"
+        app:layout_constraintTop_toBottomOf="@id/tvFullName"
+        app:layout_constraintEnd_toStartOf="@id/tvBioBadge"/>
+
+    <!-- Gender • Age -->
+    <TextView
+        android:id="@+id/tvGenderAge"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Gender • Age"
+        android:textSize="12sp"
+        android:textColor="#666666"
+        app:layout_constraintStart_toStartOf="@id/tvFullName"
+        app:layout_constraintTop_toBottomOf="@id/tvRelationship"
+        app:layout_constraintBottom_toBottomOf="@id/ivPhoto"
+        app:layout_constraintEnd_toStartOf="@id/tvBioBadge"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

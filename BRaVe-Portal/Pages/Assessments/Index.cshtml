@@ -1,0 +1,213 @@
+﻿@page
+@using BRaVe_Portal.Extensions
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models.DTOs
+@using BRaVe_Portal.Models.Enums
+@model BRaVe_Portal.Pages.Assessments.IndexModel
+@{
+}
+
+
+@if (User.IsInRole(EnumUserRoles.PM.ToString()))
+{
+    <div class="mb-4 text-end">
+        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approvalModal">
+            <i class="fa fa-plus"></i> Create New Assessment
+        </button>
+    </div>   
+}
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+ 
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Ongoing Assessments -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold">
+        Ongoing Assessments
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Id</th>
+                    <th>PM Initials</th>
+                    <th>Status</th>
+                    <th style="width:200px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Ongoing_Assessments.Count() == 0)
+                {
+                    <tr class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+                        <td colspan="4">
+                            No assessements available.
+                        </td>
+                    </tr>
+                }
+                else
+                @foreach (var ongoing in Model.Ongoing_Assessments)
+                {
+                    <tr>
+                        <td>@ongoing.AssessmentId</td>
+                        
+                        <td>
+                                @ongoing.PmName
+                        </td>
+                        <td>
+                            @ongoing.StatusText
+
+                        
+                                @if (UserRoles.UserHasPendingJob(User, ongoing.Status))
+                                {
+                                    <span class="badge bg-warning text-dark" title="Pending your action">
+                                        Pending Action
+                                    </span>
+                                
+                                }
+                                
+                        
+                        </td>
+                        <td>
+
+
+                            @if (UserRoles.UserHasPendingJob(User, ongoing.Status) && (ongoing.Status == AssessmentStatus.Draft || ongoing.Status == AssessmentStatus.PendingReview))
+                            {
+                                    @* <button class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa fa-edit"></i></button> *@
+
+
+                                    <a asp-page="/Assessments/EditAssessment"
+                                    asp-route-assessmentId="@ongoing.AssessmentId"
+                                    asp-route-statusId="@ongoing.StatusId"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    title="Edit">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                            }
+                            else
+                            {
+
+                                <a asp-page="/Assessments/ViewAssessment"
+                                    asp-route-assessmentId="@ongoing.AssessmentId"
+                                    asp-route-statusId="@ongoing.StatusId"
+                                    class="btn btn-sm btn-outline-primary"
+                                    title="View">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                            }
+
+                            @if (UserRoles.UserHasPendingJob(User, ongoing.Status) && ongoing.Status == AssessmentStatus.Draft)
+                            {
+                                <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa fa-trash"></i></button>
+                            }
+                        </td>
+                    </tr>
+                }
+                
+            </tbody>
+        </table>
+    </div>
+</div>
+<br />
+                        
+
+<!-- Decided Assessments -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold">
+        Decided Assessments (Approved, Rejected)
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Id</th>
+                    <th>PM Initials</th>
+                    <th>Status</th>
+                    <th style="width:200px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+
+
+                @if (Model.Decided_Assessments.Count() == 0)
+                {
+                    <tr class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+                        <td colspan="4">
+                            No assessements available.
+                        </td>
+                    </tr>
+                }else
+                @foreach(var decided in Model.Decided_Assessments)
+                {
+                    <tr>
+                        <td>@decided.AssessmentId</td>
+                        <td>@decided.PmName</td>
+                        <td>@decided.Status.ToString()</td>
+                        <td>
+                            @* <button class="btn btn-sm btn-outline-primary" title="View"><i class="fa fa-eye"></i></button> *@
+                                <a asp-page="/Assessments/ViewAssessment"
+                                   asp-route-assessmentId="@decided.AssessmentId"
+                                   asp-route-statusId="@decided.StatusId"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="View">
+                                <i class="fa fa-eye"></i>
+                            </a>
+
+                            @if (decided.Status == AssessmentStatus.Approved)
+                            {
+                                <button class="btn btn-sm btn-outline-success" 
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#addProgramModal"
+                                            data-Assessment="@decided.AssessmentId"
+                                    title="Create">
+                                    <i class="fa fa-plus"></i> Create Program
+                                </button>
+
+                            }
+                            
+                        </td>
+                    </tr>
+
+                }
+                
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+@section Scripts {
+
+
+
+
+    <script>
+        const editModal = document.getElementById('addProgramModal');
+        editModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+
+            var assessmentId = button.getAttribute('data-Assessment');
+
+            document.getElementById('addAssessmentId').value = assessmentId;
+            document.getElementById('spanAssessmentId').textContent = assessmentId;
+        });
+
+
+    </script>
+
+}

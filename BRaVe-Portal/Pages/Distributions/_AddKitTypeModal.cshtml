@@ -1,0 +1,118 @@
+﻿@model BRaVe_Portal.Models.KitType
+@{
+    var sources = ViewData["SourceList"] as List<SelectListItem>;
+}
+
+<div class="modal fade" id="KitTypeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-sm border-0 rounded-3">
+
+            <div class="modal-header border-0 bg-light py-3">
+                <h5 class="modal-title fw-bold" id="kitModalTitle">
+                    @(Model?.Id > 0 ? "Edit Kit Type" : "Add Kit Type")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <form method="post" asp-page-handler="SaveKitType">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" id="Kit_Id" />
+                    <input type="hidden" asp-for="TenantId" id="Kit_TenantId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input asp-for="Name" class="form-control" id="Kit_Name" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">SKU</label>
+                        <input asp-for="SKU" class="form-control" id="Kit_SKU" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Source</label>
+                        <select asp-for="Source" class="form-select" asp-items="sources" id="Kit_Source" required>
+                            <option value="">-- Select Source --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="externalIdGroup">
+                        <label class="form-label">EXTERNAL ID</label>
+                        <input asp-for="ExternalId" class="form-control" id="ExternalId" />
+                    </div>
+                   
+                    <div class="mb-3">
+                        <label class="form-label">QR CODE</label>
+                        <input asp-for="QRCode" class="form-control" id="QRCode" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea asp-for="Notes" class="form-control" id="Kit_Notes"></textarea>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input asp-for="IsActive" class="form-check-input" id="Kit_IsActive" />
+                        <label asp-for="IsActive" class="form-check-label">Active</label>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end gap-2">
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save me-1"></i>
+                            <span id="kitSaveText">
+                                @(Model?.Id > 0 ? "Update" : "Save")
+                            </span>
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-danger d-none"
+                                id="deleteKitBtn">
+                            <i class="fa fa-trash me-1"></i> Delete
+                        </button>
+
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleExternalIdField() {
+        const source = document.getElementById("Kit_Source").value;
+        const externalGroup = document.getElementById("externalIdGroup");
+
+        // Assuming External = "E"
+        if (source === "E") {
+            externalGroup.style.display = "block";
+        } else {
+            externalGroup.style.display = "none";
+            document.getElementById("ExternalId").value = "";
+        }
+    }
+
+    // Run when dropdown changes
+    document.addEventListener("change", function (e) {
+        if (e.target && e.target.id === "Kit_Source") {
+            toggleExternalIdField();
+        }
+    });
+
+    // Run when modal opens
+    var kitModal = document.getElementById('KitTypeModal');
+    kitModal.addEventListener('shown.bs.modal', function () {
+        toggleExternalIdField();
+    });
+
+    // Run on page load
+    document.addEventListener("DOMContentLoaded", function () {
+        toggleExternalIdField();
+    });
+</script>

@@ -1,0 +1,1040 @@
+﻿@page
+@model BRaVe_Portal.Pages.DataPoints.IndexModel
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models.DTOs
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups ?? new CoreLookups();
+    var lookups = coreLookups.QuestionTypes ?? new List<LookupItemDto>();
+    var categoryLookups = coreLookups.PersonalDataCategories ?? new List<LookupItemDto>();
+    ViewData["Title"] = "Datapoints";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-0">
+            DataPoint:
+            @if (Model.DataPoint != null)
+            {
+                <span style="color: #002d72;">@Model.DataPoint.Id — @Model.DataPoint.AnswerType</span>
+            }
+            else
+            {
+                <span class="text-muted">N/A</span>
+            }
+        </h4>
+
+    
+    </div>
+
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white fw-bold px-3 py-2 d-flex justify-content-between align-items-center">
+        <span>DataPoints</span>
+        <button type="button"
+                class="btn btn-success create-survey-btn shadow-sm rounded-pill px-4"
+                data-bs-toggle="modal"
+                data-bs-target="#addDataPointModal">
+            <i class="fa fa-plus me-2"></i> Add Datapoint
+        </button>
+    </div>
+
+    <div class="p-3">
+
+        <!-- Search -->
+        <form method="get" class="mb-3 d-flex justify-content-center">
+        
+            <input type="hidden" name="ProgramId" value="@Model.ProgramId" />
+            <div class="position-relative" style="max-width: 500px; width: 100%;">
+                <input type="text"
+                       name="SearchTerm"
+                       value="@Model.DisplaySearchTerm"
+                       class="form-control shadow-sm rounded-pill ps-5 pe-4"
+                       placeholder="Search datapoints..." />
+                <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+                    <i class="bi bi-search" style="color:blue; font-size: 1.1rem;"></i>
+                </span>
+            </div>
+            <button type="submit" class="btn btn-outline-primary ms-2 rounded-pill">
+                <i class="fa fa-search"></i>
+            </button>
+        </form>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>ID</th>
+                        <th>Category</th>
+                        <th>Answer Type</th>
+                        <th>Lookup Name</th>
+                        <th>TextValue</th>
+                        <th>Validation Expression</th>
+                        <th>Translate</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.DataPoints != null && Model.DataPoints.Any())
+                    {
+                        @foreach (var item in Model.DataPoints.Select((q, index) => new { q, index }))
+                        {
+                            <tr>
+                                <td>@(item.index + 1 + ((Model.PageNumber - 1) * Model.PageSize))</td>
+                                <td>@item.q.Id</td>
+                               
+                                <td>@LookupHelper.GetTextById(categoryLookups, item.q.CategoryId)</td>
+                                
+                                <td>@LookupHelper.GetTextById(lookups, item.q.AnswerType)</td>
+
+                                <td>@Model.LookupNames.FirstOrDefault(x => x.Id == item.q.LookupId)?.LookupName</td>
+
+                                <td>@(item.q.Text?.ToString() ?? "—")</td>
+                                <td>
+                                    <button class="btn btn-sm @(string.IsNullOrWhiteSpace(item.q.Restriction) ? "btn-outline-secondary" : "btn-warning")"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#validationModal"
+                                            data-id="@item.q.Id"
+                                            data-lookupid="@item.q.LookupId"
+                                            data-text="@item.q.Text"
+                                            data-type="@LookupHelper.GetTextById(lookups, item.q.AnswerType)"
+                                            data-restriction="@item.q.Restriction">
+                                        <i class="fa fa-shield-alt me-1"></i>Validation Expression
+                                    </button>
+                                </td>
+
+                                <td>
+                                    <a asp-page="/DataPoints/ManageDatapointTranslations"
+                                       asp-route-DataPointId="@item.q.Id"
+                                       asp-route-CategoryId="@item.q.CategoryId"
+                                      
+                                       class="text-primary d-inline-flex align-items-center"
+                                       title="Manage Translations">
+                                        <i class="fa fa-language fa-2x me-2"></i>
+                                    </a>
+                                </td>
+
+                                <td>@(item.q.IsActive ? "Yes" : "No")</td>
+
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editDataPointModal"
+                                                data-id="@item.q.Id"
+                                                data-text="@item.q.Text"
+                                                data-description="@item.q.Description"
+                                                data-answertype="@item.q.AnswerType"
+                                                data-categoryid="@item.q.CategoryId"
+                                                data-lookupid="@item.q.LookupId"
+                                                data-active="@item.q.IsActive">
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteDataPointModal"
+                                                data-id="@item.q.Id">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="11" class="text-center text-muted p-4">
+                                No datapoints found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addDataPointModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="AddDatapoint">
+            @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Add DataPoint</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Category</label>
+                        <select class="form-select" asp-for="NewDatapoint.CategoryId" required>
+                            @foreach (var c in categoryLookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Answer Type</label>
+                        <select id="answerTypeSelectAdd"
+                                class="form-select"
+                                asp-for="NewDatapoint.AnswerType"
+                                required>
+                            @foreach (var at in lookups)
+                            {
+                                <option value="@at.Id">@at.Text</option>
+                            }
+                        </select>
+
+                    </div>
+
+                    <!-- Lookup Section (hidden unless AnswerType = 7) -->
+                    <div id="lookupSectionAdd" class="mb-3 d-none">
+                        <label asp-for="NewDatapoint.LookupId" class="form-label fw-bold">Lookup (Optional)</label>
+                        <select asp-for="NewDatapoint.LookupId" class="form-select shadow-sm">
+                            <option value="">-- Select Lookup --</option>
+                            @foreach (var lookup in Model.LookupNames)
+                            {
+                                <option value="@lookup.Id">@lookup.LookupName</option>
+                            }
+                        </select>
+
+                        <span asp-validation-for="NewDatapoint.LookupId" class="text-danger"></span>
+                    </div>
+
+                    <!-- SelectMany Section (hidden unless AnswerType = 7) -->
+                   @* <div id="selectManySection" class="conditional-section border-start border-3 border-secondary ps-3 mb-3 d-none">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">SelectMin</label>
+                                <input asp-for="NewDatapoint.MinSelection" type="number" class="form-control" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">SelectMax</label>
+                                <input asp-for="NewDatapoint.MaxSelection" type="number" class="form-control" />
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <small class="text-muted">Min ≤ Max</small>
+                            </div>
+                        </div>
+                    </div>*@
+                    <div class="mb-3">
+                        <label>Text</label>
+                        <input class="form-control" asp-for="NewDatapoint.Text" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <input class="form-control" asp-for="NewDatapoint.Description" />
+                    </div>
+
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" asp-for="NewDatapoint.IsActive" type="checkbox" />
+                        <label class="form-check-label">Active</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" type="submit"><i class="fa fa-save me-1"></i> Save</button>
+                    <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Edit Modal -->
+<div class="modal fade" id="editDataPointModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="UpdateDataPoint">
+            @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit DataPoint</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" asp-for="ExistingDatapoint.Id" id="edit-id" />
+                    <div class="mb-3">
+                        <label>Category</label>
+                        <select class="form-select" asp-for="ExistingDatapoint.CategoryId" id="edit-categoryid" required>
+                            @foreach (var c in categoryLookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <!-- Answer Type -->
+                    <div class="col-md-6">
+                        <label class="form-label">Answer Type</label>
+                        <select id="edit-answertype"
+                                class="form-select"
+                                asp-for="ExistingDatapoint.AnswerType"
+                                required>
+                            @foreach (var at in lookups)
+                            {
+                                <option value="@at.Id">@at.Text</option>
+                            }
+                        </select>
+                    </div>
+
+
+                    <!-- Lookup -->
+                    <div id="lookupSectionEdit" class="mb-3 d-none">
+                        <label class="form-label fw-bold">Lookup (Optional)</label>
+
+                        <select class="form-select"
+                                asp-for="ExistingDatapoint.LookupId"
+                                id="edit-lookupid">
+
+                            <option value="">-- Select Lookup --</option>
+
+                            @foreach (var lookup in Model.LookupNames)
+                            {
+                                <option value="@lookup.Id">
+                                    @lookup.LookupName
+                                </option>
+                            }
+
+                        </select>
+                    </div>
+
+            
+                    <div class="mb-3">
+                        <label>Text</label>
+                        <input class="form-control" asp-for="ExistingDatapoint.Text" id="edit-text" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <input class="form-control" asp-for="ExistingDatapoint.Description" id="edit-description" />
+                    </div>
+
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" asp-for="ExistingDatapoint.IsActive" type="checkbox" id="edit-active" />
+                        <label class="form-check-label">Active</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" type="submit"><i class="fa fa-save me-1"></i> Save Changes</button>
+                    <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteDataPointModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg rounded-3 border-0">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fa fa-exclamation-triangle me-2"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <strong>Are you sure you want to delete this datapoint?</strong>
+            </div>
+
+            <div class="modal-footer">
+                <form method="post" asp-page-handler="Delete">
+                @Html.AntiForgeryToken()
+                    <input type="hidden" name="ProgramId" value="@Model.ProgramId" />
+                    <input type="hidden" name="DataPointId" id="delete-id" />
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 p-3 bg-light rounded shadow-sm small">
+
+    <form method="get" class="d-inline-flex align-items-center mb-0">
+        <input type="hidden" name="ProgramId" value="@Model.ProgramId" />
+        <span class="me-2 text-muted">Show</span>
+        <select class="form-select form-select-sm me-2"
+                name="PageSize"
+                style="width: auto;"
+                onchange="this.form.submit()">
+            <option value="5" selected="@(Model.PageSize == 5)">5</option>
+            <option value="10" selected="@(Model.PageSize == 10)">10</option>
+            <option value="25" selected="@(Model.PageSize == 25)">25</option>
+            <option value="50" selected="@(Model.PageSize == 50)">50</option>
+        </select>
+        <span class="text-muted">entries</span>
+    </form>
+
+    <nav aria-label="datapoint pagination">
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                <a class="page-link"
+                   asp-page="./Index"
+                   asp-route-ProgramId="@Model.ProgramId"
+                   asp-route-PageNumber="@(Model.PageNumber - 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   asp-route-SearchTerm="@Model.SearchTerm">
+                    <i class="fa fa-chevron-left me-1"></i> Prev
+                </a>
+            </li>
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    <a class="page-link"
+                       asp-page="./Index"
+                       asp-route-ProgramId="@Model.ProgramId"
+                       asp-route-PageNumber="@i"
+                       asp-route-PageSize="@Model.PageSize"
+                       asp-route-SearchTerm="@Model.SearchTerm">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   asp-page="./Index"
+                   asp-route-ProgramId="@Model.ProgramId"
+                   asp-route-PageNumber="@(Model.PageNumber + 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   asp-route-SearchTerm="@Model.SearchTerm">
+                    Next <i class="fa fa-chevron-right ms-1"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<partial name="_ValidationModal" />
+
+
+
+
+@section Scripts {
+
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            /* ---------------- ADD MODAL LOGIC ---------------- */
+
+            const addType = document.getElementById("answerTypeSelectAdd");
+            const lookupSection = document.getElementById("lookupSectionAdd");
+
+            if (addType && lookupSection) {
+
+                function toggleAddLookup() {
+                    const value = parseInt(addType.value);
+                    lookupSection.classList.toggle("d-none", value !== 6 && value !== 7);
+                }
+
+                addType.addEventListener("change", toggleAddLookup);
+
+                toggleAddLookup();
+            }
+
+
+            /* ---------------- EDIT MODAL POPULATION ---------------- */
+
+              /* ---------------- EDIT MODAL POPULATION ---------------- */
+
+        const editModal = document.getElementById("editDataPointModal");
+
+        if (editModal) {
+
+            const editAnswerType = document.getElementById("edit-answertype");
+            const lookupSectionEdit = document.getElementById("lookupSectionEdit");
+
+            function toggleEditLookup() {
+
+                const value = parseInt(editAnswerType.value);
+
+                lookupSectionEdit.classList.toggle(
+                    "d-none",
+                    value !== 6 && value !== 7
+                );
+            }
+
+            editAnswerType.addEventListener("change", toggleEditLookup);
+
+            editModal.addEventListener("show.bs.modal", function (event) {
+
+                const button = event.relatedTarget;
+
+                document.getElementById("edit-id").value =
+                    button.getAttribute("data-id");
+
+                document.getElementById("edit-text").value =
+                    button.getAttribute("data-text");
+
+                document.getElementById("edit-description").value =
+                    button.getAttribute("data-description");
+
+                document.getElementById("edit-answertype").value =
+                    button.getAttribute("data-answertype");
+
+                document.getElementById("edit-categoryid").value =
+                    button.getAttribute("data-categoryid");
+
+                document.getElementById("edit-lookupid").value =
+                    button.getAttribute("data-lookupid");
+
+                document.getElementById("edit-active").checked =
+                    button.getAttribute("data-active") === "True";
+
+                toggleEditLookup();
+            });
+        }
+
+
+            /* ---------------- DELETE MODAL ---------------- */
+
+            const deleteModal = document.getElementById("deleteDataPointModal");
+
+            if (deleteModal) {
+                deleteModal.addEventListener("show.bs.modal", function (event) {
+
+                    const button = event.relatedTarget;
+                    const id = button.getAttribute("data-id");
+
+                    document.getElementById("delete-id").value = id;
+
+                });
+            }
+
+                    /* ---------------- VALIDATION FORM LOADER ---------------- */
+
+        const validationForm = document.getElementById("restrictionsForm");
+
+        if (validationForm) {
+            validationForm.addEventListener("submit", function () {
+                showLoader();   // forces loader immediately
+            });
+        }
+
+        });
+
+    </script>
+
+    <script>
+
+        /* =====================================================
+           GLOBAL VALIDATION STATE
+           This object always holds the current rule JSON
+        ===================================================== */
+
+        let currentValidation = {};
+
+
+        /* =====================================================
+           RENDER TYPE-SPECIFIC FIELDS
+           Dynamically shows validation rules depending on type
+        ===================================================== */
+
+        function renderValidationFields(type) {
+
+            const container = document.getElementById("typeSpecificContainer");
+
+            if (!container) return;
+
+            const t = (type || "").toUpperCase();
+
+            let html = `<h6 class="text-uppercase text-muted small fw-bold mb-3">
+                        Type Constraints
+                        </h6>`;
+
+
+            /* ---------------- NUMERIC TYPES ---------------- */
+
+            if (t.includes("INT") || t.includes("NUM") || t.includes("NUMBER")) {
+
+                html += `
+                <div class="row g-3 mb-3">
+
+                    <div class="col-6">
+                        <label class="form-label">Minimum</label>
+                        <input type="number" class="form-control" name="min">
+                    </div>
+
+                    <div class="col-6">
+                        <label class="form-label">Maximum</label>
+                        <input type="number" class="form-control" name="max">
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Step</label>
+                    <input type="number" class="form-control" name="step">
+                </div>
+                `;
+            }
+
+
+            /* ---------------- TEXT TYPES ---------------- */
+
+            else if (t.includes("TEXT") || t.includes("NOTE")) {
+
+                html += `
+                <div class="row g-3 mb-3">
+
+                    <div class="col-6">
+                        <label class="form-label">Min Length</label>
+                        <input type="number" class="form-control" name="minLength">
+                    </div>
+
+                    <div class="col-6">
+                        <label class="form-label">Max Length</label>
+                        <input type="number" class="form-control" name="maxLength">
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Regex Pattern</label>
+                    <input type="text" class="form-control" name="pattern">
+                </div>
+                `;
+            }
+
+
+            /* ---------------- DATE TYPES ---------------- */
+
+            else if (t.includes("DATE")) {
+
+                html += `
+                <div class="row g-3 mb-3">
+
+                    <div class="col-6">
+                        <label class="form-label">Earliest Date</label>
+                        <input type="date" class="form-control" name="minDate">
+                    </div>
+
+                    <div class="col-6">
+                        <label class="form-label">Latest Date</label>
+                        <input type="date" class="form-control" name="maxDate">
+                    </div>
+
+                </div>
+                `;
+            }
+
+
+            /* ---------------- SELECT ONE / MANY ---------------- */
+
+            else if (t.includes("SELECT")) {
+
+                html += `
+                <div class="mb-3">
+
+                    <label class="form-label">Allowed Values</label>
+
+                    <input type="text"
+                           class="form-control"
+                           name="allowedValues"
+                           placeholder="Comma separated list">
+
+                </div>
+                `;
+            }
+
+
+            /* ---------------- DEFAULT CASE ---------------- */
+
+            else {
+
+                html += `
+                <div class="alert alert-light border small text-muted">
+                No specific validation rules for this type.
+                </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+
+
+
+
+        /* =====================================================
+           BUILD JSON FROM FORM
+        ===================================================== */
+
+        function updateValidationState() {
+
+            const form = document.getElementById("restrictionsForm");
+
+
+
+            const obj = {};
+
+                                /* Readonly */
+
+        const readonly = document.getElementById("readonlyToggle")?.checked;
+
+        if (readonly)
+            obj.readonly = true;
+
+          Array.from(form.elements).forEach(el => {
+
+            if (!el.name ||
+                el.name === "_bravePortalCsrf" ||
+                el.name === "DataPointId")
+                return;
+
+            if (el.type === "number") {
+
+                if (el.value !== "")
+                    obj[el.name] = Number(el.value);
+            }
+
+            else if (el.value !== "") {
+
+                obj[el.name] = el.value;
+            }
+
+        });
+
+
+            /* Default Reference */
+
+
+                const useDefault = document.getElementById("useDefault")?.checked;
+
+                const dropdown = document.getElementById("defaultValueSelect");
+                const input = document.getElementById("defaultValueInput");
+
+                let value = null;
+
+                if (dropdown && !dropdown.classList.contains("d-none"))
+                    value = dropdown.value;
+
+                if (input && !input.classList.contains("d-none"))
+                    value = input.value;
+
+                if (useDefault && value)
+                    obj.defaultValue = value;
+
+
+            /* Error Message */
+
+            const message = document.getElementById("errorMessage")?.value;
+
+            if (message)
+                obj.message = message;
+
+
+            currentValidation = obj;
+
+                    renderJsonPreview();
+                    renderActiveConstraints();
+        }
+
+
+
+        /* =====================================================
+           JSON PREVIEW
+        ===================================================== */
+
+        function renderJsonPreview() {
+
+            const pre = document.getElementById("jsonOutput");
+
+            if (!pre) return;
+
+            pre.textContent = JSON.stringify(currentValidation, null, 2);
+        }
+
+
+                function renderActiveConstraints() {
+
+            const ul = document.getElementById("activeConstraintsList");
+
+            if (!ul) return;
+
+            const rules = currentValidation || {};
+
+            const keys = Object.keys(rules);
+
+            if (!keys.length) {
+
+                ul.innerHTML = `
+                <li class="list-group-item bg-transparent text-muted small fst-italic text-center py-3">
+                No active rules
+                </li>`;
+
+                return;
+            }
+
+            ul.innerHTML = keys.map(k => {
+
+                const v = rules[k];
+
+                return `
+                <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+
+                    <span class="font-monospace small text-muted">${k}</span>
+
+                    <span class="fw-medium small">${v}</span>
+
+                </li>
+                `;
+
+            }).join("");
+        }
+
+
+        /* =====================================================
+           MODAL OPEN HANDLER
+        ===================================================== */
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const modal = document.getElementById("validationModal");
+
+            modal.addEventListener("show.bs.modal", function (event) {
+
+                const button = event.relatedTarget;
+                const id = button.getAttribute("data-id");
+                const text = button.getAttribute("data-text");
+                const type = button.getAttribute("data-type");
+                const restriction = button.getAttribute("data-restriction");
+                const lookupId = button.getAttribute("data-lookupid");
+
+                document.getElementById("modalQuestionText").textContent = text;
+                document.getElementById("modalQuestionType").textContent = type;
+                document.getElementById("validationDataPointId").value = id;
+
+                /* Reset state */
+
+
+
+                            document.getElementById("restrictionsForm").reset();
+
+                            currentValidation = {};
+
+                            document.getElementById("activeConstraintsList").innerHTML =
+                            `<li class="list-group-item bg-transparent text-muted small fst-italic text-center py-3">
+                            No active rules
+                            </li>`;
+
+        /* Hide default reference */
+
+        document.getElementById("defaultQuestionContainer").classList.add("d-none");
+
+                /* Render validation UI */
+
+                renderValidationFields(type);
+                populateDefaultDropdown(type, lookupId);
+            
+
+                  if (restriction) {
+
+                        try {
+
+                            currentValidation = JSON.parse(restriction);
+
+                                  Object.entries(currentValidation).forEach(([key,value]) => {
+
+                                        /* Try name-based inputs first (type constraints) */
+
+                                        let el = document.querySelector(`[name='${key}']`);
+
+                                        if (el) {
+                                            if (el.type === "checkbox")
+                                                el.checked = value === true;
+                                            else
+                                                el.value = value;
+
+                                            return;
+                                        }
+
+                                        /* Handle Default & Behavior fields */
+
+                                        if (key === "defaultValue") {
+                                            document.getElementById("useDefault").checked = true;
+                                            document.getElementById("defaultQuestionContainer").classList.remove("d-none");
+                                                    const dropdown = document.getElementById("defaultValueSelect");
+                                            const input = document.getElementById("defaultValueInput");
+
+                                            if (dropdown && !dropdown.classList.contains("d-none"))
+                                                dropdown.value = value;
+
+                                            if (input && !input.classList.contains("d-none"))
+                                                input.value = value;
+                                        }
+
+                                        if (key === "readonly") {
+                                            document.getElementById("readonlyToggle").checked = value === true;
+                                        }
+
+                                        if (key === "message") {
+                                            document.getElementById("errorMessage").value = value;
+                                        }
+
+                                    });
+
+                        } catch(e) {
+
+                            console.warn("Invalid restriction JSON", restriction);
+
+                        }
+
+                    }
+
+                renderJsonPreview();
+                  renderActiveConstraints();
+            });
+
+        });
+
+
+        /* =====================================================
+           AUTO UPDATE JSON WHEN FORM CHANGES
+        ===================================================== */
+
+        document.addEventListener("input", function(e){
+
+            if (!e.target.form || e.target.form.id !== "restrictionsForm")
+                return;
+
+            updateValidationState();
+
+        });
+
+
+        /* =====================================================
+           SAVE BUTTON
+        ===================================================== */
+
+           document.addEventListener("DOMContentLoaded", function () {
+
+            const btnSave = document.getElementById("btnSave");
+
+            if (!btnSave) return;
+
+            btnSave.addEventListener("click", function(){
+
+                updateValidationState();
+
+                        const json = JSON.stringify(currentValidation);
+
+                        document.getElementById("jsonHidden").value = json;
+
+                        console.log("Validation JSON:", json);
+
+                bootstrap.Modal.getInstance(
+                    document.getElementById("validationModal")
+                ).hide();
+
+            });
+
+        });
+
+                // Toggle Default Reference dropdown
+        document.addEventListener("change", function (e) {
+
+            if (e.target.id !== "useDefault") return;
+
+            const dropdownContainer = document.getElementById("defaultQuestionContainer");
+
+            if (!dropdownContainer) return;
+
+            if (e.target.checked) {
+                dropdownContainer.classList.remove("d-none");
+            } else {
+                dropdownContainer.classList.add("d-none");
+            }
+
+        });
+
+
+
+                 async function populateDefaultDropdown(type, lookupId) {
+
+            const input = document.getElementById("defaultValueInput");
+            const select = document.getElementById("defaultValueSelect");
+
+            if (!input || !select) return;
+
+            input.classList.add("d-none");
+            select.classList.add("d-none");
+
+            const t = (type || "").toUpperCase();
+
+            /* ---------------- SELECT TYPES ---------------- */
+
+            if (t.includes("SELECT") && lookupId) {
+
+                select.classList.remove("d-none");
+                select.innerHTML = '<option value="">-- Select default --</option>';
+
+                try {
+
+                    const response = await fetch(`?handler=LookupValues&lookupId=${lookupId}`);
+                    const values = await response.json();
+
+                    values.forEach(v => {
+
+                        const opt = document.createElement("option");
+
+                        opt.value = v.id;
+                        opt.textContent = v.itemName;
+
+                        select.appendChild(opt);
+
+                    });
+
+                } catch (e) {
+
+                    console.error("Failed to load lookup values", e);
+
+                }
+
+                return;
+            }
+
+            /* ---------------- NUMERIC ---------------- */
+
+            if (t.includes("INT") || t.includes("NUM") || t.includes("NUMBER")) {
+
+                input.classList.remove("d-none");
+                input.type = "number";
+
+                return;
+            }
+
+            /* ---------------- TEXT ---------------- */
+
+            if (t.includes("TEXT") || t.includes("NOTE")) {
+
+                input.classList.remove("d-none");
+                input.type = "text";
+
+                return;
+            }
+        }
+    </script>
+}

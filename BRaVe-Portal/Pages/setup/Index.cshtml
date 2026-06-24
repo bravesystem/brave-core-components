@@ -1,0 +1,181 @@
+﻿@page
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@model BRaVe_Portal.Pages.Enumerators.IndexModel
+@{
+    ViewData["Title"] = "Setup Page";
+}
+
+
+
+<!-- Section Header -->
+<div class="card mb-4 border-0 shadow-sm rounded-3">
+    <div class="card-header bg-primary text-white fw-bold d-flex align-items-center">
+        <i class="fa-solid fa-gear me-2"></i> Configuration
+    </div>
+
+    <div class="card-body bg-light">
+        <div class="row g-3">
+            
+            @if (User.IsInRole(EnumUserRoles.PA.ToString()))
+            {
+                <!-- Manage Enumerators -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/Enumerators/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-users fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Enumerators</span>
+                    </a>
+                </div>
+                <!-- Provisioning -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/ClaimSessions/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-gears fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Provisioning</span>
+                    </a>
+                </div>
+
+                <!-- Manage Lookups -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/Setup/Lookups/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-book fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Lookups</span>
+                    </a>
+                </div>
+
+                <!-- Preferences-->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="Preferences/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-filter fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Preferences</span>
+                    </a>
+                </div>
+               
+                <!-- Administrative  Levels -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/AdministrativeLevels/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-sitemap fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Administrative Levels</span>
+                    </a>
+                </div>
+
+                <!-- Locations -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/Locations/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-thumbtack fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Locations</span>
+                    </a>
+                </div>
+
+            
+            }
+            
+
+             @if (User.IsInRole(EnumUserRoles.Admin.ToString()))
+            {
+
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/Setup/TemporaryMissionAccess/Index"
+                   class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid  fa-user-clock fa-lg text-primary me-2"></i>
+                    <span class="fw-semibold text-dark">Temporary Mission Access</span>
+                </a>
+                </div>
+            }
+@*                 <div class="col-md-4 col-sm-6">
+                    <a asp-page="/Setup/UserMissionAssignment/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid  fa-user-plus fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">User Mission Assignment</span>
+                    </a>
+                </div> 
+            }
+
+            @if (User.IsInRole(EnumUserRoles.Admin.ToString()) || User.IsInRole(EnumUserRoles.PA.ToString()))
+            {
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/Setup/UserMissionAssignment/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid  fa-user-plus fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">User Mission Assignment</span>
+                    </a>
+                </div>
+            } *@
+
+            @if (User.IsInRole(EnumUserRoles.PA.ToString()) || User.IsInRole(EnumUserRoles.PO.ToString()))
+            {
+
+                <!-- Manage Consents -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/Consents/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-check-circle fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Consents</span>
+                    </a>
+                </div>
+
+                <!-- Manage Datapoints -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/DataPoints/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-circle fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Datapoints</span>
+                    </a>
+                </div>
+
+                <!-- Manage Card Printing -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/setup/CardPrintHistory/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-print fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Card Print History</span>
+                    </a>
+                </div>
+
+                
+
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/Distributions/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid  fa-boxes-packing fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Distribution types</span>
+                    </a>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/DistributionKits/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid  fa-box-open fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Kit types</span>
+                    </a>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/DistributionItems/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid  fa-list-check fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Item types </span>
+                    </a>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/ItemTags/Index"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid  fa-list-check fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Tags </span>
+                    </a>
+                </div>
+               
+          
+            }
+
+        </div>
+    </div>
+</div>
+
+
+
+
+ 

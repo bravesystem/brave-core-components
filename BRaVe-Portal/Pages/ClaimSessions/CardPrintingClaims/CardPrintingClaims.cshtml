@@ -1,0 +1,328 @@
+﻿@page
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.ClaimSessions.CardPrintingClaimsModel
+@{
+    ViewData["Title"] = "Provision Card Printing";
+}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <!-- Back Button -->
+    <a asp-page="/ClaimSessions/Index" class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-arrow-left"></i> Back
+    </a>
+
+    <!-- Header -->
+    <h4 class="mb-0 fw-bold">
+        <i class="fa fa-id-card"></i> Card Printing Provisioning
+    </h4>
+
+</div>
+<div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+    <strong style="color:#2196F3;">ℹ Note:</strong>
+    A <em>claim</em> is required to provision printing devices. It includes:
+    <ul style="margin:8px 0 0 18px; padding:0;">
+        <li><strong>Label Description:</strong> A descriptive name for the claim.</li>
+        <li><strong>Number of Devices:</strong> Indicates how many devices you will provision using the same code.</li>
+           </ul>
+</div>
+
+<br />
+
+<div class="mb-3 text-end">
+    <button type="button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#addPrintSessionModal">
+        <i class="fa fa-plus"></i> Create New Claim
+
+    </button>
+</div>
+
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+
+@if ((Model.PrintSessions?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Manage Claim
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Label</th>
+                        <th>Session Code</th>
+                        <th>Max</th>
+                        <th>Issued</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var claimSession in Model.PrintSessions)
+                    {
+
+                        <tr>
+                            <td>@claimSession.SessionId</td>
+                            <td>@claimSession.Label</td>
+                            <td>****</td>
+                            <td>@claimSession.MaxDevices</td>
+
+
+                            <td>@claimSession.DevicesConnected</td>
+                            <td>
+                                @if (claimSession.Status == 1)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactive</span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (claimSession.Status == 1)
+                                {
+                                    <form method="post" asp-page-handler="Revoke">
+                                        <input type="hidden" name="SessionId" value="@claimSession.SessionId" />
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="fa fa-ban"></i> Revoke
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+
+
+                    }
+
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+}
+else
+{
+
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Claim Session Found</h4>
+    </div>
+
+
+} 
+
+<partial name="_AddClaimModal" model="@Model.NewPrintSession" />
+<partial name="_RevokeClaimModal" model="new PrintSessionDto()" />
+
+@* render the modal partial for claim code *@
+<partial name="_ClaimModal" />
+
+<!-- Reusable toasts  -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:10500">
+    <!-- Success -->
+    <div id="toastSuccess" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
+        <div class="d-flex">
+            <div class="toast-body">
+                Success
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <!-- Failure -->
+    <div id="toastError" class="toast align-items-center text-white bg-danger border-0 mt-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3500">
+        <div class="d-flex">
+            <div class="toast-body">
+                Error
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+
+
+
+
+    <script>
+
+         const deleteModal = document.getElementById('RevokePrintSessionModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const SessionId = button.getAttribute('data-SessionId');
+            const Label = button.getAttribute('data-Label');
+
+            document.getElementById('deleteSessionId').value = SessionId;
+            document.getElementById('deleteLabel').textContent = Label ;
+
+        });
+    </script>
+
+    <script>
+        (function(){
+          // get modal element (must exist in DOM before this runs)
+          var modalEl = document.getElementById('ClaimCodeModal');
+          if (!modalEl) return;
+
+          // read server value placed in data attribute (HTML-encoded)
+          var code = modalEl.dataset.recoveryCode;
+          if (!code) return;
+
+          // show code inside UI
+          var pill = document.getElementById('claimCodePill');
+          if (pill) pill.textContent = code;
+
+          // show bootstrap modal (Bootstrap 5)
+          try {
+            var m = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+            m.show();
+          } catch (e) {
+            console.warn('Bootstrap modal open failed', e);
+          }
+        })();
+    </script>
+
+
+    <script>
+        (function(){
+          // cache elements & bootstrap Toast instances
+          const toastSuccessEl = document.getElementById('toastSuccess');
+          const toastErrorEl = document.getElementById('toastError');
+          const toastSuccess = toastSuccessEl ? new bootstrap.Toast(toastSuccessEl) : null;
+          const toastError = toastErrorEl ? new bootstrap.Toast(toastErrorEl) : null;
+
+          // show functions you can reuse
+          window.showSuccessToast = function(message){
+            if (!toastSuccessEl) return;
+            toastSuccessEl.querySelector('.toast-body').textContent = message || 'Success';
+            toastSuccess.show();
+          };
+
+          window.showErrorToast = function(message){
+            if (!toastErrorEl) return;
+            toastErrorEl.querySelector('.toast-body').textContent = message || 'Something went wrong';
+            toastError.show();
+          };
+        })();
+    </script>
+
+    @*  Copy code functionality *@
+
+    <script>
+        (function(){
+          var copyBtn = document.getElementById('claimCopyBtn');
+          var modalEl = document.getElementById('ClaimCodeModal');
+          if (!copyBtn || !modalEl) return;
+          var code = modalEl.dataset.recoveryCode;
+          if (!code) return;
+
+          copyBtn.addEventListener('click', async function(){
+            try {
+              await navigator.clipboard.writeText(code);
+              // reusable success
+              window.showSuccessToast('Code copied to clipboard');
+            } catch (err) {
+              console.warn(err);
+              window.showErrorToast('Copy failed — clipboard not available');
+            }
+          });
+        })();
+    </script>
+    @*     Share code function *@
+    <script>
+        (function(){
+          var shareBtn = document.getElementById('claimShareBtn');
+          var modalEl = document.getElementById('ClaimCodeModal');
+          if (!shareBtn || !modalEl) return;
+
+          var code = modalEl.dataset.recoveryCode;
+          if (!code) return;
+
+          shareBtn.addEventListener('click', async function (e) {
+
+              e.preventDefault();
+              e.stopImmediatePropagation();
+
+              // If device supports native share:
+              if (navigator.share) {
+                  try {
+                      await navigator.share({
+                          title: 'Claim Code',
+                          text: code
+                      });
+                      window.showSuccessToast("Code shared");
+                  } catch(e) {
+                      // User cancelled share, no error toast
+                  }
+                  return;
+              }
+
+              // Fallback: copy to clipboard
+              try {
+                  await navigator.clipboard.writeText(code);
+                  window.showSuccessToast("Code copied (share unavailable)");
+              } catch (err) {
+                  window.showErrorToast("Share failed");
+              }
+          });
+
+        })();
+    </script>
+
+    @*  download code function *@
+
+    <script>
+        (function(){
+          var downloadBtn = document.getElementById('claimDownloadBtn');
+          var modalEl = document.getElementById('ClaimCodeModal');
+          if (!downloadBtn || !modalEl) return;
+
+          var code = modalEl.dataset.recoveryCode;
+          if (!code) return;
+
+          downloadBtn.addEventListener('click', function (e) {
+
+              e.preventDefault();
+              e.stopImmediatePropagation();
+
+              try {
+                  const blob = new Blob([code], { type: 'text/plain' });
+                  const url = URL.createObjectURL(blob);
+
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = "Printing_claim_code.txt";
+                  a.setAttribute("data-no-loader", "true");
+                  a.style.display = "none";
+                  document.body.appendChild(a);
+
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+
+                  window.showSuccessToast("Code downloaded");
+              }
+              catch (err) {
+                  window.showErrorToast("Download failed");
+              }
+          });
+        })();
+    </script>
+
+
+
+
+}
+

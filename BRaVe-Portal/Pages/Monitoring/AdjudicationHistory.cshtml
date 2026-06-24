@@ -1,0 +1,410 @@
+﻿@page
+@model BRaVe_Portal.Pages.Monitoring.AdjudicationHistoryModel
+
+@{
+    ViewData["Title"] = "Adjudication History";
+    Layout = "_SectionMenu";
+}
+
+<style>
+    .match-card {
+        border-radius: 12px;
+        border: 1px solid #dee2e6;
+        background: white;
+        margin-bottom: 0.75rem;
+        transition: 0.2s;
+    }
+
+        .match-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+    .p1-col, .p2-col {
+        flex: 1;
+    }
+
+    .score-center {
+        width: 160px;
+        text-align: center;
+        border-left: 1px solid #eee;
+        border-right: 1px solid #eee;
+        padding: 0.75rem;
+        background: #fafafa;
+    }
+
+    .action-col {
+        width: 180px;
+    }
+
+    .filter-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 2rem;
+    }
+</style>
+
+<div class="container-fluid py-5">
+
+    <!-- ALERTS -->
+    @if (Model.SuccessMessage != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @Model.SuccessMessage
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+        </div>
+    }
+
+    @if (Model.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @Model.ErrorMessage
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+        </div>
+    }
+
+    <!-- HEADER -->
+    <div class="mb-4">
+        <h1 class="h3 fw-bold">
+            Adjudication History
+        </h1>
+
+        <p class="text-muted">
+            Audit trail of all adjudicated duplicate records
+        </p>
+    </div>
+
+    <!-- FILTERS -->
+    <form method="get" class="filter-section">
+
+        <div class="fw-semibold mb-3">
+            FILTERS
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 align-items-end">
+
+            <!-- DECISION -->
+            <div>
+                <label class="form-label">
+                    Decision
+                </label>
+
+                <select asp-for="DecisionId"
+                        class="form-select">
+
+                    <option value="">
+                        All
+                    </option>
+
+                    @foreach (var decision in Model.AdjudicationDecisions)
+                    {
+                        <option value="@decision.DecisionId">
+                            @decision.Name
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- TYPE -->
+            <div>
+                <label class="form-label">
+                    Type
+                </label>
+
+                <select asp-for="DedupMode"
+                        class="form-select">
+
+                    <option value="">
+                        All
+                    </option>
+
+                    <option value="A">
+                        Biometric
+                    </option>
+
+                    <option value="M">
+                        Manual
+                    </option>
+                </select>
+            </div>
+
+            <!-- DATE FROM -->
+            <div>
+                <label class="form-label">
+                    Date From
+                </label>
+
+                <input asp-for="DateFrom"
+                       type="date"
+                       class="form-control" />
+            </div>
+
+            <!-- DATE TO -->
+            <div>
+                <label class="form-label">
+                    Date To
+                </label>
+
+                <input asp-for="DateTo"
+                       type="date"
+                       class="form-control" />
+            </div>
+
+            <!-- USER -->
+            <div>
+                <label class="form-label">
+                    User
+                </label>
+
+                <input asp-for="AdjudicatedBy"
+                       type="text"
+                       class="form-control"
+                       placeholder="Search user..." />
+            </div>
+
+            <!-- APPLY -->
+            <div>
+                <button type="submit"
+                        class="btn btn-primary">
+                    Apply
+                </button>
+            </div>
+
+        </div>
+    </form>
+
+
+
+    <!-- LIST -->
+    <div>
+
+        @if (Model.Records.Any())
+        {
+            @foreach (var item in Model.Records)
+            {
+                var decisionClass =
+                item.FinalState == "O"
+                ? "bg-success-subtle text-success"
+                : "bg-danger-subtle text-danger";
+
+                <div class="match-card">
+
+                    <div class="d-flex align-items-center">
+
+                        <!-- SOURCE -->
+                        <div class="px-3 py-3 p1-col">
+
+                            <div class="fw-semibold">
+                                @item.SourceFullName
+                            </div>
+
+                            <small class="text-muted">
+                                @item.SourceHouseholdId
+                                •
+                                @item.SourceAge
+                                /
+                                @item.SourceGender
+                            </small>
+
+                            @if (!string.IsNullOrWhiteSpace(item.SourceRelationship))
+                            {
+                                <div class="small text-muted">
+                                    @item.SourceRelationship
+                                </div>
+                            }
+
+                        </div>
+
+
+
+                        <!-- CENTER -->
+                        <div class="score-center">
+
+                            <span class="badge @decisionClass">
+                                @item.DecisionName
+                            </span>
+
+                            <div class="small text-muted mt-2">
+                                Score:
+                                @(item.MatchScore?.ToString() ?? "-")
+                            </div>
+
+                            <div class="small text-muted">
+                                @item.MatchType
+                            </div>
+
+                            <div class="small text-muted">
+                                @item.FinalStateName
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- MATCHED -->
+                        <div class="px-3 py-3 p2-col text-end">
+
+                            <div class="fw-semibold">
+                                @item.MatchedFullName
+                            </div>
+
+                            <small class="text-muted">
+                                @item.MatchedHouseholdId
+                                •
+                                @item.MatchedAge
+                                /
+                                @item.MatchedGender
+                            </small>
+
+                            @if (!string.IsNullOrWhiteSpace(item.MatchedRelationship))
+                            {
+                                <div class="small text-muted">
+                                    @item.MatchedRelationship
+                                </div>
+                            }
+
+                        </div>
+
+
+
+                        <!-- META -->
+                        <div class="px-3 py-3 action-col text-end">
+
+                            <div class="small text-muted">
+                                @item.AdjudicatedBy
+                            </div>
+
+                            <div class="small text-muted">
+                                @item.AdjudicatedOn.ToString("yyyy-MM-dd HH:mm")
+                            </div>
+
+                            @if (item.MatchProbability.HasValue)
+                            {
+                                <div class="small text-muted mt-1">
+                                    Probability:
+                                    @item.MatchProbability.Value.ToString("0.##")
+                                </div>
+                            }
+
+                            @* 
+                            <button class="btn btn-sm btn-outline-danger mt-2"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#undoModal">
+                                Undo
+                            </button>
+                            *@
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- DETAILS -->
+                    <div class="px-4 pb-3 small">
+
+                        @if (!string.IsNullOrWhiteSpace(item.Notes))
+                        {
+                            <div>
+                                <b>Notes:</b>
+                                @item.Notes
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(item.Suggestion))
+                        {
+                            <div class="text-muted">
+                                <b>Suggestion:</b>
+                                @item.Suggestion
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-light border">
+                No adjudication history records found.
+            </div>
+        }
+
+    </div>
+
+
+
+    <!-- PAGINATION -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+
+        <div class="small text-muted">
+            Showing @Model.StartRecord–@Model.EndRecord
+            of @Model.TotalCount records
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <ul class="pagination pagination-sm mb-0">
+
+                <!-- PREVIOUS -->
+                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+
+                    <a class="page-link"
+                       asp-page="./AdjudicationHistory"
+                       asp-route-PageNumber="@(Model.PageNumber - 1)"
+                       asp-route-DecisionId="@Model.DecisionId"
+                       asp-route-DedupMode="@Model.DedupMode"
+                       asp-route-DateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")"
+                       asp-route-DateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+                       asp-route-AdjudicatedBy="@Model.AdjudicatedBy">
+                        Previous
+                    </a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+
+                        <a class="page-link"
+                           asp-page="./AdjudicationHistory"
+                           asp-route-PageNumber="@i"
+                           asp-route-DecisionId="@Model.DecisionId"
+                           asp-route-DedupMode="@Model.DedupMode"
+                           asp-route-DateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")"
+                           asp-route-DateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+                           asp-route-AdjudicatedBy="@Model.AdjudicatedBy">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <!-- NEXT -->
+                <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+
+                    <a class="page-link"
+                       asp-page="./AdjudicationHistory"
+                       asp-route-PageNumber="@(Model.PageNumber + 1)"
+                       asp-route-DecisionId="@Model.DecisionId"
+                       asp-route-DedupMode="@Model.DedupMode"
+                       asp-route-DateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")"
+                       asp-route-DateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+                       asp-route-AdjudicatedBy="@Model.AdjudicatedBy">
+                        Next
+                    </a>
+                </li>
+
+            </ul>
+        }
+
+    </div>
+
+</div>

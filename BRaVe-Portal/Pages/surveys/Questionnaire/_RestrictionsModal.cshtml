@@ -1,0 +1,136 @@
+﻿@* _RESTRICTIONSMODAL.CSHTML*@
+
+<div class="modal fade" id="restrictionsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="modalQuestionText">Question text</h5>
+                    <span class="badge bg-secondary ms-1" id="modalQuestionType">TYPE</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body d-flex" style="min-height:420px;">
+                <!-- Left: Builder / JSON -->
+                <div class="w-50 d-flex flex-column border-end">
+                    <div class="px-4 pt-3 border-bottom">
+                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#tab-builder" role="tab">
+                                    <i class="bi bi-sliders me-1"></i> Rule Builder
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#tab-json" role="tab">
+                                    <i class="bi bi-code-slash me-1"></i> JSON
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="tab-content flex-grow-1 overflow-hidden">
+                        <!-- Builder -->
+                        <div class="tab-pane fade show active h-100" id="tab-builder" role="tabpanel">
+                            <div class="p-3 form-scroll-area">
+                                <form id="restrictionsForm" novalidate>
+
+                                    @Html.AntiForgeryToken()
+
+                                    <div id="typeSpecificContainer"></div>
+
+                                    <hr />
+
+                                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Default & Behavior</h6>
+
+                                    <div id="commonOptions">
+
+                                        <!-- Default toggle -->
+                                        <div class="form-check form-switch mb-2" id="defaultToggleContainer">
+                                            <input class="form-check-input" type="checkbox" id="useDefault">
+                                            <label class="form-check-label" for="useDefault">Use Default Value</label>
+                                        </div>
+
+                                        <!-- Manual toggle -->
+                                        <div class="form-check form-switch mb-2" id="manualToggleContainer">
+                                            <input class="form-check-input" type="checkbox" id="isManual">
+                                            <label class="form-check-label" for="isManual">Manual Value</label>
+                                        </div>
+
+                                        <!-- Manual value -->
+                                        <div class="mb-3" id="manualValueContainer">
+                                            <label class="form-label small">Default Value</label>
+                                            <input type="text" class="form-control" id="defaultValue">
+                                        </div>
+
+                                        <!-- Question reference dropdown -->
+                                        <div class="mb-3" id="defaultQuestionContainer">
+                                            <label class="form-label small">Default to existing value</label>
+                                            <select class="form-select" id="defaultValueSelect">
+                                                <option value="">Select field</option>
+                                                <option value="age">Age</option>
+                                                <option value="firstname">First Name</option>
+                                                <option value="lastname">Last Name</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Readonly -->
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="readonlyToggle">
+                                            <label class="form-check-label">Readonly</label>
+                                        </div>
+
+                                        <!-- Error message -->
+                                        <div class="mb-2">
+                                            <label class="form-label small">Error Message</label>
+                                            <input type="text" class="form-control" id="errorMessage">
+                                        </div>
+
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- JSON -->
+                        <div class="tab-pane fade h-100 p-0" id="tab-json" role="tabpanel">
+                            <div class="h-100 p-3 bg-dark">
+                                <pre id="jsonOutput" class="json-preview m-0" style="background:#212529;color:#28a745;padding:1rem;border-radius:.375rem;min-height:260px;overflow:auto;">{ }</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Live preview + active constraints -->
+                <div class="w-50 preview-pane d-flex flex-column bg-light">
+                    <div class="p-4 border-bottom bg-white">
+                        <h6 class="text-primary fw-bold mb-3"><i class="bi bi-eye me-2"></i>Live Validation Preview</h6>
+
+                        <div class="card border-dashed shadow-sm">
+                            <div class="card-body">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Test Input</label>
+
+                                <div id="previewInputContainer">
+                                    <input type="text" class="form-control" id="previewInput" placeholder="Type to test validation...">
+                                </div>
+
+                                <div id="validationFeedback" class="mt-2 validation-status small d-flex align-items-center"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 flex-grow-1 overflow-auto">
+                        <h6 class="text-muted small text-uppercase fw-bold mb-3">Active Constraints</h6>
+                        <ul class="list-group list-group-flush rounded border" id="activeConstraintsList">
+                            <li class="list-group-item bg-transparent text-muted small fst-italic text-center py-3">No active rules</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-white">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSave"><i class="bi bi-save me-2"></i>Apply and save</button>
+            </div>
+        </div>
+    </div>
+</div>

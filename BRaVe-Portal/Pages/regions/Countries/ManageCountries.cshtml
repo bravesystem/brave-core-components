@@ -1,0 +1,147 @@
+﻿@page "{RegionId:int}"
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.regions.ManageCountriesModel
+@{
+    ViewData["Title"] = "Manage Countries";
+}
+
+<h5 class="fw-bold mb-3">Region: @Model.Region.Name</h5>
+
+<div class="d-flex justify-content-between mb-3">
+    <a asp-page="/Regions/Index" class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-arrow-left"></i> Back
+    </a>
+
+    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addCountryModal">
+        <i class="fa fa-plus"></i> Add New Country
+    </button>
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+@if ((Model.Countries?.Count ?? 0) > 0)
+{
+   
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold">
+        Manage Countries
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ISO2</th>
+                    <th>Phone Code</th>
+                    <th>Name</th>
+                    <th>Missions</th>
+                    <th style="width:200px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var country in Model.Countries)
+                {
+                    <tr>
+                        <td>@country.CountryIso2</td>
+                        <td>@country.PhoneCode</td>
+                        <td>@country.Name</td>
+                            <td>
+                                <a asp-page="/Regions/Missions/ManageMissions"
+                                   asp-route-countryISO2="@country.CountryIso2"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Manage Missions
+                                </a>
+
+                            </td>
+                        <td>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editCountryModal"
+                                        data-iso2="@country.CountryIso2"
+                                        data-name="@country.Name"
+                                        data-phonecode="@country.PhoneCode">
+                                    <i class="fa fa-edit"></i> Edit
+                                </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+}
+else
+{
+
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Countries Found</h4>
+    </div>
+
+
+}
+
+<!-- Add Country Modal-->
+<partial name="_AddCountryModal" model="Model.NewCountry" />
+<partial name="_EditCountryModal" model="Model.EditCountry" />
+
+
+
+<!-- Toast Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="addCountryToast" class="toast align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">Country added successfully!</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+
+    <div id="editCountryToast" class="toast align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">Country updated successfully!</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ADD COUNTRY MODAL ---
+    var addCountryForm = document.getElementById('addCountryForm');
+    var addCountryModal = document.getElementById('addCountryModal');
+    var addCountryToastEl = document.getElementById('addCountryToast');
+    var addCountryToast = new bootstrap.Toast(addCountryToastEl);
+
+    // Clear Add form when modal closes
+    addCountryModal.addEventListener('hidden.bs.modal', function () {
+        addCountryForm.reset();
+    });
+
+    // Show Add toast after submit
+    addCountryForm.addEventListener('submit', function () {
+        setTimeout(function () {
+            var modalInstance = bootstrap.Modal.getInstance(addCountryModal);
+            if (modalInstance) modalInstance.hide();
+            addCountryToast.show();
+        }, 200);
+    });
+
+    // --- EDIT COUNTRY MODAL ---
+    var editCountryForm = document.getElementById('editCountryForm');
+    var editCountryModal = document.getElementById('editCountryModal');
+    var editCountryToastEl = document.getElementById('editCountryToast');
+    var editCountryToast = new bootstrap.Toast(editCountryToastEl);
+
+    // Clear Edit form when modal closes
+    editCountryModal.addEventListener('hidden.bs.modal', function () {
+        editCountryForm.reset();
+    });
+
+    // Show Edit toast after submit
+    editCountryForm.addEventListener('submit', function () {
+        setTimeout(function () {
+            var modalInstance = bootstrap.Modal.getInstance(editCountryModal);
+            if (modalInstance) modalInstance.hide();
+            editCountryToast.show();
+        }, 200);
+    });
+
+  
+</script>
+

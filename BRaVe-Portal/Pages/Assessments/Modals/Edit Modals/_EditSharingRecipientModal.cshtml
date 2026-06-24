@@ -1,0 +1,78 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+@model BRaVe_Portal.Models.ViewModels.DataProcessingDataSharingRecipient
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.DataSharingRecipients ?? new List<LookupItemDto>();
+    var lookups1 = coreLookups?.TypeOfAgreements ?? new List<LookupItemDto>();
+    var lookups2 = coreLookups?.StatusOfAgreements ?? new List<LookupItemDto>();
+}
+
+
+@if (coreLookups == null)
+{
+    <div class="text-danger">coreLookups is NULL</div>
+}
+else if (coreLookups.DataDisclosureRecipients == null)
+{
+    <div class="text-danger">PartnerOganizations is NULL</div>
+}
+<div class="modal fade" id="editSharingRecipientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Sharing Recipient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditSharingRecipient">
+                    <input type="hidden" asp-for="AssessmentId" id="editSharingAssessmentId" />
+                    <div class="mb-3">
+                        <label class="form-label">Recipient</label>
+                        <select asp-for="RecipientId" class="form-select" id="editSharingRecipientId">
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                        <input asp-for="RecipientOther" class="form-control mt-2" placeholder="If Other, specify..." id="editSharingRecipientOther" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type of Agreement</label>
+                        <select asp-for="TypeOfAgreementId" class="form-select" id="editTypeOfAgreementId">
+                            @foreach (var c in lookups1)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                        <input asp-for="TypeOfAgreementOther" class="form-control mt-2" placeholder="If Other, specify..." id="editTypeOfAgreementOther" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status of Agreement</label>
+                        <select asp-for="StatusOfAgreementId" class="form-select" id="editStatusOfAgreementId">
+                            @foreach (var c in lookups2)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Purpose</label>
+                        <textarea asp-for="PurposeOfDataSharing" class="form-control" id="editPurposeOfDataSharing" required></textarea>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

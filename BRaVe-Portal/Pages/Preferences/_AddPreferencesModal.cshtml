@@ -1,0 +1,65 @@
+﻿@using BRaVe_Portal.Models
+@model List<Preference>
+
+@{
+    var allPreferences = Model ?? new List<Preference>();
+    var selectedProgramId = ViewData["SelectedProgramId"] ?? 0;
+}
+
+@if (!allPreferences.Any())
+{
+    <div class="alert alert-warning mb-0">
+        No default preferences available.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            These are default Preferences — Edit Values and save
+        </div>
+        <div class="card-body">
+            <!-- Updated handler -->
+            <form method="post" asp-page-handler="AddMissionPreferences">
+                @Html.AntiForgeryToken()
+
+                <!-- Hidden fields for required binding -->
+                <input type="hidden" name="UpdatedPreferences.ProgramId" value="@selectedProgramId" />
+                <input type="hidden" name="UpdatedPreferences.Description" value="Batch Add" />
+
+                <table class="table table-sm table-bordered align-middle mb-3">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Default Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pref in allPreferences)
+                        {
+                            <tr>
+                                <td>@pref.PreferenceId</td>
+                                <td>@pref.PreferenceName</td>
+                                <td>@pref.Description</td>
+                                <td>
+                                    <input type="text"
+                                           class="form-control form-control-sm"
+                                           name="PreferenceValues[@pref.PreferenceId]"
+                                           value="@pref.DefaultValue" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-save me-2"></i> Add Preferences to this mission
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}

@@ -1,0 +1,53 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model ClaimSession
+
+
+
+<div class="modal fade" id="EditClaimSessionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Revoke claim Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditClaimSession">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="SessionId" id="editSessionId" />
+                    <div class="mb-3">
+                        <label class="form-label">Session Code</label>
+                        <input asp-for="SessionCodeHash" class="form-control" required id="editSessionCodeHash">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Label</label>
+                        <input asp-for="Label" class="form-control" required id="editLabel">
+                    </div>
+
+
+                    <div class="mb-3">
+                        <label class="form-label">Maximum Claims</label>
+                        <input asp-for="MaxClaims" class="form-control" required id="editMaxClaims" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Issue</label>
+                        <input asp-for="ClaimsIssued" class="form-control" required id="editClaimsIssued">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Expiry Date</label>
+                        <input asp-for="ExpiresAtUtc" class="form-control" id="editExpiresAtUtc">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input asp-for="Deactivate" class="form-check-input" />
+                        <label asp-for="Deactivate" class="form-check-label">Deactivate</label>
+                    </div>
+                   
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

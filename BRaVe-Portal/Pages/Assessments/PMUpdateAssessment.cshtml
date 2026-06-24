@@ -1,0 +1,71 @@
+﻿@page "{assessmentId:int}/{statusId}"
+@model BRaVe_Portal.Pages.Assessments.PMUpdateAssessmentModel
+@{
+    ViewData["Title"] = "Risk-Benefit Assessment";
+ 
+}
+
+<div class="d-flex align-items-center mb-4">
+    <!-- Back Button on Top Left -->
+    <a href="/programs/Index" class="btn btn-outline-secondary me-auto">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+
+    <!-- Centered Title -->
+    <h5 class="fw-bold text-primary text-center flex-grow-1">
+        <i class="fa-solid fa-clipboard-check"></i> Registration & Risk-Benefit Assessment Form
+    </h5>
+
+    <!-- Spacer to balance the flexbox (keeps title centered) -->
+    <div style="width:70px;"></div>
+</div>
+
+
+<partial name="_RiskAssessmentPartialView" model="Model.Assessment" />
+
+@if (TempData["SaveAssessment"] != null )
+{
+    <div asp-validation-summary="All" class="alert alert-danger"></div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+}
+
+
+
+@* <div class="text-end mt-4">
+    <button type="submit" class="btn btn-success btn-lg">
+        <i class="fa fa-save"></i> Save
+    </button>
+</div> *@
+
+
+<div class="d-flex justify-content-end gap-2 mt-4">
+    <form method="post" asp-page-handler="SaveAssessment" class="m-0">
+        @Html.AntiForgeryToken()
+        <input asp-for="@Model.AssessmentId" type="hidden" />
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="fa fa-save"></i> Save
+        </button>
+    </form>
+
+    @if (Model.IsValid)
+    {
+        <form method="post" asp-page-handler="SubmitAssessment" class="m-0">
+            @Html.AntiForgeryToken()
+            <input asp-for="@Model.AssessmentId" type="hidden" />
+            <button type="submit" class="btn btn-info btn-lg">
+                <i class="fa fa-save"></i> Submit
+            </button>
+        </form>
+    
+    }
+
+    
+</div>

@@ -1,0 +1,538 @@
+﻿@page
+@model BRaVe_Portal.Pages.Monitoring.MatchingDetailsModel
+@{
+    ViewData["Title"] = "Match Details";
+    Layout = "_SectionMenu";
+}
+
+<div class="container-fluid py-4">
+
+
+
+    @Html.AntiForgeryToken()
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+   
+        <div>
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm mb-3"
+                    onclick="history.back();">
+                <i class="fa fa-arrow-left me-2"></i> Back
+            </button>
+            <h1 class="h3 fw-bold mb-1">Biometric Match Details</h1>
+            <p class="text-muted">Detailed comparison of matched records.</p>
+        </div>
+
+   
+    </div>
+
+    @if (Model.ViewModel == null)
+    {
+        <div class="alert alert-warning">
+            Match not found.
+        </div>
+    }
+    else
+    {
+        @await Html.PartialAsync("_BiometricMatchPartial", Model.ViewModel)
+    }
+
+</div>
+
+
+<!-- ================= CONFIRM MODAL ================= -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-clipboard-list me-2"></i> Confirm Match
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="small text-muted mb-3">
+                    <div><strong>Recent: </strong> <span id="confirmSourceName"></span></div>
+                    <div><strong>Old: </strong> <span id="confirmMatchedName"></span></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Select decision</label>
+                    <select id="confirmReason" class="form-select" required>
+                        <option value="" disabled selected>-- Select Reason --</option>
+                        @foreach (var decision in Model.AdjudicationDecisions)
+                        {
+                            <option value="@decision.DecisionId">
+                                @decision.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Notes (optional)</label>
+                    <textarea class="form-control"
+                              id="confirmNotes"
+                              rows="3"></textarea>
+                </div>
+
+                <input type="hidden" id="confirmSourceUuid" />
+                <input type="hidden" id="confirmMatchedUuid" />
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button class="btn btn-primary" onclick="confirmDuplicate()">
+                    Yes, Confirm
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- ================= REJECT MODAL ================= -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Match</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="small text-muted mb-3">
+                    <div><strong>New: </strong> <span id="rejectSourceName"></span></div>
+                    <div><strong>Existing: </strong> <span id="rejectMatchedName"></span></div>
+                </div>
+
+                <input type="hidden" id="rejectSourceUuid" />
+                <input type="hidden" id="rejectMatchedUuid" />
+
+                <div class="mb-3">
+                    <label class="form-label">Specify Reason</label>
+                    <textarea id="otherReasonText"
+                              class="form-control"
+                              rows="3"></textarea>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button class="btn btn-primary"
+                        onclick="rejectDuplicate()">
+                    Submit
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+<!-- ================= IMAGE COMPARISON MODAL ================= -->
+<div class="modal fade" id="compareModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Image Comparison</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row text-center">
+
+                    <!-- SOURCE -->
+                    <div class="col-md-6">
+                        <div class="fw-bold mb-2" id="compareSourceName"></div>
+                        <img id="compareSourceImg"
+                             class="img-fluid border rounded"
+                             style="max-height:400px; object-fit:contain;" />
+                    </div>
+
+                    <!-- MATCHED -->
+                    <div class="col-md-6">
+                        <div class="fw-bold mb-2" id="compareMatchedName"></div>
+                        <img id="compareMatchedImg"
+                             class="img-fluid border rounded"
+                             style="max-height:400px; object-fit:contain;" />
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+
+
+            function openComparePreview(sourceName, matchedName, sourceImg, matchedImg) {
+
+            document.getElementById("compareSourceName").innerText = sourceName;
+            document.getElementById("compareMatchedName").innerText = matchedName;
+
+            document.getElementById("compareSourceImg").src = sourceImg;
+            document.getElementById("compareMatchedImg").src = matchedImg;
+
+            const modal = new bootstrap.Modal(document.getElementById('compareModal'));
+            modal.show();
+        }
+
+    </script>
+
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const mapDiv = document.querySelector('[id^="map-"]');
+
+            if (!mapDiv) return;
+
+            const mapId = mapDiv.id;
+
+            const sourceGps = mapDiv.dataset.source;
+            const matchedGps = mapDiv.dataset.matched;
+
+            initMatchMap(mapId, sourceGps, matchedGps);
+
+        });
+
+    </script>
+    <script>
+        function openConfirm(sourceName, matchedName, sourceUuid, matchedUuid) {
+
+            document.getElementById('confirmSourceUuid').value = sourceUuid;
+            document.getElementById('confirmMatchedUuid').value = matchedUuid;
+
+            document.getElementById('confirmSourceName').innerText = sourceName;
+            document.getElementById('confirmMatchedName').innerText = matchedName;
+
+            bootstrap.Modal
+                .getOrCreateInstance(document.getElementById('confirmModal'))
+                .show();
+        }
+
+        function openReject(sourceName, matchedName, sourceUuid, matchedUuid) {
+
+            document.getElementById('rejectSourceUuid').value = sourceUuid;
+            document.getElementById('rejectMatchedUuid').value = matchedUuid;
+
+            document.getElementById('rejectSourceName').innerText = sourceName;
+            document.getElementById('rejectMatchedName').innerText = matchedName;
+
+            bootstrap.Modal
+                .getOrCreateInstance(document.getElementById('rejectModal'))
+                .show();
+        }
+
+        function confirmDuplicate() {
+
+                const decisionId =
+                document.getElementById('confirmReason').value;
+
+            if (!decisionId) {
+                alert('Please select a confirmation decision.');
+                return;
+            }
+
+            const payload = {
+                sourceUuid: document.getElementById('confirmSourceUuid').value,
+                matchedUuid: document.getElementById('confirmMatchedUuid').value,
+                decisionId: parseInt(decisionId),
+                notes: document.getElementById('confirmNotes').value,
+                suggestion: getSuggestionText(),
+                dedupMode: 'A'
+            };
+
+            submitAdjudication(payload);
+        }
+
+        function rejectDuplicate() {
+
+        
+
+            const payload = {
+                sourceUuid: document.getElementById('rejectSourceUuid').value,
+                matchedUuid: document.getElementById('rejectMatchedUuid').value,
+                decisionId: 1,
+                notes: document.getElementById('otherReasonText').value,
+                suggestion: getSuggestionText(),
+                dedupMode: 'A'
+            };
+
+            submitAdjudication(payload);
+        }
+
+         async function submitAdjudication(payload) {
+
+            const response = await fetch("?handler=Adjudicate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-BRaVe-Portal-CSRF":
+                        document.querySelector(
+                            'input[name="_bravePortalCsrf"]'
+                        ).value
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.redirect) {
+                window.location.href = result.redirect;
+            }
+        }
+
+        function getSuggestionText() {
+            const box =
+                document.querySelector('[id^="suggestionBox"]:not(.d-none)');
+            return box ? box.innerText.trim() : null;
+        }
+
+                document.querySelectorAll('.collapse[data-household-id]')
+        .forEach(collapse => {
+
+            collapse.addEventListener('show.bs.collapse', async function () {
+
+                const householdId = this.dataset.householdId;
+                const target = this.dataset.target;
+
+                const tbody = document.getElementById(target);
+
+                if (tbody.dataset.loaded === "true") return;
+
+                tbody.innerHTML =
+                `<tr>
+                    <td colspan="6" class="text-muted small">
+                        Loading household members...
+                    </td>
+                </tr>`;
+
+                try {
+
+                        const response =
+                         await fetch(`?handler=HouseholdMembers&householdId=${householdId}`);
+
+                    const members = await response.json();
+
+                    let rows = "";
+
+                    members.forEach(m => {
+
+                            const photo =
+                            m.photo
+                            ? `data:image/jpeg;base64,${m.photo}`
+                            : "/img/avatar.png";
+
+                        rows += `
+                        <tr>
+
+                                                        <td>
+                            <img src="${m.photo
+                                ? `data:image/jpeg;base64,${m.photo}`
+                                : '/images/avatar.jpg'}"
+                                 class="rounded-circle border"
+                                 style="width:42px;height:42px;object-fit:cover;cursor:pointer;"
+                                 onclick="openImagePreview('${m.fullName}', this.src)">
+
+                            </td>
+
+                            <td class="fw-semibold">${m.fullName}</td>
+
+                            <td>${m.ageYears ?? "-"}</td>
+
+                            <td>${m.relationship ?? "-"}</td>
+
+                            <td>${m.gender ?? "-"}</td>
+
+                            <td>
+                                <span class="badge bg-success-subtle text-success">
+                                    <i class="fa-solid fa-fingerprint"></i>
+                                </span>
+                            </td>
+
+                        </tr>`;
+                    });
+
+                    tbody.innerHTML = rows;
+                    tbody.dataset.loaded = "true";
+
+                } catch {
+
+                    tbody.innerHTML =
+                    `<tr>
+                        <td colspan="6" class="text-danger small">
+                            Failed to load household members
+                        </td>
+                    </tr>`;
+                }
+
+            });
+
+        });
+
+
+                  document.querySelectorAll('.collapse[data-member-id]')
+        .forEach(collapse => {
+
+            collapse.addEventListener('show.bs.collapse', async function () {
+
+                const memberId = this.dataset.memberId;
+                const target = this.dataset.target;
+
+                const tbody = document.getElementById(target);
+
+                if (tbody.dataset.loaded === "true") return;
+
+                tbody.innerHTML =
+                `<tr>
+                    <td colspan="6" class="text-muted small">
+                        Loading match history...
+                    </td>
+                </tr>`;
+
+                try {
+
+                    const response =
+                        await fetch(`?handler=MatchHistory&memberUuid=${memberId}`);
+
+                    const history = await response.json();
+
+                    //  HANDLE NO HISTORY
+                    if (!history || history.length === 0) {
+
+                        tbody.innerHTML =
+                        `<tr>
+                            <td colspan="5" class="text-muted small">
+                                This record has no match history
+                            </td>
+                        </tr>`;
+
+                        return;
+                    }
+
+                    let rows = "";
+
+                    history.forEach(h => {
+
+                            const statusBadge =
+                            h.otherMemberStatus === "O"
+                                ? `<span class="badge bg-success-subtle text-success">Original</span>`
+                                : `<span class="badge bg-warning-subtle text-warning">Duplicate</span>`;
+
+                        rows += `
+                        <tr>
+                            <td class="fw-semibold">${h.otherMemberName}</td>
+                            <td>${h.otherMemberAge ?? "-"}</td>
+                            <td>${h.otherMemberGender}</td>
+                             <td>${statusBadge}</td>
+                             <td>${h.activityCode ?? "-"}</td>
+                            <td>${new Date(h.adjudicatedOn).toLocaleString()}</td>
+                        </tr>`;
+                    }
+ 
+                    );
+
+                    tbody.innerHTML = rows;
+                    tbody.dataset.loaded = "true";
+
+                            // ADD MARKERS TO MAP AFTER TABLE LOAD
+                    const mapDiv = document.querySelector('[id^="map-"]');
+
+                    if (mapDiv) {
+                        addHistoryMarkers(mapDiv.id, history);
+                    }
+
+                } catch {
+
+                    tbody.innerHTML =
+                    `<tr>
+                        <td colspan="5" class="text-danger small">
+                            Failed to load match history
+                        </td>
+                    </tr>`;
+                }
+
+            });
+
+        });
+    </script>
+
+    @*   // Suggestion score script *@
+    <script>
+        function generateSuggestion(btn) {
+
+            // find current card only
+            const card = btn.closest(".card-body");
+
+            let total = 0;
+
+            // ONLY radios inside this card
+            card.querySelectorAll(".indicator:checked").forEach(radio => {
+                total += parseFloat(radio.value);
+            });
+
+            const box = card.querySelector('[id^="suggestionBox"]');
+
+            if (!box) return;
+
+            let message = "";
+            let css = "alert-secondary";
+
+            if (total >= 180) {
+                message = "High-confidence duplicate. Recommended action: Auto-match or high-priority review.";
+                css = "alert-success";
+            }
+            else if (total >= 120) {
+                message = "Likely duplicate. Human review recommended.";
+                css = "alert-primary";
+            }
+            else if (total >= 60) {
+                message = "Possible duplicate. Optional review.";
+                css = "alert-warning";
+            }
+            else if (total < 0) {
+                message = "Probably not duplicate. Exclude from further matching.";
+                css = "alert-danger";
+            }
+            else {
+                message = "Unlikely duplicate. Low priority.";
+            }
+
+            box.className = "alert " + css + " mt-3";
+            box.innerHTML = `
+                <div class="fw-bold">Total Score: ${total}</div>
+                <div class="mt-1">${message}</div>
+            `;
+
+            box.classList.remove("d-none");
+        }
+    </script>
+
+
+}

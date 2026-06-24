@@ -1,0 +1,159 @@
+﻿
+@model IEnumerable<Models.ViewModels.DataProcessingDataOutput>
+
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.DataOutputs ?? new List<LookupItemDto>();
+    var lookups1 = coreLookups?.DataOutputRecipients ?? new List<LookupItemDto>();
+
+     bool IsReadOnly = ViewData["IsReadOnly"] != null && (bool)ViewData["IsReadOnly"];
+
+}
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString()=="DataOutput")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "DataOutput")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Data Output</th>
+            <th>Recipient</th>
+            <th>Other</th>
+            <th>Justification</th>
+            <th style="width:120px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Count() == 0)
+        {
+            <tr class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+                <td colspan="8">
+                    No data outputs available.
+                </td>
+            </tr>
+        }
+        else
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td> @LookupHelper.GetTextById(lookups, @c.DataOutputId)</td>
+                    <td> @LookupHelper.GetTextById(lookups, @c.RecipientId)</td>
+                    <td> @c.RecipientOfOutput</td>
+                    <td> @c.DataOutputAndUsageJustification</td>
+                    <td>
+                        
+
+
+                        @if (!IsReadOnly)
+                        {
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editDataOutputModal"
+                                    data-DataOutputAssessment="@c.AssessmentId"
+                                    data-DataOutputId="@c.DataOutputId"
+                                    data-RecipientOfOutput="@c.RecipientOfOutput"
+                                    data-DataOutputAndUsageJustification="@c.DataOutputAndUsageJustification"
+                                    data-RecipientId="@c.RecipientId">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-button"
+                                    data-id="@c.DataOutputId"
+                                    data-assessment-id="@c.AssessmentId"
+                                    data-name="@LookupHelper.GetTextById(lookups, @c.DataOutputId)"
+                                    data-bs-toggle="modal" data-bs-target="#DeleteModal" data-handler="DeleteDataOutput"
+                                    data-entity="data">
+                                <i class="fa fa-trash"></i>
+                            </button>
+
+
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-subtle text-secondary border">View-only</span>
+                            <i class="fa-solid fa-lock ms-2 text-muted" data-bs-toggle="tooltip" title="Read-only: no actions"></i>
+
+                        }
+
+
+                    </td>
+                </tr>
+            }
+     
+    </tbody>
+</table>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var editModal = document.getElementById("editDataOutputModal");
+
+        editModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+
+            // Get values from button attributes
+            var assessmentId = button.getAttribute("data-DataOutputAssessment");
+            var DataOutputId = button.getAttribute("data-DataOutputId");
+            var RecipientOther = button.getAttribute("data-RecipientOther");
+            var RecipientOfOutput = button.getAttribute("data-RecipientOfOutput");
+            var DataOutputAndUsageJustification = button.getAttribute("data-DataOutputAndUsageJustification");
+            var RecipientId = button.getAttribute("data-RecipientId");
+          
+
+            // Fill modal form
+            document.getElementById("editDataOutputAssessmentId").value = assessmentId;
+            document.getElementById("selectedDataOutputId").value = DataOutputId;
+            document.getElementById("editDataOutputId").value = DataOutputId;
+            document.getElementById("editRecipientOther").value = RecipientOther;
+            document.getElementById("editRecipientOfOutput").value = RecipientOfOutput;
+            document.getElementById("editDataOutputAndUsageJustification").value = DataOutputAndUsageJustification;
+            document.getElementById("editRecipientId").value = RecipientId;
+            
+        });
+    });
+</script>
+
+<script>
+    function toggleOtherInput(selectId, inputId) {
+        const select = document.getElementById(selectId);
+        const input = document.getElementById(inputId);
+
+        if (!select || !input) return;
+
+        if (select.value === "99") {
+            input.disabled = false;
+        } else {
+            input.disabled = true;
+            input.value = "";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const primarySelect = document.getElementById("outputRecipientSelect");
+
+        if (primarySelect) {
+            primarySelect.addEventListener("change", () =>
+                toggleOtherInput("outputRecipientSelect", "outputRecipientOther")
+            );
+            toggleOtherInput("outputRecipientSelect", "outputRecipientOther");
+        }
+    });
+</script>

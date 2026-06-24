@@ -1,0 +1,115 @@
+﻿@page
+@model BRaVe_Portal.Pages.joinamission.IndexModel
+@{
+}
+
+
+@* <h2>Welcome</h2>
+<p>If you are a new partner, please join your assigned mission.</p>
+
+<i>Should you have any additional questions or require further assistance, feel free to reach out to us at brave-admin@iom.int</i> *@
+<!-- Modern Welcome / Access Request Card -->
+<div class="card shadow-lg mb-4 text-center rounded-3"
+     style="background: linear-gradient(135deg, #e0f2ff, #cfe8ff); transition: transform 0.3s;">
+    <div class="card-body p-5">
+        <h2 class="card-title fw-bold text-primary mb-3" style="font-family: 'Segoe UI', sans-serif; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+            Welcome to BRaVe Portal!
+        </h2>
+        <p class="card-text mb-4" style="font-size: 1.1rem; color: #004080; font-family: 'Segoe UI', sans-serif;">
+            You currently do not have a role assigned. Click the button below to request access and describe the role you need.
+        </p>
+
+        <!-- Success / Error Messages -->
+        @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+        {
+            <div class="alert alert-success alert-dismissible fade show mx-auto" role="alert" style="max-width:500px;">
+                <i class="bi bi-check-circle me-2"></i>
+                @Model.SuccessMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show mx-auto" role="alert" style="max-width:500px;">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                @Model.ErrorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+
+        <button type="button" class="btn btn-primary btn-lg shadow-sm px-5 py-2"
+                data-bs-toggle="modal" data-bs-target="#requestAccessModal"
+                style="background-color: #004080; color: white; font-weight: 600; border-radius: 50px; transition: transform 0.2s;">
+            Request Access
+        </button>
+    </div>
+</div>
+
+<style>
+    /* Interactive card hover */
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    /* Button hover lift */
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Modal input focus */
+    .modal .form-control:focus {
+        border-color: #004080;
+        box-shadow: 0 0 0 0.25rem rgba(0,64,128,0.25);
+    }
+
+    /* Modal font */
+    .modal-body label, .modal-body input, .modal-body textarea {
+        font-family: 'Segoe UI', sans-serif;
+    }
+</style>
+
+
+<!-- Request Access Modal -->
+<div class="modal fade" id="requestAccessModal" tabindex="-1" aria-labelledby="requestAccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-lg">
+            <form method="post" asp-page-handler="SubmitAccessRequest">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-primary" id="requestAccessModalLabel" style="font-family: 'Segoe UI', sans-serif;">
+                        Request Access
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <input type="hidden" id="userid" name="UserId" value="@Model.UserId" />
+
+                    <!-- Username (read-only) -->
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-semibold">Username</label>
+                        <input type="text" id="username" name="Username" class="form-control rounded-3 shadow-sm" value="@Model.Username" readonly />
+                    </div>
+
+                    <!-- Profile Name (read-only) -->
+                    <div class="mb-3">
+                        <label for="profileName" class="form-label fw-semibold">Profile Name</label>
+                        <input type="text" id="profileName" name="ProfileName" class="form-control rounded-3 shadow-sm" value="@Model.ProfileName" readonly />
+                    </div>
+
+                    <!-- Role Description / Justification -->
+                    <div class="mb-3">
+                        <label for="roleDescription" class="form-label fw-semibold">Role Description / Justification</label>
+                        <textarea id="roleDescription" name="RoleDescription" class="form-control rounded-3 shadow-sm" rows="4" placeholder="Describe the role you are requesting..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 py-2" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 py-2">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

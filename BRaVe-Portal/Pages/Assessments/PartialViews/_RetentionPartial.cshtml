@@ -1,0 +1,114 @@
+﻿@model Models.ViewModels.DataProcessingRetention
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.ArchivingMethodTypes ?? new List<LookupItemDto>();
+    var lookups1 = coreLookups?.DisposalMethodTypes ?? new List<LookupItemDto>();
+
+    bool IsReadOnly = ViewData["IsReadOnly"] != null && (bool)ViewData["IsReadOnly"];
+}
+
+
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "SectionH")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (/*TempData["ErrorMessage"] != null &&*/ TempData["Section"] != null && TempData["Section"].ToString() == "SectionH")
+{
+    @* <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div> *@
+    <div asp-validation-summary="All" class="alert alert-danger"></div>
+}
+
+
+
+@if (Model == null || !Model.HasData)
+{
+
+    <button type="button"
+            class="btn btn-success rounded-pill shadow px-5 py-2 d-flex align-items-center gap-2"
+            data-bs-toggle="modal"
+            data-bs-target="#saveSectionHModal">
+        <i class="fa fa-plus-circle"></i>
+        <span>Provide Section Details</span>
+    </button>
+
+
+
+
+}
+else
+{
+<h6 class="fw-bold text-primary">Beneficiary Data Retention After Project Closure:</h6>
+<div class="row mb-3">
+    <div class="col-md-3"><input asp-for="BeneficiaryDataYearsAfterProjectClosure" class="form-control" placeholder="Years" readonly/></div>
+    <div class="col-md-3"><input asp-for="BeneficiaryDataMonthsAfterProjectClosure" class="form-control" placeholder="Months" readonly/></div>
+        <div class="col-md-6"><textarea asp-for="BeneficiaryDataRetentionJustification" class="form-control" placeholder="Justification" readonly></textarea></div>
+</div>
+
+<h6 class="fw-bold text-primary">Financial Data Retention After Project Closure:</h6>
+<div class="row mb-3">
+        <div class="col-md-3"><input asp-for="FinancialDataYearsAfterProjectClosure" class="form-control" placeholder="Years" readonly /></div>
+        <div class="col-md-3"><input asp-for="FinancialDataMonthsAfterProjectClosure" class="form-control" placeholder="Months" readonly /></div>
+        <div class="col-md-6"><textarea asp-for="FinancialDataRetentionJustification" class="form-control" placeholder="Justification" readonly></textarea></div>
+</div>
+
+<h6 class="fw-bold text-primary">Consent Forms Data Retention After Project Closure:</h6>
+<div class="row mb-3">
+        <div class="col-md-3"><input asp-for="ConsentFormsYearsAfterProjectClosure" class="form-control" placeholder="Years" readonly /></div>
+        <div class="col-md-3"><input asp-for="ConsentFormsMonthsAfterProjectClosure" class="form-control" placeholder="Months" readonly /></div>
+        <div class="col-md-6"><textarea asp-for="ConsentFormsRetentionJustification" class="form-control" placeholder="Justification" readonly></textarea></div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label class="form-label">Method of Archiving</label>
+        
+            <select asp-for="MethodOfArchivingAfterProjectClosure" class="form-select" disabled>
+                @foreach (var c in lookups)
+                {
+                    <option value="@c.Id">@c.Text</option>
+
+                }
+            </select>
+            <input asp-for="MethodOfArchivingAfterProjectClosureOther" class="form-control mt-2" placeholder="If Other, specify..." readonly />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Method of Disposal</label>
+        
+            <select asp-for="MethodOfDisposalAfterRetentionPeriod" class="form-select" disabled>
+                @foreach (var c in lookups1)
+                {
+                    <option value="@c.Id">@c.Text</option>
+
+                }
+            </select>
+            <input asp-for="MethodOfDisposalAfterRetentionPeriodOther" class="form-control mt-2" placeholder="If Other, specify..." readonly />
+    </div>
+</div>
+
+    @if (!IsReadOnly)
+    {
+        
+        <div class="d-flex justify-content-end my-3">
+            <button type="button"
+                    class="btn btn-primary rounded-pill shadow px-4 py-2 d-flex align-items-center gap-2"
+                    data-bs-toggle="modal"
+                    data-bs-target="#saveSectionHModal">
+                <i class="fa fa-edit"></i>
+                <span>Edit Details</span>
+            </button>
+        </div>
+
+    }
+
+
+}

@@ -1,0 +1,202 @@
+﻿@page
+@model BRaVe_Portal.Pages.FormRegisterUserModel
+@inject string appEnvironment
+@{
+    ViewData["Title"] = "Partner Portal Registration";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - BRaVe Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #004080;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .register-container {
+            background: #fff;
+            color: #333;
+            padding: 3rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: left;
+            max-width: 480px;
+            width: 100%;
+        }
+
+            .register-container h1 {
+                margin-bottom: 0.5rem;
+                font-size: 1.8rem;
+                color: #004b87;
+            }
+
+            .register-container p.subtitle {
+                margin-bottom: 1.5rem;
+                color: #555;
+            }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 0.3rem;
+                font-weight: 600;
+            }
+
+            .form-group input {
+                width: 100%;
+                padding: 0.6rem 0.8rem;
+                border-radius: 0.5rem;
+                border: 1px solid #ccc;
+                font-size: 0.95rem;
+                box-sizing: border-box;
+            }
+
+            .form-group small {
+                display: block;
+                margin-top: 0.25rem;
+                color: #777;
+                font-size: 0.8rem;
+            }
+
+        .actions {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-primary {
+            flex: 1;
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.8rem;
+            background: #0056B3;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+            .btn-primary i {
+                margin-right: 0.4rem;
+            }
+
+            .btn-primary:hover {
+                background: #004b9f;
+                transform: translateY(-1px);
+            }
+
+        .btn-secondary-link {
+            border: none;
+            background: transparent;
+            color: #0056B3;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+
+        .status {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+            .status.error {
+                color: #c0392b;
+            }
+
+            .status .error {
+                color: #c0392b;
+                font-size: 1rem;
+                font-weight: 600;
+            }
+
+            .status.success {
+                color: #27ae60;
+            }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h1>Partner Portal Registration</h1>
+
+
+        @if (appEnvironment == "DEV" || appEnvironment == "UAT")
+        {
+            <p class="subtitle">
+                Register a test user for the BRaVe Dev/UAT environment using an admin-issued token.
+            </p>
+        }
+        else
+        {
+            <p class="subtitle">
+                Register to Access the Partner Portal using an admin-issued token.
+            </p>
+        }
+      
+
+        <form id="registrationForm" method="post" asp-page-handler="Register" novalidate>
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input id="email" name="dto.Email" type="email" value="@Model.Dto.Email" autocomplete="email" required />
+            </div>
+
+            <div class="form-group">
+                <label for="displayName">Display name</label>
+                <input id="displayName" name="dto.DisplayName" type="text" value="@Model.Dto.DisplayName" autocomplete="name" required />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input id="password" name="dto.Password" type="password" autocomplete="new-password" required minlength="8" />
+                <small>At least 8 characters and one special character (e.g. !@@#$%^&amp;*).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm password</label>
+                <input id="confirmPassword" name="ConfirmPassword" type="password" autocomplete="new-password" required />
+            </div>
+
+            <div class="form-group">
+                <label for="adminToken">Admin token</label>
+                <input id="adminToken" name="dto.AdminToken" type="text" required />
+                <small>Provided by an administrator. Used only for onboarding and claim counting.</small>
+            </div>
+
+            <div class="actions">
+                <button id="btnRegister" type="submit" class="btn-primary">
+                    <i class="fa-solid fa-user-plus"></i> Register
+                </button>
+                <button id="btnBack" class="btn-secondary-link" type="button" onclick="window.location.href='@Url.Page("Login")';">
+                    Back to login
+                </button>
+            </div>
+
+            <div id="status" class="status" aria-live="polite">
+                <div asp-validation-summary="All" class="error"></div>
+            </div>
+
+        </form>
+    </div>
+</body>
+</html>
+

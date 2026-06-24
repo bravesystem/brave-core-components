@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36401.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BRaVe-Reporting-Backend.Tests", "BRaVe-Reporting-Backend.Tests.csproj", "{0E7AB94C-BB84-4A2D-A38A-B6B5FF0BB715}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0E7AB94C-BB84-4A2D-A38A-B6B5FF0BB715}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E7AB94C-BB84-4A2D-A38A-B6B5FF0BB715}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E7AB94C-BB84-4A2D-A38A-B6B5FF0BB715}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E7AB94C-BB84-4A2D-A38A-B6B5FF0BB715}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {76C76A38-E76F-45B8-94A4-75982AA70F49}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,57 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Models.ViewModels.DataProcessingDataOutput
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.DataOutputs ?? new List<LookupItemDto>();
+    var lookups1 = coreLookups?.DataOutputRecipients ?? new List<LookupItemDto>();
+}
+
+<div class="modal fade" id="editDataOutputModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Data Output</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editDataOutputForm" method="post" enctype="multipart/form-data" asp-page-handler="EditDataOutput">
+                    <input type="hidden" asp-for="AssessmentId" id="editDataOutputAssessmentId" />
+                    <input type="hidden" asp-for="DataOutputId" id="selectedDataOutputId" />
+                    <div class="mb-3">
+                        <label class="form-label">Data Output</label>
+
+                        <select asp-for="DataOutputId" class="form-select" id="editDataOutputId" disabled>
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Recipient</label>
+                        <select asp-for="RecipientId" class="form-select" id="RecipientId">
+                            @foreach (var c in lookups1)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                        <input asp-for="RecipientOfOutput" class="form-control mt-2" placeholder="If Other, specify..." id="editRecipientOfOutput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Usage Justification</label>
+                        <textarea asp-for="DataOutputAndUsageJustification" class="form-control" id="editDataOutputAndUsageJustification" required></textarea>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

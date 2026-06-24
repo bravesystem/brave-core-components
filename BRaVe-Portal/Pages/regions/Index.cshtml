@@ -1,0 +1,117 @@
+﻿@page
+@using BRaVe_Portal.Models
+@model BRaVe_Portal.Pages.regions.IndexModel
+@{
+    ViewData["Title"] = "Region Management";
+}
+
+
+
+<!-- Region Heading 
+<h5 class="fw-bold mb-3">Region: Africa</h5>-->
+
+<!-- Add New Country Button (Top Right) -->
+<div class="mb-3 text-end">
+    <button type"button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#addRegionModal">
+        <i class="fa fa-plus"></i> Add New Region 
+     
+    </button>
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+<!-- Countries Management Section -->
+@if ((Model.Regions?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Manage Regions 
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        
+
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Countries</th>
+                        <th style="width:200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var region in Model.Regions)
+                    {
+
+                        <tr>
+
+                            <td>@region.Name</td>
+                            <td title="@region.Note">
+                                @((region.Note?.Length > 100)
+                                        ? region.Note.Substring(0, 100) + "..."
+                                        : region.Note)
+                            </td>
+                            <td>
+                        <a asp-page="/Regions/Countries/ManageCountries" asp-route-regionId="@region.RegionId" class="btn btn-sm btn-outline-primary">Manage</a>
+                            </td>
+                            <td>
+                               
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editRegionModal"
+                                        data-id="@region.RegionId"
+                                        data-name="@region.Name"
+                                        data-note="@region.Note">
+                                    <i class="fa fa-edit"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+
+
+                    }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Region Found</h4>
+    </div>
+
+
+}
+
+
+@section Scripts {
+    <partial name="_EditRegionModal" model="@Model.UpdatedRegion" />
+
+    <partial name="_AddRegionModal" model="@Model.Region" />
+
+
+    <script>
+        var editModal = document.getElementById('editRegionModal');
+        editModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget; // Button that triggered the modal
+
+            var id = button.getAttribute('data-id');
+            var name = button.getAttribute('data-name');
+            var note = button.getAttribute('data-note');
+
+            // Fill form fields inside modal
+            document.getElementById('editRegionId').value = id;
+            document.getElementById('editRegionName').value = name;
+            document.getElementById('editRegionNote').value = note;
+        });
+    </script>
+
+}
+
+

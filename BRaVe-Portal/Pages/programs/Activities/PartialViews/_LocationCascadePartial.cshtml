@@ -1,0 +1,82 @@
+﻿@model BRaVe_Portal.Models.ViewModels.LocationCascadeViewModel
+@using BRaVe_Portal.Models
+@* @model BRaVe_Portal.Pages.programs.Activities.ManageActivitiesModel *@
+
+@{
+    var orderedLevels = Model.AdminLevels
+         .OrderBy(l => l.Id)
+         .ToList();
+    var endpoint = Url.Page(null, null, new { handler = "LocationsByLevel" }) ?? string.Empty;
+}
+
+<div id="locationCascadeContainer" class="card shadow-sm mb-3" data-endpoint="@endpoint">
+    <div class="card-header bg-primary text-white fw-bold">
+        Location Details
+    </div>
+    <div class="card-body">
+        @if (!orderedLevels.Any())
+        {
+            <div class="alert alert-warning mb-0">No administrative levels available.</div>
+        }
+        else
+        {
+            @for (int i = 0; i < orderedLevels.Count; i++)
+            {
+                var level = orderedLevels[i];
+                var hasLocations = Model.LocationsByLevel.TryGetValue(level.Id, out var levelLocations);
+                var selectedValue = Model.SelectedLocationIds.TryGetValue(level.Id, out var selectedId) ? selectedId : null;
+
+                List<Location> options;
+                if (!hasLocations)
+                {
+                    options = new List<Location>();
+                }
+                else if (i == 0)
+                {
+                    options = levelLocations.Where(x => !x.ParentLocationId.HasValue).ToList();
+                }
+                else
+                {
+                    var parentLevelId = orderedLevels[i - 1].Id;
+                    var parentSelected = Model.SelectedLocationIds.TryGetValue(parentLevelId, out var parentId) ? parentId : null;
+                    options = parentSelected.HasValue
+                    ? levelLocations.Where(x => x.ParentLocationId == parentSelected.Value).ToList()
+                    : new List<BRaVe_Portal.Models.Location>();
+                }
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="admin-level-@level.Id">
+                        @level.LevelName
+                    </label>
+                    <select class="form-select"
+                            id="admin-level-@level.Id"
+                            name="SelectedLocationIds[@level.Id]"
+                            data-level-index="@i">
+                        <option value="">-- Select @level.LevelName --</option>
+                        @foreach (var location in options)
+                        {
+                            if (selectedValue == location.Id)
+                            {
+                                <option value="@location.Id" selected>@location.LocationName</option>
+                            }
+                            else
+                            {
+                                <option value="@location.Id">@location.LocationName</option>
+                            }
+                        }
+                    </select>
+                </div>
+            }
+
+            <div class="mb-0">
+                <label class="form-label fw-semibold" for="AddressInfo">Address Info</label>
+                <input type="text"
+                       class="form-control"
+                       id="AddressInfo"
+                       name="AddressInfo"
+                       value="@Model.AddressInfo"
+                       placeholder="Enter address information" />
+            </div>
+        }
+    </div>
+</div>

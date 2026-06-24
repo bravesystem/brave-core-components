@@ -1,0 +1,95 @@
+﻿@page
+@model BRaVe_Portal.Pages.DuplicateRulesets.IndexModel
+@using BRaVe_Portal.Models.ViewModels
+
+@{
+    ViewData["Title"] = "Duplicate Rulesets";
+}
+
+@* <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Duplicate Rulesets</h2>
+    <a asp-action="/DuplicateRulesets/Create" class="btn btn-primary">
+        <i class="fa fa-plus"></i> Add
+    </a>
+</div> *@
+
+<form method="post" asp-page-handler="Add">
+    @Html.AntiForgeryToken()
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Duplicate Rulesets</h2>
+        <button type="submit" class="btn btn-primary">
+            <i class="fa fa-plus"></i> Add
+        </button>
+    </div>
+
+</form>
+
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Is Active</th>
+            <th>Created On</th>
+            <th>Type</th>
+            <th>Manage</th>
+            <th>Edit</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null)
+        {
+            @foreach (var item in Model.DuplicateRulesets)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@(item.Description ?? "—")</td>
+                    <td>
+                        @if (item.IsActive)
+                        {
+                            <span class="badge bg-success">Yes</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">No</span>
+                        }
+                    </td>
+                    <td>@(item.CreatedOn.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                    <td>@(item.TenantId == null ? "BuiltIn" : "Custom")</td>
+                    <td>
+                        <a asp-page="/DuplicateRulesets/DuplicatePredicates" asp-route-rulesetId="@item.Id" class="btn btn-sm btn-outline-secondary" title="Manage predicates">
+                            <i class="fa fa-tools"></i>
+                        </a>
+                    </td>
+                    <td>
+                        @if (item.TenantId != null)
+                        {
+                            <a asp-action="Edit" asp-controller="DuplicateRulesets" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Edit">
+                                <i class="fa fa-edit"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@if (Model == null || !Model.DuplicateRulesets.Any())
+{
+    <p class="text-muted">No rulesets defined.</p>
+}

@@ -1,0 +1,119 @@
+﻿@model IEnumerable<Models.ViewModels.DataProcessingSecurityMeasure>
+
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.SecurityMeasures ?? new List<LookupItemDto>();
+
+     bool IsReadOnly = ViewData["IsReadOnly"] != null && (bool)ViewData["IsReadOnly"];
+
+    }
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "SecurityMeasures")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "SecurityMeasures")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Security Measure</th>
+            <th>Technical Measure</th>
+            <th>Organizational Measure</th>
+            <th style="width:120px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Count() == 0)
+        {
+            <tr class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+                <td colspan="8">
+                    No data security measures available.
+                </td>
+            </tr>
+        }
+        else
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td> @LookupHelper.GetTextById(lookups, @c.SecurityMeasureId)</td>
+                    <td> @c.TechnicalMeasures</td>
+                    <td> @c.OrganizationalMeasures</td>
+                    <td>
+                        
+
+                        @if (!IsReadOnly)
+                        {
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editSecurityMeasureModal"
+                                    data-SecurityMeasureAssessment="@c.AssessmentId"
+                                    data-SecurityMeasureId="@c.SecurityMeasureId"
+                                    data-TechnicalMeasures="@c.TechnicalMeasures"
+                                    data-OrganizationalMeasures="@c.OrganizationalMeasures">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-button"
+                                    data-id="@c.SecurityMeasureId"
+                                    data-assessment-id="@c.AssessmentId"
+                                    data-name="@LookupHelper.GetTextById(lookups, @c.SecurityMeasureId)"
+                                    data-bs-toggle="modal" data-bs-target="#DeleteModal" data-handler="DeleteSecurityMeasure"
+                                    data-entity="security measure">
+                                <i class="fa fa-trash"></i>
+                            </button>
+
+
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-subtle text-secondary border">View-only</span>
+                            <i class="fa-solid fa-lock ms-2 text-muted" data-bs-toggle="tooltip" title="Read-only: no actions"></i>
+
+                        }
+
+
+                    </td>
+                </tr>
+            }
+    </tbody>
+</table>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var editModal = document.getElementById("editSecurityMeasureModal");
+
+        editModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+
+            // Get values from button attributes
+            var assessmentId = button.getAttribute("data-SecurityMeasureAssessment");
+            var SecurityMeasureId = button.getAttribute("data-SecurityMeasureId");
+            var TechnicalMeasures = button.getAttribute("data-TechnicalMeasures");
+            var OrganizationalMeasures = button.getAttribute("data-OrganizationalMeasures");
+
+
+
+            // Fill modal form
+            document.getElementById("editSecurityMeasureAssessmentId").value = assessmentId;
+            document.getElementById("editSecurityMeasureId").value = SecurityMeasureId;
+            document.getElementById("editTechnicalMeasures").value = TechnicalMeasures;
+            document.getElementById("editOrganizationalMeasures").value = OrganizationalMeasures;
+
+        });
+    });
+</script>

@@ -1,0 +1,92 @@
+﻿@model BRaVe_Portal.Models.ViewModels.DataProcessingLawfulBasis
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.LawfulBases ?? new List<LookupItemDto>();
+
+
+}
+
+
+<div class="modal fade" id="saveSectionEModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Complete Section</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+
+                <form method="post" asp-page-handler="SaveSectionE" enctype="multipart/form-data">
+
+
+                    <input asp-for="AssessmentId" type="hidden" />
+
+<div class="mb-3">
+    <label class="form-label">Lawful Basis</label>
+
+    <select asp-for="ProcessingActivityLawfulBasisId" class="form-select">
+        @foreach (var c in lookups)
+        {
+            <option value="@c.Id">@c.Text</option>
+
+        }
+    </select>
+</div>
+<div class="mb-3">
+    <label class="form-label">Explanation</label>
+                        <textarea asp-for="LawfulBasisExplanation" class="form-control" maxlength="500"></textarea>
+</div>
+<div class="mb-3">
+    <label class="form-label">Upload Supporting Document</label>
+                        <input type="file" class="form-control" name="LawfulBasisDocPath" />
+                        <a id="lawfulBasisDownloadLink" class="d-none">
+                            <i class="fa fa-download me-1"></i> Download Attachment
+                        </a>
+</div>
+<div class="mb-3">
+    <label class="form-label">Initial Data Collection Explanation</label>
+    <textarea asp-for="InitialDataCollectionExplanation" class="form-control" maxlength="500" required></textarea>
+</div>
+<div class="mb-3">
+    <label class="form-label">Upload Initial Data Collection Document</label>
+                        <input type="file" class="form-control" name="InitialDataCollectionDocPath" />
+                        <a id="initialCollectionDownloadLink" class="d-none">
+                            <i class="fa fa-download me-1"></i> Download Attachment
+                        </a>
+</div>
+<div class="mb-3">
+    <label class="form-label">Ongoing Data Management</label>
+                        <textarea asp-for="OngoingDataManagementExplanation" class="form-control" maxlength="500" required></textarea>
+</div>
+<div class="mb-3">
+    <label class="form-label">Upload Ongoing Management Document</label>
+                        <input type="file" class="form-control" name="OngoingDataManagementDocPath" />
+                        <a id="ongoingDownloadLink" class="d-none">
+                            <i class="fa fa-download me-1"></i> Download Attachment
+                        </a>
+</div>
+<div class="mb-3">
+    <label class="form-label">Data Sharing Explanation</label>
+                        <textarea asp-for="DataSharingExplanation" class="form-control" maxlength="500" required></textarea>
+</div>
+<div class="mb-3">
+    <label class="form-label">Upload Data Sharing Document</label>
+                        <input type="file" class="form-control" name="DataSharingDocPath" />
+                        <a id="dataSharingDownloadLink" class="d-none">
+                            <i class="fa fa-download me-1"></i> Download Attachment
+                        </a>
+</div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+
+                </form>
+
+
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,196 @@
+﻿@page "{countryISO2}"
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.regions.Missions.ManageMissionsModel
+@{
+    ViewData["Title"] = "Manage Missions";
+}
+
+
+<h5 class="fw-bold mb-3">Country: @Model.Country.Name</h5>
+
+<div class="d-flex justify-content-between mb-3">
+    <a asp-page="/Regions/Countries/ManageCountries" asp-route-regionId="@Model.Country.RegionId"
+       class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-arrow-left"></i> Back
+    </a>
+
+    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addMissionModal">
+        <i class="fa fa-plus"></i> Add New Mission
+    </button>
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+@if ((Model.Missions?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Manage Missions
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Focal Point</th>
+                        <th>Note</th>
+                        <th style="width:200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mission in Model.Missions)
+                    {
+                        <tr>
+                            <td>@mission.Name</td>
+                           <td>
+                                @{
+                                    var fp = Model.FocalPoints?.FirstOrDefault(f => f.Id == mission.FocalpointType);
+                                 }
+                                    @fp?.Text
+                            </td>
+                            <td>@mission.Note</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editMissionModal"
+                                        data-id="@mission.MissionId"
+                                        data-name="@mission.Name"
+                                        data-focalpoint="@mission.FocalpointType"
+                                        data-note="@mission.Note">
+                                    <i class="fa fa-edit"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Missions Found</h4>
+    </div>
+}
+
+@{
+    ViewData["FocalPoints"] = @Model.FocalPoints;
+}
+
+<!-- Add Mission Modal -->
+<partial name="_AddMissionModal" model="Model.NewMission" />
+
+<!-- Edit Mission Modal -->
+<partial name="_EditMissionModal" model="Model.EditMission" />
+
+<!-- Toast Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="addMissionToast" class="toast align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">Mission added successfully!</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+
+    <div id="editMissionToast" class="toast align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">Mission updated successfully!</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+
+        // ==========================================
+        // Add Mission
+        // ==========================================
+
+        const addForm = document.getElementById('addMissionForm');
+        const addModal = document.getElementById('addMissionModal');
+        const addToastEl = document.getElementById('addMissionToast');
+
+        if (addForm && addModal && addToastEl) {
+
+            const addToast = new bootstrap.Toast(addToastEl);
+
+            addModal.addEventListener('hidden.bs.modal', () => {
+                addForm.reset();
+            });
+
+            addForm.addEventListener('submit', () => {
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(addModal)?.hide();
+                    addToast.show();
+                }, 200);
+            });
+        }
+
+        // ==========================================
+        // Edit Mission
+        // ==========================================
+
+        const editForm = document.getElementById('editMissionForm');
+        const editModalEl = document.getElementById('editMissionModal');
+        const editToastEl = document.getElementById('editMissionToast');
+
+        if (editForm && editModalEl && editToastEl) {
+
+            const editToast = new bootstrap.Toast(editToastEl);
+
+            editModalEl.addEventListener('hidden.bs.modal', () => {
+                editForm.reset();
+            });
+
+                 editForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(editForm);
+
+            const response = await fetch(editForm.action, {
+                method: "POST",
+                body: formData
+            });
+
+            if (response.ok) {
+                bootstrap.Modal.getInstance(editModalEl).hide();
+                editToast.show();
+            } else {
+                alert("Update failed");
+            }
+        });
+            // Populate Edit Modal
+            editModalEl.addEventListener('show.bs.modal', function (event) {
+
+                const button = event.relatedTarget;
+
+                if (!button) return;
+
+                console.log("Mission Id:", button.getAttribute('data-id'));
+                console.log("Mission Name:", button.getAttribute('data-name'));
+                console.log("Mission Note:", button.getAttribute('data-note'));
+                console.log("Focal Point:", button.getAttribute('data-focalpoint'));
+
+                const missionId = document.getElementById('EditMissionId');
+                const missionName = document.getElementById('EditMission_Name');
+                const focalPoint = document.getElementById('EditMission_FocalpointType');
+                const note = document.getElementById('EditMission_Note');
+
+                if (missionId)
+                    missionId.value = button.getAttribute('data-id') || '';
+
+                if (missionName)
+                    missionName.value = button.getAttribute('data-name') || '';
+
+                if (focalPoint)
+                    focalPoint.value = button.getAttribute('data-focalpoint') || '';
+
+                if (note)
+                    note.value = button.getAttribute('data-note') || '';
+            });
+        }
+
+    </script>
+}

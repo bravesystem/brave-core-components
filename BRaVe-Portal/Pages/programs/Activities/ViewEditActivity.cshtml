@@ -1,0 +1,468 @@
+﻿@page
+@model BRaVe_Portal.Pages.programs.Activities.ViewEditActivityModel
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.ViewModels
+@{
+    //ViewData["Title"] = "View / Edit Activity";
+}
+<div>
+    <!-- Back Button on Top Left -->
+    <a asp-page="/programs/Activities/ManageActivities"
+       asp-route-SelectedProgramId="@Model.SelectedActivity?.ProgramId"
+       class="btn btn-outline-secondary me-auto btn-with-spinner">
+        <span class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+
+</div>
+<div>
+    <br />
+
+</div>
+
+<div id="activityDetails" class="alert alert-info mb-4 mx-auto w-100 w-md-50">
+    @if (Model.SelectedActivity != null)
+    {
+        <p class="mb-3">
+            <i class="fa-solid fa-circle-info me-2"></i>
+            <strong>Note:</strong> Activity - <strong>@Model.SelectedActivity.Title</strong>.
+        </p>
+
+        <table class="table table-borderless align-middle mb-0" style="--bs-table-bg: transparent;">
+            <tr>
+                <td><strong>Activity Code:</strong></td>
+                <td>@Model.SelectedActivity.ActivityCode</td>
+            </tr>
+            <tr>
+                <td><strong>Title:</strong></td>
+                <td>@Model.SelectedActivity.Title</td>
+            </tr>
+            <tr>
+                <td><strong>Description:</strong></td>
+                <td class="description-cell">@Model.SelectedActivity.Description</td>
+            </tr>
+            <tr>
+                <td><strong>Start Date:</strong></td>
+                <td>@Model.SelectedActivity.StartDate.ToString("yyyy-MM-dd")</td>
+            </tr>
+            <tr>
+                <td><strong>End Date:</strong></td>
+                <td>@Model.SelectedActivity.EndDate.ToString("yyyy-MM-dd")</td>
+            </tr>
+            <tr>
+                <td><strong>Location/Site:</strong></td>
+                <td>@Model.LocationCascade.getSiteFullAddress()</td>
+            </tr>
+            <tr>
+                <td><strong>Latitude:</strong></td>
+                <td>@Model.SelectedActivity.latitude</td>
+            </tr>
+            <tr>
+                <td><strong>Longitude:</strong></td>
+                <td>@Model.SelectedActivity.Longitude</td>
+            </tr>
+            <tr>
+                <td><strong>Enumerator Restricted:</strong></td>
+                <td>@(Model.SelectedActivity.RestrictToEnumerator ? "Yes" : "No")</td>
+            </tr>
+            <tr>
+                <td><strong>Allow registration:</strong></td>
+                <td>@(Model.SelectedActivity.AllowRegistration ? "Yes" : "No")</td>
+            </tr>
+            <tr>
+                <td><strong>Allow biometric record check:</strong></td>
+                <td>@(Model.SelectedActivity.AllowBiometricRecordCheck ? "Yes" : "No")</td>
+            </tr>
+
+            <tr>
+                <td><strong>Download Status</strong></td>
+                <td>
+
+                    @if (@Model.SelectedActivity.IsActive)
+                    {
+                        <span class="badge bg-success">
+                            <i class="fa fa-check"></i>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">
+                            <i class="fa fa-times"></i>
+                        </span>
+                    }
+
+                </td>
+            </tr>
+        </table>
+
+        <div class="d-flex justify-content-end mb-3 w-100">
+
+
+            @if (!Model.SelectedActivity.IsActive)
+            {
+                <form method="post" asp-page-handler="ValidateActivity" class="me-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" value="@Model.SelectedActivity.ActivityId" />
+                    <button type="submit"
+                            class="btn btn-outline-success"
+                            id="validateActivityBtn">
+                        <i class="fa-solid fa-check"></i> Activate
+                    </button>
+                </form>
+
+            }
+            else
+            {
+                <form method="post" asp-page-handler="InvalidateActivity" class="me-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" value="@Model.SelectedActivity.ActivityId" />
+                    <button type="submit"
+                            class="btn btn-outline-danger"
+                            id="invalidateActivityBtn">
+                        <i class="fa-solid fa-ban"></i> De-activate
+                    </button>
+                </form>
+            }
+
+
+            <button type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editActivityModal"
+                    data-id="@Model.SelectedActivity.ActivityId"
+                    data-title="@Model.SelectedActivity.Title"
+                    data-description="@Model.SelectedActivity.Description"
+                    data-start="@Model.SelectedActivity.StartDate.ToString("yyyy-MM-dd")"
+                    data-end="@Model.SelectedActivity.EndDate.ToString("yyyy-MM-dd")"
+                    data-restrict="@Model.SelectedActivity.RestrictToEnumerator.ToString().ToLower()"
+                    data-latitude="@Model.SelectedActivity.latitude"
+                    data-longitude="@Model.SelectedActivity.Longitude">
+                <i class="fa fa-edit"></i> Edit Activity
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning mb-0">
+            No activity selected. Please pick one from the list.
+        </div>
+    }
+</div>
+
+<style>
+    .description-cell {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        max-width: 50vw;
+    }
+</style>
+
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+@*  view-data='new ViewDataDictionary(ViewData) { { "ProgramId", Model.SelectedProgramId } , {   "LocationCascade", Model.LocationCascade}}' *@
+
+<partial name="_EditActivityModal" model="Model.SelectedActivity ?? new ActivityViewModel()"
+         view-data='new ViewDataDictionary(ViewData) { { "LocationCascade", Model.LocationCascade } }' />
+
+@* additional information *@
+
+<p>Additional Information</p>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+        <span>Attached Data Points</span>
+
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addDataPointModal">
+            <i class="fa fa-plus"></i> Attach Data point
+        </button>
+
+    </div>
+    <div class="card-body">
+        <partial name="PartialViews/_ActivityDataPointsPartial"
+                 model="Model.SelectedDataPoints"
+                 view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+    </div>
+</div>
+
+
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+        <span>Attached Surveys</span>
+
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addSurveyToActivityModal">
+            <i class="fa fa-plus"></i> Attach Survey
+        </button>
+
+    </div>
+    <div class="card-body">
+        <partial name="PartialViews/_ActivitySurveyPartial"
+                 model="Model.SelectedSurveys"
+                 view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+    </div>
+</div>
+
+
+@* 
+@{
+    var concents = BRaVe_Portal.Helpers.MockDataStore.GetConcentByProgramId(Model.SelectedActivity?.ProgramId ?? 0);
+    
+} *@
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+        <span>Attached Consents</span>
+
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addConcentToActivityModal">
+            <i class="fa fa-plus"></i> Attach Consent
+        </button>
+
+    </div>
+    <div class="card-body">
+        <partial name="PartialViews/_ActivityConcentPartial"
+                 model="Model.SelectedConsents"
+                 view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+    </div>
+</div>
+
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+        <span>Attached Default Preferences</span>
+
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addPrefferenceToActivityModal">
+            <i class="fa fa-plus"></i> Attach Preference
+        </button>
+
+    </div>
+    <div class="card-body">
+        <partial name="PartialViews/_ActivityPreferencesPartial"
+                 model="Model.AttachedPreferences"
+                 view-data='new ViewDataDictionary(ViewData) { { "ActivityId",  Model.SelectedActivity?.ActivityId ?? 0 } }' />
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+        <span>Enumerator Whitelist</span>
+
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addEnumeratorModal">
+            <i class="fa fa-plus"></i> Add Enumerator
+        </button>
+
+    </div>
+    <div class="card-body">
+        <partial name="PartialViews/_EnumeratorsListPartial"
+                 model="Model.SelectedDEnumerator"
+                 view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+        <span>Attach Distributions</span>
+
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addDistributionToActivityModal">
+            <i class="fa fa-plus"></i> Attach Distribution
+        </button>
+
+    </div>
+    <div class="card-body">
+        <partial name="PartialViews/_ActivityDistributionPartial"
+                 model="Model.AttachedDistributers"
+                 view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+    </div>
+</div>
+
+
+
+
+<!-- Modals -->
+<!--Add-->
+
+
+<partial name="Modals/AddModals/_AddConcentToActivityModal"
+         model="Model"
+         view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+
+<partial name="Modals/AddModals/_AddDataPointModal"
+         model="Model"
+         view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+
+<partial name="Modals/AddModals/_AddEnumeratorModal" model="Model"
+         view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+
+<partial name="Modals/AddModals/_AddPrefferenceToActivityModal" model="Model"
+         view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+
+<partial name="Modals/AddModals/_AddSurveyToActivityModal"
+         model="Model"
+         view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+
+
+<partial name="Modals/AddModals/_AddDistributionToActivityModal" model="Model"
+         view-data='new ViewDataDictionary(ViewData) { { "ActivityId", Model.SelectedActivity?.ActivityId ?? 0 } }' />
+
+
+<!--Delete-->
+<partial name="Modals/_ConfirmDeleteModal" />
+
+<!--Edit-->
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+
+            function initLocationCascade(container) {
+                debugger;
+                if (!container || container.dataset.initialized === 'true') return;
+                container.dataset.initialized = 'true';
+
+                const endpoint = container.dataset.endpoint;
+
+                const selects = Array.from(container.querySelectorAll('select[data-level-index]'));
+
+                function clearSelect(select) {
+                    const label = select.previousElementSibling?.textContent?.trim() || 'Location';
+                    select.innerHTML = `<option value="">-- Select ${label} --</option>`;
+                    select.value = '';
+                    select.disabled = true;
+                }
+
+                function fillSelect(select, items) {
+                    clearSelect(select);
+                    items.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.name;
+                        select.appendChild(option);
+                    });
+                    select.disabled = false;
+                }
+
+                async function loadChildren(nextSelect, levelId, parentLocationId) {
+                    const url = new URL(endpoint, window.location.origin);
+                    url.searchParams.set('levelId', String(levelId));
+                    url.searchParams.set('parentLocationId', String(parentLocationId));
+                    const response = await fetch(url.toString(), { method: 'GET' });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    fillSelect(nextSelect, data || []);
+                }
+
+                selects.forEach(select => {
+                    select.addEventListener('change', async function () {
+                        debugger;
+                        const currentIndex = Number(this.dataset.levelIndex);
+                        const selectedParentId = this.value ? Number(this.value) : null;
+
+                        for (let i = currentIndex + 1; i < selects.length; i++) {
+                            clearSelect(selects[i]);
+                        }
+
+                        const nextSelect = selects[currentIndex + 1];
+                        if (!nextSelect || !selectedParentId) return;
+
+                        const nextLevelId = Number(nextSelect.id.replace('admin-level-', ''));
+                        try {
+                            await loadChildren(nextSelect, nextLevelId, selectedParentId);
+                        } catch {
+                            clearSelect(nextSelect);
+                        }
+                    });
+                });
+            }
+
+            initLocationCascade(document.getElementById('locationCascadeContainer'));
+
+
+            // --- EDIT ACTIVITY MODAL ---
+            const editModal = document.getElementById('editActivityModal');
+            if (editModal) {
+                editModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+
+                    document.getElementById('editActivityId').value = button.getAttribute('data-id');
+                    document.getElementById('editTitle').value = button.getAttribute('data-title');
+                    document.getElementById('editDescription').value = button.getAttribute('data-description');
+                    
+                    document.getElementById('editStartDate').value = button.getAttribute('data-start');
+                    document.getElementById('editEndDate').value = button.getAttribute('data-end');
+                    document.getElementById('editRestrictToEnumerator').checked =
+                        button.getAttribute('data-restrict') === 'true';
+                    document.getElementById('editLatitude').value = button.getAttribute('data-latitude');
+                    document.getElementById('editLongitude').value = button.getAttribute('data-longitude');
+                });
+            }
+
+            // --- DELETE CONFIRMATION MODAL ---
+            const form = document.getElementById('delete-form');
+            if (form) {
+                document.querySelectorAll('.delete-button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const id = button.getAttribute('data-id');
+                        const activityId = button.getAttribute('data-activityid');
+                        const name = button.getAttribute('data-name');
+                        const entity = button.getAttribute('data-entity');
+                        const handler = button.getAttribute('data-handler');
+
+                        document.getElementById('delete-id').value = id;
+                        document.getElementById('delete-activity-id').value = activityId;
+                        document.getElementById('delete-name').textContent = name;
+                        document.getElementById('delete-entity').textContent = entity;
+
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('handler', handler);
+                        form.action = url.pathname + url.search;
+                    });
+                });
+            }
+
+            // --- BUTTON SPINNER HANDLER ---
+            function showButtonSpinner(button) {
+                const spinner = button.querySelector(".spinner-border");
+                if (spinner) spinner.classList.remove("d-none");
+                button.disabled = true;
+
+                // Timeout fallback (5s)
+                setTimeout(() => {
+                    if (spinner && !spinner.classList.contains("d-none")) {
+                        spinner.classList.add("d-none");
+                        button.disabled = false;
+                        alert("Request timed out. Please try again.");
+                    }
+                }, 5000);
+            }
+
+            // Attach click handler for buttons/links with spinner
+            document.querySelectorAll(".btn-with-spinner").forEach(button => {
+                button.addEventListener("click", function (e) {
+                    showButtonSpinner(button);
+
+                    // For links, allow navigation
+                    const href = button.getAttribute("href");
+                    if (href) {
+                        setTimeout(() => { window.location = href; }, 50);
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            // Attach submit handler for forms
+            document.querySelectorAll("form").forEach(form => {
+                form.addEventListener("submit", function () {
+                    const submitButton = form.querySelector("button[type='submit']");
+                    if (submitButton) showButtonSpinner(submitButton);
+                });
+            });
+
+
+
+
+
+        });
+    </script>
+}

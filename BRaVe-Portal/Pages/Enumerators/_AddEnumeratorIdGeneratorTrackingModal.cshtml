@@ -1,0 +1,55 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model EnumeratorIdGeneratorTrackingDto
+
+
+
+<div class="modal fade" id="addEnumeratorIdGeneratorTrackingModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Enumerator Code Pool</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+
+
+                <div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+                    <strong style="color:#2196F3;">ℹ Note:</strong>
+                    The Enumerator Code Pool is a collection of codes available for assignment to enumerators.
+                    For example, if the prefix is <em>EN</em>, the suffix length is <em>3</em>, and the total count is <em>20</em>,
+                    the system will generate codes ranging from <code>EN000</code> to <code>EN019</code>.
+                </div>
+
+                <br />
+
+
+                <form method="post" enctype="multipart/form-data" asp-page-handler="addEnumeratorIdGeneratorTracking">
+                    @Html.AntiForgeryToken()
+ 
+                    <div class="mb-3">
+                        <label class="form-label">Prefix </label>
+                        <input asp-for="Prefix" class="form-control" required maxlength="5" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">SuffixLength</label>
+                        <input asp-for="SuffixLength" class="form-control" required>
+                    </div>
+             
+
+                    <div class="mb-3">
+                        <label class="form-label">Total</label>
+                        <input asp-for="TotalCodeGenerated" class="form-control" required />
+                    </div>
+                    
+                 
+              
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

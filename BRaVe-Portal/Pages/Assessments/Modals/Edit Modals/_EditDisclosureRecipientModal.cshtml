@@ -1,0 +1,71 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+@model BRaVe_Portal.Models.ViewModels.DataProcessingDataDisclosureRecipient
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.DataDisclosureRecipients ?? new List<LookupItemDto>();
+}
+
+
+@if (coreLookups == null)
+{
+    <div class="text-danger">coreLookups is NULL</div>
+}
+else if (coreLookups.DataDisclosureRecipients == null)
+{
+    <div class="text-danger">PartnerOganizations is NULL</div>
+}
+
+<div class="modal fade" id="editDisclosureRecipientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Disclosure Recipient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditDisclosureRecipient">
+                    <input type="hidden" asp-for="AssessmentId" id="editDisclosureRecipientAssessmentId" />
+                    <input type="hidden" asp-for="RecipientId" id="selectedRecipientId" />
+                    <div class="mb-3">
+                        <label class="form-label">Recipient</label>
+                        <select asp-for="RecipientId" class="form-select" id="editRecipientId" disabled>
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                        <input asp-for="RecipientOther" class="form-control mt-2" placeholder="If Other, specify..." id="editDisclosureRecipientOther" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department Name</label>
+                        <input asp-for="NameOfRecipientDepartment" class="form-control" id="editNameOfRecipientDepartment" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Purpose Of Data Access</label>
+                        <textarea asp-for="PurposeOfDataAccess" class="form-control" id="editPurposeOfDataAccess"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="IsDataAggregatedBeforeSharing" class="form-check-input" type="checkbox" id="editIsDataAggregatedBeforeSharing" />
+                        <label class="form-check-label">Data Aggregated?</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input asp-for="IsDataAnonymizedBeforeSharing" class="form-check-input" type="checkbox" id="editIsDataAnonymizedBeforeSharing" />
+                        <label class="form-check-label">Data Anonymized?</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Purpose Of Data Disclosure</label>
+                        <textarea asp-for="PurposeOfDataDisclosure" class="form-control" id="editPurposeOfDataDisclosure"></textarea>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

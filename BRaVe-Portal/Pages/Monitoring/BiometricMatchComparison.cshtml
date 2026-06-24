@@ -1,0 +1,751 @@
+﻿@page
+@model BiometricMatchComparisonModel
+@{
+    ViewData["Title"] = "Biometric record matching";
+    Layout = "_SectionMenu";
+}
+
+
+
+@section SubMenuBar {
+    <div class="page-tabs">
+        <a asp-page="/Monitoring/BiometricMatchComparison" class="tab-item active">Deduplication</a>
+        <a asp-page="/Monitoring/Verifications" class="tab-item">Biometric Verification</a>
+
+    </div>
+
+}
+
+@section Styles {
+
+    <style>
+        .match-card {
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+            background: white;
+            margin-bottom: 0.75rem;
+            transition: transform 0.2s;
+        }
+
+            .match-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+
+            .match-card .d-flex {
+                padding: 0.75rem 1rem;
+            }
+
+            .match-card .fw-semibold {
+                font-size: 0.95rem;
+            }
+
+            .match-card small {
+                font-size: 0.75rem;
+            }
+
+        .person-column {
+            padding: 0.75rem 1rem;
+        }
+
+        .score-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-left: 1px solid #eee;
+            border-right: 1px solid #eee;
+            background: #fafafa;
+            padding: 0.5rem 0.75rem;
+            min-width: 120px;
+        }
+
+        .score-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .score-high {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .score-med {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+
+        .score-low {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .data-label {
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.1rem;
+        }
+
+        .data-value {
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 2rem;
+        }
+
+        .sticky-actions {
+            position: sticky;
+            top: 1rem;
+            z-index: 100;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(8px);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .p1-col,
+        .p2-col {
+            flex: 1;
+        }
+
+        .score-center {
+            width: 140px;
+        }
+
+        .action-col {
+            width: 110px;
+        }
+
+        .match-card .d-flex {
+            gap: 0;
+        }
+
+        .view-match-btn {
+            font-size: 0.75rem;
+            text-decoration: none;
+            color: #0d6efd;
+            font-weight: 500;
+        }
+
+            .view-match-btn:hover {
+                text-decoration: underline;
+            }
+    </style>
+
+}
+
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="container-fluid py-5">
+
+    @Html.AntiForgeryToken()
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Deduplication / Biometric matching</h1>
+            <p class="text-muted">View biometric record matches.</p>
+            <p class="text-muted mb-0 mt-1">
+                Total number of records: <strong>@Model.TotalCount</strong>
+            </p>
+        </div>
+        <button class="btn btn-success" onclick="exportToExcel()">
+            <i class="fa-solid fa-download me-2"></i>Export to Excel
+        </button>
+        </div>
+
+        <!-- Filters -->
+    <form method="get" class="filter-section">
+
+        <div class="fw-semibold mb-2">
+            FILTERS
+        </div>
+
+        <div class="d-flex align-items-end gap-3 flex-wrap">
+
+            <!-- Activity -->
+            <div style="min-width:200px;">
+                <label class="form-label mb-1">Activity Code</label>
+                <select name="ActivityCode"
+                        class="form-select"
+                        onchange="this.form.submit()">
+
+                    <option value="">All Activities</option>
+
+                    @foreach (var activity in Model.ActivityCodes)
+                    {
+                        <option value="@activity"
+                                selected="@(Model.ActivityCode == activity)">
+                            @activity
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Date From -->
+            <div>
+                <label class="form-label mb-1">Date From</label>
+                <input type="date"
+                       name="DateFrom"
+                       class="form-control"
+                       value="@(Model.DateFrom?.ToString("yyyy-MM-dd"))" />
+            </div>
+
+            <!-- Date To -->
+            <div>
+                <label class="form-label mb-1">Date To</label>
+                <input type="date"
+                       name="DateTo"
+                       class="form-control"
+                       value="@(Model.DateTo?.ToString("yyyy-MM-dd"))" />
+            </div>
+
+            <!-- Min Score -->
+            <div style="width:120px;">
+                <label class="form-label mb-1">Minimum Score</label>
+                <input type="number"
+                       name="MinScore"
+                       class="form-control"
+                       value="@Model.MinScore" />
+            </div>
+
+            <!-- Button -->
+            <div>
+                <button class="btn btn-primary">Apply</button>
+
+                <a asp-page="/Monitoring/BiometricMatchComparison"
+                   asp-route-PageNumber="1"
+                   asp-route-PageSize="@Model.PageSize"
+                   class="btn btn-outline-secondary">
+                    Clear
+                </a>
+            </div>
+
+        </div>
+
+        <input type="hidden" name="PageNumber" value="1" />
+        <input type="hidden" name="PageSize" value="@Model.PageSize" />
+
+    </form>
+
+        <!-- Bulk Actions -->
+        <div class="sticky-actions d-none" id="bulkActions">
+            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <div class="form-check m-0">
+                    <input class="form-check-input" type="checkbox" id="selectAllVisible" onchange="toggleSelectAll(this)">
+                    <label class="form-check-label small" for="selectAllVisible">
+                        <b>Select All</b>
+                    </label>
+                </div>
+
+                <span id="selectedCount">0 items selected</span>
+            </div>
+                <div class="btn-group">
+                <button class="btn btn-outline-primary btn-sm"
+                        onclick="openBulkConfirm()">
+                    Confirm Selected
+                </button>
+
+                <button class="btn btn-outline-danger btn-sm"
+                        onclick="openBulkReject()">
+                    Reject Selected
+                </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match List -->
+    <div id="matchList">
+
+@if (Model.Matches == null || !Model.Matches.Any())
+    {
+        <div class="text-center text-muted py-4">
+            <h5>No biometric matches found</h5>
+        </div>
+    }
+
+
+        @foreach (var match in Model.Matches)
+        {
+            var scoreClass = match.MatchScore >= 200
+            ? "score-high"
+            : match.MatchScore >= 100
+            ? "score-med"
+            : "score-low";
+
+            <div class="match-card"
+                 data-score="@match.MatchScore"
+                 data-source="@match.SourceUuid"
+                 data-matched="@match.MatchedUuid"
+                 data-source-name="@match.SourceFullName"
+                 data-matched-name="@match.MatchedFullName">
+                <div class="d-flex align-items-center">
+
+                    <!-- Checkbox -->
+                    <div class="px-2">
+                        <input type="checkbox"
+                               class="form-check-input row-checkbox"
+                               onchange="updateSelection()">
+                    </div>
+
+                    <!-- P1 -->
+                    <div class="px-3 p1-col">
+                        <div class="fw-semibold">@match.SourceFullName</div>
+                        <small class="text-muted">
+                            <b>@match.SourceRegistrationDate.ToString("yyyy-MM-dd")</b> •
+                            @match.SourceActivity •
+                            @match.SourceAge / @match.SourceGender •
+
+                     
+                           
+                            <a asp-page="/dashboard/RawData/HouseholdDetails"
+                               asp-route-householdId="@match.SourceHouseholdId">
+                                @match.SourceHouseholdId
+                            </a>
+                        </small>
+                    </div>
+
+                    <!-- Score -->
+                    <div class="score-center text-center">
+                        <small class="text-muted d-block mb-1">Biometric Score</small>
+                        <div class="score-circle @scoreClass">
+                            @match.MatchScore
+                        </div>
+
+                       
+                        <a asp-page="/Monitoring/MatchingDetails"
+                           asp-route-sourceUuid="@match.SourceUuid"
+                           asp-route-matchedUuid="@match.MatchedUuid"
+                           class="btn btn-link btn-sm p-0 mt-1 view-match-btn">
+                            View Match Details
+                        </a>
+                    </div>
+
+                    <!-- P2 -->
+                    <div class="px-3 p2-col text-end">
+                        <div class="fw-semibold">@match.MatchedFullName</div>
+                        <small class="text-muted">
+                            <b>@match.MatchedRegistrationDate.ToString("yyyy-MM-dd")</b>  •
+                            @match.MatchedActivity •
+                            @match.MatchedAge / @match.MatchedGender •
+                           
+
+                            <a asp-page="/dashboard/RawData/HouseholdDetails"
+                               asp-route-householdId="@match.MatchedHouseholdId">
+                                @match.MatchedHouseholdId
+                            </a>
+                        </small>
+                    </div>
+
+                </div>
+            </div>
+        }
+    </div>
+
+        <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
+
+        <!-- Records Per Page Selector -->
+        <div class="d-flex align-items-center gap-2">
+
+
+            <div class="small text-muted">
+                Showing @Model.Matches.Count of @Model.TotalCount records
+            </div>
+
+            <form method="get" class="d-flex align-items-center gap-2">
+
+
+
+                <select name="PageSize"
+                        class="form-select form-select-sm"
+                        style="width: 90px;"
+                        onchange="this.form.submit()">
+
+                    <option value="5" selected="@(Model.PageSize == 5)">5</option>
+                    <option value="10" selected="@(Model.PageSize == 10)">10</option>
+                    <option value="20" selected="@(Model.PageSize == 20)">20</option>
+                    <option value="50" selected="@(Model.PageSize == 50)">50</option>
+                </select>
+
+                <!-- Reset to page 1 when page size changes -->
+                <input type="hidden" name="PageNumber" value="1" />
+
+                <span class="small text-muted">records</span>
+
+            </form>
+
+        </div>
+
+        <!-- Pagination Controls -->
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-route-PageNumber="@(Model.PageNumber - 1)"
+                       asp-route-PageSize="@Model.PageSize"
+                       asp-route-Activity="@Model.ActivityCode"
+                       asp-route-DateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")"
+                       asp-route-DateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+                       asp-route-MinScore="@Model.MinScore">
+                        Previous
+                    </a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                        <a class="page-link"
+                           asp-route-PageNumber="@i"
+                           asp-route-PageSize="@Model.PageSize"
+                           asp-route-Activity="@Model.ActivityCode"
+                           asp-route-DateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")"
+                           asp-route-DateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+                           asp-route-MinScore="@Model.MinScore">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-route-PageNumber="@(Model.PageNumber + 1)"
+                       asp-route-PageSize="@Model.PageSize"
+                       asp-route-Activity="@Model.ActivityCode"
+                       asp-route-DateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")"
+                       asp-route-DateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+                       asp-route-MinScore="@Model.MinScore">
+                        Next
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+    </div>
+    </div>
+
+
+    <!--BULK CONFIRMATION MODAL-->
+<div class="modal fade" id="bulkConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Selected Matches</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="small text-muted mb-3">
+                    <div><strong>The selected records will be updated. </strong> </div>
+           
+                </div>
+
+                <label class="form-label">Select decision: </label>
+                <select id="bulkConfirmReason" class="form-select">
+
+                    <option value="" disabled selected>-- Select Reason --</option>
+
+                    @foreach (var decision in Model.AdjudicationDecisions)
+                    {
+                        <option value="@decision.DecisionId">@decision.Name</option>
+                    }
+
+                </select>
+
+                <div id="bulkConfirmCount" class="small text-muted mb-3"></div>
+
+                <label class="form-label">Notes (optional)</label>
+                <textarea id="bulkConfirmNotes" class="form-control" rows="3"></textarea>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmBulk()">Confirm</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!--BULK REJECT MODAL-->
+<div class="modal fade" id="bulkRejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Selected Matches</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="small text-muted mb-3">
+                    <div><strong>The selected records will be updated. Both records will be marked as original. </strong> </div>
+
+                </div>
+
+                <div id="bulkRejectCount" class="small text-muted mb-3"></div>
+
+
+                <label class="form-label mt-3">Notes</label>
+                <textarea id="bulkRejectNotes" class="form-control"></textarea>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger" onclick="rejectBulk()">Reject</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+    @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+    <script>
+
+                 function toggleSelectAll(masterCheckbox) {
+
+            const checkboxes =
+                document.querySelectorAll('.match-card:not([style*="display: none"]) .row-checkbox');
+
+            checkboxes.forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+            });
+
+            updateSelection();
+        }
+
+           function updateSelection() {
+
+            const visibleCheckboxes =
+                document.querySelectorAll('.match-card:not([style*="display: none"]) .row-checkbox');
+
+            const checked =
+                document.querySelectorAll('.match-card:not([style*="display: none"]) .row-checkbox:checked');
+
+            const bulk = document.getElementById('bulkActions');
+            const count = document.getElementById('selectedCount');
+            const master = document.getElementById('selectAllVisible');
+
+            if (checked.length > 0) {
+                bulk.classList.remove('d-none');
+                count.textContent = `${checked.length} items selected`;
+            } else {
+                bulk.classList.add('d-none');
+            }
+
+            master.checked = visibleCheckboxes.length === checked.length;
+        }
+
+           function exportToExcel() {
+
+            const rows = [];
+
+            const visibleCards = document.querySelectorAll(
+                '.match-card:not([style*="display: none"])'
+            );
+
+            visibleCards.forEach(card => {
+
+                const p1Name =
+                    card.querySelector('.p1-col .fw-semibold')?.innerText || '';
+
+                const p1Details =
+                    card.querySelector('.p1-col small')?.innerText || '';
+
+                const p2Name =
+                    card.querySelector('.p2-col .fw-semibold')?.innerText || '';
+
+                const p2Details =
+                    card.querySelector('.p2-col small')?.innerText || '';
+
+                const score =
+                    card.dataset.score || '';
+
+                rows.push({
+                    Source_Name: p1Name,
+                    Source_Details: p1Details,
+                    Match_Score: score,
+                    Matched_Name: p2Name,
+                    Matched_Details: p2Details
+                });
+            });
+
+            if (rows.length === 0) {
+                alert("No visible records to export.");
+                return;
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Matches");
+
+            XLSX.writeFile(workbook, "biometric_matches.xlsx");
+
+               setTimeout(() => {
+            stopDelayedLoader();
+        }, 100);
+        }
+
+                document.addEventListener("DOMContentLoaded", function () {
+            const master = document.getElementById("selectAllVisible");
+            if (master) master.checked = false;
+        });
+    </script>
+    <script >
+                function getSelectedPairs(){
+
+            const selected =
+                document.querySelectorAll('.row-checkbox:checked');
+
+            const pairs = [];
+
+            selected.forEach(cb => {
+
+                const card = cb.closest('.match-card');
+
+                pairs.push({
+                    sourceUuid: card.dataset.source,
+                    matchedUuid: card.dataset.matched
+                });
+
+            });
+
+            return pairs;
+        }
+
+                function openBulkConfirm(){
+
+            const pairs = getSelectedPairs();
+
+            if(pairs.length === 0){
+                alert("Select at least one record.");
+                return;
+            }
+
+            document.getElementById("bulkConfirmCount")
+                .innerText = `${pairs.length} records selected`;
+
+            bootstrap.Modal
+                .getOrCreateInstance(document.getElementById("bulkConfirmModal"))
+                .show();
+        }
+
+                function openBulkReject(){
+
+            const pairs = getSelectedPairs();
+
+            if(pairs.length === 0){
+                alert("Select at least one record.");
+                return;
+            }
+
+            document.getElementById("bulkRejectCount")
+                .innerText = `${pairs.length} records selected`;
+
+            bootstrap.Modal
+                .getOrCreateInstance(document.getElementById("bulkRejectModal"))
+                .show();
+        }
+
+                async function confirmBulk(){
+
+                       const decisionId =
+                document.getElementById("bulkConfirmReason").value;
+
+            if(!decisionId){
+                alert("Select confirmation decision");
+                return;
+            }
+
+            const pairs = getSelectedPairs();
+
+            const payload = pairs.map(p => ({
+                sourceUuid: p.sourceUuid,
+                matchedUuid: p.matchedUuid,
+                decisionId: parseInt(decisionId),
+                notes: document.getElementById("bulkConfirmNotes").value,
+                suggestion: null,
+                dedupMode: 'A'
+            }));
+
+            await submitBulk(payload);
+        }
+
+                async function rejectBulk(){
+
+
+            const pairs = getSelectedPairs();
+
+            const payload = pairs.map(p => ({
+                sourceUuid: p.sourceUuid,
+                matchedUuid: p.matchedUuid,
+                decisionId: 1,
+                notes: document.getElementById("bulkRejectNotes").value,
+                suggestion: null,
+                dedupMode: 'A'
+            }));
+
+            await submitBulk(payload);
+        }
+
+                async function submitBulk(payload){
+
+            const response = await fetch("?handler=AdjudicateBulk", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":"application/json",
+                    "X-BRaVe-Portal-CSRF":
+                        document.querySelector('input[name="_bravePortalCsrf"]').value
+                },
+
+                body: JSON.stringify(payload)
+
+            });
+
+            const result = await response.json();
+
+            if(result.redirect)
+                window.location.href = result.redirect;
+        }
+    </script>}

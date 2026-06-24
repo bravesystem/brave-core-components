@@ -1,0 +1,302 @@
+﻿@using BRaVe_Portal.Models.ViewModels
+@model BRaVe_Portal.Models.ViewModels.RiskBenefitAssessmentViewModel
+
+@{
+    bool IsReadOnly = ViewData["IsReadOnly"] != null && (bool)ViewData["IsReadOnly"];
+
+}
+
+
+<form method="post" enctype="multipart/form-data">
+
+    @Html.AntiForgeryToken()
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Section A – Identification & Purpose
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_IdentificationPartial" model="Model.DataProcessing" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>Section B – Collaborators</span>
+
+            @if (!IsReadOnly)
+            {
+                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addCollaboratorModal">
+                <i class="fa fa-plus"></i> Add Collaborator
+            </button>
+            
+            }
+            
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_CollaboratorsPartial" model="Model.Collaborators" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>Section C – Data Subjects</span>
+            
+            @if (!IsReadOnly)
+            {
+                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addSubjectModal">
+                <i class="fa fa-plus"></i> Add Subject
+                </button>
+            }
+            
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_DataSubjectsPartial" model="Model.Subjects" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>Section D – Personal Data</span>
+
+
+            @if (!IsReadOnly)
+            {
+                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addPersonalDataModal">
+                    <i class="fa fa-plus"></i> Add Personal Data
+                </button>
+            }
+            
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_PersonalDataPartial" model="Model.PersonalData" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Section E – Legal Basis & Explanations
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_LawfulBasisPartial" model="Model.LawfulBasis" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>Section F – Disclosure Recipients</span>
+
+
+            @if (!IsReadOnly)
+            {
+                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addDisclosureRecipientModal">
+                    <i class="fa fa-plus"></i> Add Disclosure Recipient
+                </button>
+            }
+
+            
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_DisclosureRecipientsPartial" model="Model.DisclosureRecipients" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>Section G – Sharing Recipients</span>
+
+            @if (!IsReadOnly)
+            {
+                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addSharingRecipientModal">
+                    <i class="fa fa-plus"></i> Add Sharing Recipient
+                </button>
+            }
+
+
+            
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_SharingRecipientsPartial" model="Model.SharingRecipients" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Section H – Retention
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_RetentionPartial" model="Model.Retention" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>Section I – Security Measures</span>
+
+            @if (!IsReadOnly)
+            {
+                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addSecurityMeasureModal">
+                    <i class="fa fa-plus"></i> Add Security Measure
+                </button>
+            }
+
+
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_SecurityMeasuresPartial" model="Model.SecurityMeasures" />
+        </div>
+    </div>
+
+
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>Section J – Source of Data</span>
+
+            @if(Model.SourceOfData==null || !Model.SourceOfData.IsCaptured)
+            {
+                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addSourceOfDataModal">
+                    <i class="fa fa-plus"></i> Add Source of Data
+                </button>
+
+            }
+            
+
+
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_SourceOfDataPartial" model="Model.SourceOfData" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>Section K – Data Outputs</span>
+
+            @if (!IsReadOnly)
+            {
+                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addDataOutputModal">
+                    <i class="fa fa-plus"></i> Add Data Output
+                </button>
+            }
+            
+        </div>
+        <div class="card-body">
+            <partial name="PartialViews/_DataOutputsPartial" model="Model.DataOutputs" />
+        </div>
+    </div>
+
+
+</form>
+
+
+<partial name="PartialViews/_ApprovalHistoryPartial" model="Model.PastDecisions" />
+
+
+<!-- Modals -->
+<!--Add-->
+<partial name="Modals/Add Modals/_SectionAModal" model="Model.DataProcessing" />
+<partial name="Modals/Add Modals/_SectionEModal" model="Model.LawfulBasis" />
+<partial name="Modals/Add Modals/_SectionHModal" model="Model.Retention" />
+<partial name="Modals/Add Modals/_AddCollaboratorModal" model="new DataProcessingCollaborator(){ AssessmentId= Model.AssessmentId}" />
+
+<partial name="Modals/Add Modals/_AddDataSubjectModal" model="new DataProcessingDataSubject(){ AssessmentId= Model.AssessmentId}" />
+<partial name="Modals/Add Modals/_AddPersonalDataModal" model="new DataProcessingPersonalData(){
+    AssessmentId = Model.AssessmentId
+}" />
+<partial name="Modals/Add Modals/_AddDisclosureRecipientModal" model="new DataProcessingDataDisclosureRecipient(){ AssessmentId= Model.AssessmentId}" />
+<partial name="Modals/Add Modals/_AddSharingRecipientModal" model="new DataProcessingDataSharingRecipient(){ AssessmentId= Model.AssessmentId}" />
+<partial name="Modals/Add Modals/_AddSecurityMeasureModal" model="new DataProcessingSecurityMeasure(){ AssessmentId= Model.AssessmentId}" />
+<partial name="Modals/Add Modals/_AddDataOutputModal" model="new DataProcessingDataOutput(){ AssessmentId= Model.AssessmentId}" />
+<partial name="Modals/Add Modals/_AddSourceOfDataModal" model="new DataProcessingSourceOfData(){ AssessmentId= Model.AssessmentId}" />
+
+<!--Delete-->
+ <partial name="Modals/_ConfirmDeleteModal" />
+
+ <!--Edit-->
+ <partial name="Modals/Edit Modals/_EditCollaboratorModal" model="new DataProcessingCollaborator()" />
+ <partial name="Modals/Edit Modals/_EditPersonalDataModal" model="new DataProcessingPersonalData()" />
+ <partial name="Modals/Edit Modals/_EditDisclosureRecipientModal" model="new DataProcessingDataDisclosureRecipient()" />
+<partial name="Modals/Edit Modals/_EditSharingRecipientModal" model="new DataProcessingDataSharingRecipient()" />
+<partial name="Modals/Edit Modals/_EditSecurityMeasureModal" model="new DataProcessingSecurityMeasure()" />
+<partial name="Modals/Edit Modals/_EditDataOutputModal" model="new DataProcessingDataOutput()" />
+<partial name="Modals/Edit Modals/_EditSourceOfDataModal" model="new DataProcessingSourceOfData()" />
+<partial name="Modals/Edit Modals/_EditDataSubjectModal" model="new DataProcessingDataSubject()" />
+
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById('delete-form');
+
+  document.querySelectorAll('.delete-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+
+      document.getElementById('delete-id').value = btn.dataset.id;
+      document.getElementById('delete-assessment-id').value = btn.dataset.assessmentId;
+      document.getElementById('delete-name').textContent = btn.dataset.name;
+      document.getElementById('delete-entity').textContent = btn.dataset.entity;
+
+ 
+      const url = new URL(window.location.href);
+
+      // set (or replace) handler query param
+      url.searchParams.set('handler', btn.dataset.handler);
+      form.action = url.pathname + url.search;
+    });
+  });
+});
+</script>
+
+
+<!--Javascript to shoe download links on lawful basis-->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var modal = document.getElementById("saveSectionEModal");
+    if (!modal) return;
+
+    modal.addEventListener("show.bs.modal", function (event) {
+        var button = event.relatedTarget;
+        if (!button) return;
+
+        toggleLink(
+            button.getAttribute("data-lawfulbasis-path"),
+            "lawfulBasisDownloadLink"
+        );
+
+        toggleLink(
+            button.getAttribute("data-initialcollection-path"),
+            "initialCollectionDownloadLink"
+        );
+
+        toggleLink(
+            button.getAttribute("data-ongoing-path"),
+            "ongoingDownloadLink"
+        );
+
+        toggleLink(
+            button.getAttribute("data-datasharing-path"),
+            "dataSharingDownloadLink"
+        );
+    });
+
+    function toggleLink(path, linkId) {
+        var link = document.getElementById(linkId);
+        if (!link) return;
+
+        if (path && path.trim() !== "") {
+            link.classList.remove("d-none");
+            link.href = `?handler=DownloadAttachment&blobPath=${encodeURIComponent(path)}`;
+        } else {
+            link.classList.add("d-none");
+            link.removeAttribute("href");
+        }
+    }
+});
+</script>
+
+
+
+
+

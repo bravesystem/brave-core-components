@@ -1,0 +1,67 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Models.DTOs.SurveyDto
+
+@{
+    CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.SurveyTypes ?? new List<LookupItemDto>();
+}
+
+<div class="modal fade" id="editSurveyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Survey</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post" asp-page-handler="EditSurvey">
+                    @Html.AntiForgeryToken()
+                    <!-- Hidden ID -->
+                    <input type="hidden" asp-for="SurveyId" id="editSurveyId" />
+                    <input type="hidden" asp-for="ProgramId" id="editSurveyProgram" />
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">Title</label>
+                        <input asp-for="Title" class="form-control" id="editSurveyTitle" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="mb-3">
+                        <label asp-for="Details" class="form-label">Details</label>
+                        <textarea asp-for="Details" class="form-control" id="editSurveyDetails"></textarea>
+                        <span asp-validation-for="Details" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SurveyType" class="form-label">Type</label>
+                        <select asp-for="SurveyType" class="form-select" id="editSurveyType">
+                            <option value="">-- Select Type --</option>
+                            @foreach (var s in lookups)
+                            {
+                                <option value="@s.Id">@s.Text</option>
+                            }
+                        </select>
+                        <span asp-validation-for="SurveyType" class="text-danger"></span>
+                    </div>
+
+                    <!-- Is Active -->
+                    <div class="form-check mb-3">
+                        <input type="checkbox" asp-for="IsActive" class="form-check-input" id="editSurveyActive" />
+                        <label class="form-check-label" asp-for="IsActive">Is Active</label>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

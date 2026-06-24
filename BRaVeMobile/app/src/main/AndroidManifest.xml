@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"  android:maxSdkVersion="22"/>
+
+    <uses-feature android:name="android.hardware.usb.host" />
+    <uses-feature android:name="android.hardware.camera" />
+
+    <!--<uses-feature android:name="android.hardware.camera"  android:required="false" />-->
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.BRaVeMobile"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
+
+        <activity
+            android:name=".ui.distributions.PendingVerificationActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.distributions.DistributionDetailsPage"
+            android:label="@string/title_activity_pending_verification"
+            android:theme="@style/Theme.BRaVeMobile" />
+        <activity
+            android:name=".ui.registrations.FillSurveyPageUpdated"
+            android:exported="false"
+            android:label="@string/title_activity_fill_survey_page_updated"
+            android:theme="@style/Theme.BRaVeMobile" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <activity
+            android:name=".ui.EnumeratorListPage"
+            android:exported="false"
+            android:parentActivityName=".ui.LoginPage" />
+        <activity
+            android:name=".ui.EnvironmentSelectorPage"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".ui.InputPinPage"
+            android:exported="false"
+            android:parentActivityName=".ui.LoginPage"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.targetingstrategies.TargetingDashboard"
+            android:exported="false" />
+        <activity
+            android:name=".ui.targetingstrategies.TargetingDetailsPage"
+            android:exported="false" />
+        <activity
+            android:name=".ui.targetingstrategies.TargetingListPage"
+            android:exported="false" />
+        <activity
+            android:name=".ui.distributions.BiometricSearchPage"
+            android:exported="false" />
+        <activity
+            android:name=".ui.distributions.MatchFoundPage"
+            android:exported="false" />
+        <activity
+            android:name=".ui.distributions.ManualSearchPage"
+            android:exported="false"
+            android:parentActivityName=".ui.distributions.DistributionDetailsPage" />
+        <activity
+            android:name=".ui.distributions.DistributionDetailsPage"
+            android:exported="false"
+            android:parentActivityName=".ui.distributions.DistributionListPage" />
+        <activity
+            android:name=".ui.distributions.DistributionListPage"
+            android:exported="false"
+            android:parentActivityName=".ui.activities.ActivityDetailsPage" />
+        <activity
+            android:name=".ui.distributions.DistributionDashboard"
+            android:exported="false" />
+        <activity
+            android:name=".ui.verifications.VerificationCreatePage"
+            android:exported="false"
+            android:parentActivityName=".ui.verifications.VerificationListPage" />
+        <activity
+            android:name=".ui.verifications.VerificationDetailsPage"
+            android:exported="false"
+            android:parentActivityName=".ui.verifications.VerificationListPage" />
+        <activity
+            android:name=".ui.verifications.VerificationListPage"
+            android:exported="false"
+            android:parentActivityName=".ui.activities.ActivityDetailsPage" />
+        <activity
+            android:name=".ui.verifications.VerificationDashboard"
+            android:exported="false" />
+        <activity
+            android:name=".ui.registrations.FillSurveyPage"
+            android:exported="false" />
+        <activity
+            android:name=".ui.registrations.SurveyListPage"
+            android:exported="false" />
+        <activity
+            android:name=".ui.registrations.MemberCreatePage"
+            android:exported="false"
+            android:parentActivityName=".ui.registrations.MemberListPage" />
+        <activity
+            android:name=".ui.registrations.MemberDetailsPage"
+            android:exported="false"
+            android:parentActivityName=".ui.registrations.MemberListPage" />
+        <activity
+            android:name=".ui.registrations.MemberListPage"
+            android:exported="false"
+            android:parentActivityName=".ui.registrations.RegistrationCreatePage" />
+        <activity
+            android:name=".ui.registrations.RegistrationCreatePage"
+            android:exported="false"
+            android:parentActivityName=".ui.registrations.RegistrationListPage" />
+        <activity
+            android:name=".ui.registrations.RegistrationDetailsPage"
+            android:exported="false"
+            android:parentActivityName=".ui.registrations.RegistrationListPage" />
+        <activity
+            android:name=".ui.registrations.RegistrationListPage"
+            android:exported="false"
+            android:parentActivityName=".ui.activities.ActivityDetailsPage" />
+        <activity
+            android:name=".ui.registrations.RegistrationDashboard"
+            android:exported="false" />
+        <activity
+            android:name=".ui.activities.ActivityDetailsPage"
+            android:exported="false"
+            android:parentActivityName=".ui.activities.ActivityListPage" />
+        <activity
+            android:name=".ui.activities.ActivityListPage"
+            android:exported="false"
+            android:parentActivityName=".ui.Dashboard" />
+        <activity
+            android:name=".ui.Dashboard"
+            android:exported="false" />
+        <activity
+            android:name=".ui.ConfirmPinPage"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".ui.CreatePinPage"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".ui.LoginPage"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".ui.ActivationPage"
+            android:exported="false" />
+        <activity
+            android:name=".ui.SplashScreen"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MyApp.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

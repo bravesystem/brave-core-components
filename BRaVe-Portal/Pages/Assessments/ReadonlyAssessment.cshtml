@@ -1,0 +1,37 @@
+﻿@page "{assessmentId:int}"
+@model BRaVe_Portal.Pages.Assessments.ReadonlyAssessmentModel
+@{
+    ViewData["Title"] = "Risk-Benefit Assessment";
+
+}
+
+
+
+<div class="d-flex align-items-center mb-4">
+    <!-- Back Button on Top Left -->
+    <a href="javascript:history.back()" class="btn btn-outline-secondary me-auto">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+
+    <!-- Centered Title -->
+    <h5 class="fw-bold text-primary text-center flex-grow-1">
+        <i class="fa-solid fa-clipboard-check"></i> View Registration & Risk Benefit Assessment, Status: 
+
+        @if (Model.Assessment.Status == Models.Enums.AssessmentStatus.Approved
+                || Model.Assessment.Status == Models.Enums.AssessmentStatus.Draft
+                || Model.Assessment.Status == Models.Enums.AssessmentStatus.Rejected)
+        {
+            @Model.Assessment.Status.ToString()
+        }
+        else
+        {
+            @:Under Review
+        }
+
+    </h5>
+
+    <!-- Spacer to balance the flexbox (keeps title centered) -->
+    <div style="width:70px;"></div>
+</div>
+
+<partial name="_RiskAssessmentPartialView" model="Model.Assessment" />

@@ -1,0 +1,1654 @@
+﻿@* QUESTIONBUILDER.CSHTML *@
+
+@page "{SurveyId:int}"
+@model BRaVe_Portal.Pages.surveys.Questionnaire.QuestionBuilderModel
+@using System.Text.Json
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models.DTOs
+
+@{
+    ViewData["Title"] = "Questionnaire Builder";
+
+    CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.QuestionTypes ?? new List<LookupItemDto>();
+}
+
+<div class="container py-4">
+
+    <a asp-page="/Surveys/Index"
+       
+       class="btn btn-outline-primary d-inline-flex align-items-center">
+        <i class="fa fa-arrow-left me-2"></i> Back
+    </a>
+    <br /><br />
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <!-- Survey summary card  -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <div class="row align-items-center g-3">
+
+                <!-- Title and meta -->
+                <div class="col">
+                    <h5 class="mb-1 fw-bold text-truncate">
+                        <span class="text-primary">
+                            @Model.CurrentSurvey?.SurveyCode — @Model.CurrentSurvey?.Title
+                        </span>
+                    </h5>
+
+                    <div class="d-flex flex-wrap gap-3 align-items-center small text-muted">
+                        <div>
+                            Active:
+                            @if (Model.CurrentSurvey?.IsActive == true)
+                            {
+                                <span class="badge bg-success ms-1">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger ms-1">No</span>
+                            }
+                        </div>
+
+                        <div>
+                            Last updated:
+                            <span class="fw-semibold ms-1 text-dark">
+                                @Model.CurrentSurvey?.UpdatedOn.ToString("yyyy-MM-dd HH:mm")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="col-auto text-end">
+
+                   @*  <button class="btn btn-outline-primary btn-sm me-2" title="Validate survey">
+                        <i class="fa fa-check me-1"></i> Validate
+                    </button> *@
+
+                    <form method="post" asp-page-handler="ActivateSurvey" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Id" value="@Model.CurrentSurvey?.SurveyId" />
+                        <button type="submit"
+                                class="btn btn-sm @(Model.CurrentSurvey?.IsActive == true ? "btn-outline-success" : "btn-success")"
+                                title="Activate survey">
+                            <i class="fa fa-bolt me-1"></i>
+                            @(Model.CurrentSurvey?.IsActive == true ? "Activated" : "Activate")
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.CurrentSurvey?.IsActive == true)
+    {
+        <div class="alert alert-warning d-flex align-items-center shadow-sm">
+            <i class="fa fa-lock me-2"></i>
+            <div>
+                <strong>Survey is active.</strong> Editing is locked.
+                You cannot add or modify questions in an active survey. Deactivate to proceed.
+            </div>
+        </div>
+    }
+
+    <div class="card shadow-sm @(Model.CurrentSurvey?.IsActive == true ? "readonly-mode" : "")">
+        <div class="card-header d-flex justify-content-between align-items-center bg-white">
+            <h5 class="mb-0">Questionnaire Builder</h5>
+            <div class="d-flex gap-2">
+                <button id="addQuestionBtn"
+                        class="btn btn-sm btn-outline-primary"
+                        @(Model.CurrentSurvey?.IsActive == true ? "disabled title='Survey is active. Editing locked'" : "")>
+                    Add Question
+                </button>
+
+                <button id="saveAllBtn"
+                        class="btn btn-sm btn-primary"
+                        onclick="showLoader()"
+                        @(Model.CurrentSurvey?.IsActive == true ? "disabled title='Survey is active. Editing locked'" : "")>
+                    Save All
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body p-3">
+            <div id="questionList" class="d-flex flex-column gap-3">
+                @* question cards injected by JS *@
+            </div>
+        </div>
+
+        <div class="card-footer bg-light text-muted small">
+            Drag cards to reorder
+        </div>
+    </div>
+
+</div>
+
+<form id="deleteForm" method="post" asp-page-handler="DeleteQuestion">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="QuestionId" />
+    <input type="hidden" name="surveyCode" value="@Model.CurrentSurvey?.SurveyCode" />
+    <input type="hidden" name="surveyId" value="@Model.SurveyId" />
+</form>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content shadow">
+
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title">Confirm Delete</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to delete this question?</p>
+            </div>
+
+            <div class="modal-footer py-2">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button id="confirmDeleteBtn" class="btn btn-danger btn-sm">Delete</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@* Anti-forgery token so JS can read it when POSTing *@
+<form id="antiforgeryForm" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+@await Html.PartialAsync("_RestrictionsModal")
+
+@await Html.PartialAsync("_CalculatedFieldModal")
+
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+         //Default dropdown valus for restriction modal
+            const defaultValueOptions = @Html.Raw(JsonSerializer.Serialize(Model.DefaultValueOptions));
+        // --- server-provided data ---
+        const initialQuestions = @Html.Raw(JsonSerializer.Serialize(Model.Questions));
+
+                // ---- hydrate admin level from Restriction JSON ----
+        (initialQuestions || []).forEach(q => {
+
+            if (!q.Restriction) return;
+
+            try {
+                const r = typeof q.Restriction === "string"
+                    ? JSON.parse(q.Restriction)
+                    : q.Restriction;
+
+                if (r?.type === "administrative_level" && r?.value?.id) {
+
+                    // make UI understand selected value
+                    q.LookupId = r.value.id;
+
+                    // also keep object version for preview/modal usage
+                    q.Restrictions = r;
+                }
+            }
+            catch (e) {
+                console.warn("Failed parsing restriction JSON", e);
+            }
+        });
+        const lookupTypes = @Html.Raw(JsonSerializer.Serialize(lookups));
+        const lookupNames = @Html.Raw(JsonSerializer.Serialize(ViewData["LookupNames"] ?? Model.LookupNames ?? new List<BRaVe_Management_Backend.DTOs.LookupTableNameDto>()));
+        const surveyId = @Model.SurveyId;
+                const datasets = @Html.Raw(JsonSerializer.Serialize(
+                    ViewData["Datasets"] ?? new List<DatasetsDto>()
+            ));
+
+                const adminLevels = @Html.Raw(JsonSerializer.Serialize(
+                ViewData["AdministrativeLevels"] ?? new List<AdministrativeLevel>()
+        ));
+
+
+        // --- normalize question types to stable shape { id, code, text } ---
+        const normalizedLookupTypes = (Array.isArray(lookupTypes) ? lookupTypes : []).map(l => {
+            const code = String(l.Id);
+            return {
+                id: l?.Id ?? null,
+                code: code,
+                text: l?.Text ?? l?.text ?? String(l)
+            };
+        });
+
+
+
+        // --- normalize lookup *sources* to stable shape { id, name } ---
+        const normalizedLookupSources = (Array.isArray(lookupNames) ? lookupNames : []).map(l => {
+            return {
+                id: l?.Id ?? null,
+                name: l?.LookupName ?? l?.lookupName ?? String(l)
+            };
+        });
+
+        //    // --- normalize datasets
+
+                const normalizedDatasets = (Array.isArray(datasets) ? datasets : []).map(d => ({
+            id: d?.Id ?? null,
+            name: d?.Title ?? d?.title ?? String(d)
+        }));
+
+             // --- normalize admin levels
+                const normalizedAdminLevels = (Array.isArray(adminLevels)
+            ? adminLevels
+            : []).map(a => ({
+                id: a?.Id ?? null,
+                name: a?.LevelName ?? ''
+        }));
+
+            const DATASET_TYPE_IDS = normalizedLookupTypes
+        .filter(t => (t.text || '').toUpperCase() === 'DATASET')
+        .map(t => String(t.code));
+
+
+
+        console.log('lookupTypes (normalized):', normalizedLookupTypes);
+        console.log('lookupSources (normalized):', normalizedLookupSources);
+
+        /* --- Minimal restrictions helpers (global state) --- */
+        if (typeof window.currentRestrictions === 'undefined') window.currentRestrictions = {};
+        if (typeof window.currentQuestionId === 'undefined') window.currentQuestionId = null;
+        if (typeof window._restrictionsEditingQid === 'undefined') window._restrictionsEditingQid = null;
+
+        /* ---------- renderTypeSpecificFields (keeps existing semantics, safe to overwrite) ---------- */
+        if (typeof renderTypeSpecificFields !== 'function') {
+          function renderTypeSpecificFields(type) {
+            const container = document.getElementById('typeSpecificContainer');
+            if (!container) return;
+            const t = (type || '').toString().toUpperCase();
+
+            let html = '<h6 class="card-title text-uppercase text-muted small fw-bold mb-3">Type Constraints</h6>';
+
+            if (t.includes('INT') || t.includes('NUM') || t.includes('NUMBER')) {
+              html += `
+                <div class="row g-3 mb-3">
+                  <div class="col-6"><label class="form-label">Minimum</label><input type="number" class="form-control" name="min" /></div>
+                  <div class="col-6"><label class="form-label">Maximum</label><input type="number" class="form-control" name="max" /></div>
+                </div>
+                <div class="mb-3"><label class="form-label">Step size (optional)</label><input type="number" class="form-control" name="step" step="any" /></div>
+                <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="allowNeg" name="allowNegative"><label class="form-check-label" for="allowNeg">Allow negative numbers</label></div>
+              `;
+              const p = document.getElementById('previewInput'); if (p) { p.type = 'number'; p.disabled = false; p.placeholder = ''; }
+            }
+            else if (t.includes('TEXT') || t.includes('NOTE')) {
+              html += `
+                <div class="row g-3 mb-3">
+                  <div class="col-6"><label class="form-label">Min length</label><input type="number" class="form-control" name="minLength" /></div>
+                  <div class="col-6"><label class="form-label">Max length</label><input type="number" class="form-control" name="maxLength" /></div>
+                </div>
+                <div class="mb-3"><label class="form-label">Regex pattern (optional)</label><input type="text" class="form-control font-monospace" name="pattern" placeholder="^[A-Za-z]+$" /></div>
+              `;
+              const p = document.getElementById('previewInput'); if (p) { p.type = 'text'; p.disabled = false; p.placeholder = ''; }
+            }
+            else if (t.includes('DATE')) {
+              html += `
+                <div class="row g-3 mb-3">
+                  <div class="col-6"><label class="form-label">Earliest date</label><input type="date" class="form-control" name="minDate" /></div>
+                  <div class="col-6"><label class="form-label">Latest date</label><input type="date" class="form-control" name="maxDate" /></div>
+                </div>
+                <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" name="noFuture" id="noFuture"><label class="form-check-label" for="noFuture">Prevent future dates</label></div>
+                <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="noPast" id="noPast"><label class="form-check-label" for="noPast">Prevent past dates</label></div>
+              `;
+              const p = document.getElementById('previewInput'); if (p) { p.type = 'date'; p.disabled = false; p.placeholder = ''; }
+            }
+            else if (t.includes('GPS') || t.includes('GPS_COORDINATES')) {
+              html += `
+                <div class="row g-3 mb-3">
+                  <div class="col-6"><label class="form-label">Min lat</label><input type="number" class="form-control" name="minLat" step="any"></div>
+                  <div class="col-6"><label class="form-label">Max lat</label><input type="number" class="form-control" name="maxLat" step="any"></div>
+                  <div class="col-6"><label class="form-label">Min lng</label><input type="number" class="form-control" name="minLng" step="any"></div>
+                  <div class="col-6"><label class="form-label">Max lng</label><input type="number" class="form-control" name="maxLng" step="any"></div>
+                </div>
+                <hr/>
+                <div class="mb-3">
+                  <label class="form-label small fw-bold">Geofence (lat,lng,m)</label>
+                  <div class="input-group mb-2"><input type="number" class="form-control" name="radiusLat" step="any" placeholder="lat"><input type="number" class="form-control" name="radiusLng" step="any" placeholder="lng"></div>
+                  <div class="input-group"><span class="input-group-text">Meters</span><input type="number" class="form-control" name="radiusMeters"></div>
+                </div>
+              `;
+              const p = document.getElementById('previewInput'); if (p) { p.type = 'text'; p.disabled = true; p.placeholder = 'GPS preview not supported'; }
+            }
+                    else if (t.includes('DATASET')) {
+          html += `
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label">Minimum Value</label>
+                <input type="number" class="form-control" name="min" />
+              </div>
+              <div class="col-6">
+                <label class="form-label">Maximum Value</label>
+                <input type="number" class="form-control" name="max" />
+              </div>
+            </div>
+
+            <div class="alert alert-info small">
+              <i class="bi bi-info-circle me-2"></i>
+              Applies validation on dataset-derived value
+            </div>
+          `;
+
+          const p = document.getElementById('previewInput');
+          if (p) {
+            p.type = 'number';
+            p.disabled = false;
+            p.placeholder = 'Enter dataset value...';
+          }
+        }
+            else {
+
+                        html += `
+          <div class="alert alert-light border text-muted small mb-0">
+              <i class="bi bi-info-circle me-2"></i>
+                  No specific constraints for this question type
+          </div>
+        `;
+            
+              const p = document.getElementById('previewInput'); if (p) { p.type = 'text'; p.disabled = false; p.placeholder = ''; }
+            }
+
+            container.innerHTML = html;
+          }
+        }
+
+
+
+        /* ---------- populateForm (keeps existing semantics) ---------- */
+        if (typeof populateForm !== 'function') {
+          function populateForm(data) {
+            const form = document.getElementById('restrictionsForm');
+            if (!form) return;
+            form.reset();
+            if (!data || typeof data !== 'object') return;
+            for (const [k, v] of Object.entries(data)) {
+              try {
+                const el = form.elements[k];
+                if (!el) {
+                  if (k === 'withinRadius' && Array.isArray(v)) {
+                    if (form.elements['radiusLat']) form.elements['radiusLat'].value = v[0] ?? '';
+                    if (form.elements['radiusLng']) form.elements['radiusLng'].value = v[1] ?? '';
+                    if (form.elements['radiusMeters']) form.elements['radiusMeters'].value = v[2] ?? '';
+                  }
+                  continue;
+                }
+                if (el.type === 'checkbox') el.checked = !!v;
+                else el.value = v ?? '';
+              } catch (e) { /* ignore */ }
+            }
+          }
+        }
+
+        /* ---------- Modal helpers: update state, JSON, active list, preview, save ---------- */
+
+        function updateStateFromForm() {
+
+            const form = document.getElementById('restrictionsForm');
+            if (!form) return;
+
+            const obj = {};
+
+            for (const el of Array.from(form.elements)) {
+
+                if (!el.name) continue;
+
+                if (el.type === 'checkbox') {
+                    obj[el.name] = el.checked;
+                }
+                else if (el.type === 'number') {
+                    obj[el.name] = el.value === '' ? undefined : Number(el.value);
+                }
+                else {
+                    obj[el.name] = el.value === '' ? undefined : el.value;
+                }
+            }
+
+          
+
+            /* DEFAULT VALUE LOGIC */
+
+            const useDefault = document.getElementById("useDefault")?.checked;
+            const manual = document.getElementById("isManual")?.checked;
+
+            if (useDefault) {
+
+                if (manual) {
+                    obj.default = document.getElementById("defaultValue")?.value || null;
+                    obj.manual = true;
+                }
+                else {
+                    obj.defaultValue = document.getElementById("defaultValueSelect")?.value || null;
+                    obj.manual = false;
+                }
+
+            }
+
+                    const readonly = document.getElementById("readonlyToggle")?.checked;
+        if (readonly) obj.readonly = true;
+
+        const message = document.getElementById("errorMessage")?.value;
+        if (message) obj.message = message;
+
+
+            /* CLEANUP */
+
+            Object.keys(obj).forEach(k => {
+                if (obj[k] === undefined || obj[k] === '') delete obj[k];
+            });
+
+            window.currentRestrictions = obj;
+        }
+
+        function renderJsonOutput() {
+          const pre = document.getElementById('jsonOutput');
+          if (!pre) return;
+          pre.textContent = JSON.stringify(window.currentRestrictions || {}, null, 2);
+        }
+
+        function renderActiveConstraints() {
+          const ul = document.getElementById('activeConstraintsList');
+          if (!ul) return;
+          const rules = window.currentRestrictions || {};
+          const ignore = ['message'];
+          const keys = Object.keys(rules).filter(k => !ignore.includes(k));
+          if (!keys.length) {
+            ul.innerHTML = '<li class="list-group-item bg-transparent text-muted small fst-italic text-center py-3">No active rules</li>';
+            return;
+          }
+          ul.innerHTML = keys.map(k => {
+            const v = rules[k];
+            const display = Array.isArray(v) ? `[${v.join(', ')}]` : String(v);
+            return `<li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                      <span class="font-monospace small text-muted">${k}</span>
+                      <span class="fw-medium small">${display}</span>
+                    </li>`;
+          }).join('');
+        }
+
+        function showFeedback(isValid, message) {
+          const feedbackEl = document.getElementById('validationFeedback');
+          if (!feedbackEl) return;
+          if (isValid) {
+            feedbackEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-2"></i><span class="text-success">${message}</span>`;
+          } else {
+            feedbackEl.innerHTML = `<i class="bi bi-exclamation-circle-fill text-danger me-2"></i><span class="text-danger">${message}</span>`;
+          }
+        }
+
+        function validatePreview() {
+          const input = document.getElementById('previewInput');
+          if (!input) return;
+          const val = input.value;
+          const rules = window.currentRestrictions || {};
+          const typeBadge = document.getElementById('modalQuestionType');
+          const type = (typeBadge && typeBadge.textContent) ? typeBadge.textContent.toUpperCase() : '';
+
+          if (!val) {
+            showFeedback(true, 'No value (ok)');
+            return;
+          }
+
+          try {
+            if (type.includes('INT') || type.includes('NUM')) {
+              const num = Number(val);
+              if (isNaN(num)) throw 'Not a valid number';
+              if (rules.min !== undefined && num < rules.min) throw `Must be ≥ ${rules.min}`;
+              if (rules.max !== undefined && num > rules.max) throw `Must be ≤ ${rules.max}`;
+              if (rules.allowNegative === false && num < 0) throw 'Negative numbers not allowed';
+            }
+
+            if (type.includes('TEXT') || type.includes('NOTE')) {
+              if (rules.minLength !== undefined && val.length < rules.minLength) throw `Too short (min ${rules.minLength})`;
+              if (rules.maxLength !== undefined && val.length > rules.maxLength) throw `Too long (max ${rules.maxLength})`;
+              if (rules.pattern) {
+                const re = new RegExp(rules.pattern);
+                if (!re.test(val)) throw 'Format does not match pattern';
+              }
+            }
+
+            if (type.includes('DATE')) {
+              const d = new Date(val);
+              if (isNaN(d.getTime())) throw 'Invalid date';
+              if (rules.minDate && new Date(rules.minDate) > d) throw `Must be after ${rules.minDate}`;
+              if (rules.maxDate && new Date(rules.maxDate) < d) throw `Must be before ${rules.maxDate}`;
+              const today = new Date(); today.setHours(0,0,0,0);
+              if (rules.noFuture && d > today) throw 'Future date not allowed';
+              if (rules.noPast && d < today) throw 'Past date not allowed';
+            }
+            if (type.includes('DATASET')) {
+            const num = Number(val);
+            if (isNaN(num)) throw 'Not a valid number';
+
+            if (rules.min !== undefined && num < rules.min)
+                throw `Must be ≥ ${rules.min}`;
+
+            if (rules.max !== undefined && num > rules.max)
+                throw `Must be ≤ ${rules.max}`;
+        }
+
+            showFeedback(true, 'Valid input');
+          } catch (err) {
+            showFeedback(false, (typeof window.currentRestrictions?.message === 'string' && window.currentRestrictions.message.length) ? window.currentRestrictions.message : String(err));
+          }
+        }
+
+        /* Bind small form listeners for immediate feedback and Save button */
+        (function bindModalFormListeners() {
+          document.addEventListener('input', (e) => {
+            const modal = document.getElementById('restrictionsModal');
+            if (!modal) return;
+            if (!e.target || !e.target.form || e.target.form.id !== 'restrictionsForm') return;
+            updateStateFromForm();
+            renderJsonOutput();
+            renderActiveConstraints();
+            validatePreview();
+          });
+
+          document.addEventListener('input', (e) => {
+            if (e.target && e.target.id === 'previewInput') validatePreview();
+          });
+        })();
+
+        // helper: escape HTML when injecting values into templates
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        (function () {
+            let questions = Array.isArray(initialQuestions) && initialQuestions.length
+                ? initialQuestions
+                : [{
+                    Id: 'id-' + Math.random().toString(36).slice(2, 9),
+                    SourceId: null,
+                    QuestionOrder: null,
+                    Text: '',
+                    Type: normalizedLookupTypes[0]?.code || "1",
+                    LookupId: null,
+                    DatasetId: null,
+                    MinSelection: null,
+                    MaxSelection: null,
+                    Required: false,
+                    Active: true,
+                    Expression: ''
+                }];
+
+            const listEl = document.getElementById('questionList');
+            const addBtn = document.getElementById('addQuestionBtn');
+            const saveBtn = document.getElementById('saveAllBtn');
+            let pendingDelete = null; // holds the model to delete
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+            // --- SINGLE, CLEAN SAVE BUTTON HANDLER FOR RESTRICTIONS MODAL ---
+            document.addEventListener('click', async (e) => {
+                const btn = e.target.closest && e.target.closest('#btnSave');
+                if (!btn) return; // ignore all other clicks
+
+                e.preventDefault();
+                showLoader(); 
+
+                // Pull latest values from the form into window.currentRestrictions
+                updateStateFromForm();
+
+                const editQid = window._restrictionsEditingQid;
+
+                // Find the question being edited
+                const target = (editQid !== undefined && editQid !== null)
+                    ? questions.find(q =>
+                        Number(q.SourceId) === Number(editQid) ||
+                        String(q.Id) === String(editQid))
+                    : null;
+
+                // Update in-memory question model
+                if (target) {
+                    target.Restrictions = { ...(window.currentRestrictions || {}) };
+                }
+
+                const questionId = target ? Number(target.SourceId) : NaN;
+
+                // If this question already exists in DB -> save to server
+                if (!isNaN(questionId) && questionId > 0) {
+                        const token = document.querySelector('#antiforgeryForm input[name="_bravePortalCsrf"]')
+                        ?.value;
+
+                    try {
+                        const resp = await fetch(
+                            `?handler=SaveRestrictions&questionId=${encodeURIComponent(questionId)}&surveyId=${encodeURIComponent(surveyId)}`,
+                            {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                        ...(token ? { 'X-BRaVe-Portal-CSRF': token } : {})
+                                },
+                                body: JSON.stringify(window.currentRestrictions || {})
+                            }
+                        );
+
+                        const json = await resp.json();
+
+           if (json && json.success === true) {
+
+            if (typeof renderAll === 'function') renderAll();
+
+            bootstrap.Modal.getOrCreateInstance(
+                document.getElementById('restrictionsModal')
+            ).hide();
+
+            showSuccessToast("Restrictions saved successfully");
+
+        }
+
+                        else {
+                            console.warn("Saving restrictions failed:", json);
+                        }
+                    } catch (err) {
+                        console.error("Failed to POST restrictions:", err);
+                    }
+                }
+
+                // If question is NOT yet saved (no SourceId), just update UI and close modal
+                if (typeof renderAll === 'function') renderAll();
+
+                bootstrap.Modal.getOrCreateInstance(
+                    document.getElementById('restrictionsModal')
+                ).hide();
+            });
+
+            // helpers to detect select types
+            function isSelectOneTypeCode(typeCode) {
+                if (!typeCode) return false;
+                const item = normalizedLookupTypes.find(l => String(l.code) === String(typeCode));
+                if (!item) return false;
+                const txt = (item.text || '').toLowerCase();
+                return txt.includes('select one') || txt.includes('single select') || txt.includes('single-choice');
+            }
+
+                    function isAdministrativeLevelTypeCode(typeCode) {
+            if (!typeCode) return false;
+
+            const item = normalizedLookupTypes.find(l =>
+                String(l.code) === String(typeCode)
+            );
+
+            if (!item) return false;
+
+            const txt = (item.text || '').toLowerCase();
+
+            return txt.includes('administrative level') ||
+                   txt.includes('admin level');
+                }
+
+            function isSelectMultipleTypeCode(typeCode) {
+                if (!typeCode) return false;
+                const item = normalizedLookupTypes.find(l => String(l.code) === String(typeCode));
+                if (!item) return false;
+                const txt = (item.text || '').toLowerCase();
+                return txt.includes('select multiple') || txt.includes('multiple select') || txt.includes('select many');
+            }
+
+              function isDatasetTypeCode(typeCode) {
+            return DATASET_TYPE_IDS.includes(String(typeCode));
+        }
+
+
+            // render a single card; accepts index for order badge
+            function renderCard(q, index) {
+                const options = normalizedLookupTypes.map(l =>
+                    `<option value="${escapeHtml(l.code)}" ${l.code === q.Type ? 'selected' : ''}>${escapeHtml(l.text)}</option>`
+                ).join('');
+
+                const displayOrder = (typeof q.QuestionOrder === 'number' && q.QuestionOrder > 0) ? q.QuestionOrder : (index + 1);
+                const orderBadge = `<div class="order-badge d-inline-flex align-items-center justify-content-center me-2">#${displayOrder}</div>`;
+                const surveyId = @Model.SurveyId;
+                const surveyCode = @Html.Raw(JsonSerializer.Serialize(Model.CurrentSurvey?.SurveyCode ?? ""));
+
+                // answer control (always render text input first)
+                let answerControl = `
+                  <input type="text"
+                         class="form-control mb-2 qb-question-input"
+                         data-prop="text"
+                         value="${escapeHtml(q.Text)}"
+                         placeholder="Enter question here" required/>
+                `;
+
+                if (isSelectOneTypeCode(q.Type) || isSelectMultipleTypeCode(q.Type)) {
+                    answerControl += `
+                      <select class="form-select form-select-sm qb-answer-select mb-2" data-prop="answer">
+                          <option value="" disabled ${!q.LookupId ? 'selected' : ''} hidden>Select lookup source</option>
+                          ${normalizedLookupSources.map(l => {
+                              const sel = (q.LookupId && Number(q.LookupId) === Number(l.id)) ? 'selected' : '';
+                              return `<option value="${escapeHtml(l.id)}" ${sel}>${escapeHtml(l.name)}</option>`;
+                          }).join('')}
+                      </select>
+                    `;
+                }
+
+                if (isSelectMultipleTypeCode(q.Type)) {
+                    answerControl += `
+                      <div class="row g-2 mb-2">
+                          <div class="col-auto" style="min-width:140px;">
+                              <label class="form-label small mb-1">Select Min</label>
+                              <input type="number" class="form-control form-control-sm qb-min-selection" placeholder="Min" value="${q.MinSelection ?? ''}" />
+                          </div>
+                          <div class="col-auto" style="min-width:140px;">
+                              <label class="form-label small mb-1">Select Max</label>
+                              <input type="number" class="form-control form-control-sm qb-max-selection" placeholder="Max" value="${q.MaxSelection ?? ''}" />
+                          </div>
+                      </div>`;
+                }
+
+             if (isDatasetTypeCode(q.Type)) {
+            answerControl += `
+              <label class="form-label small">Dataset</label>
+              <select class="form-select form-select-sm qb-dataset-select mb-3" data-prop="dataset">
+                <option value="" disabled ${!q.DatasetId ? 'selected' : ''} hidden>Select dataset</option>
+                ${normalizedDatasets.map(d => {
+                    const sel = q.DatasetId && Number(q.DatasetId) === Number(d.id) ? 'selected' : '';
+                    return `<option value="${escapeHtml(d.id)}" ${sel}>${escapeHtml(d.name)}</option>`;
+                }).join('')}
+              </select>
+            `;
+        }
+
+
+                const showExpressionBuilder = (index !== 0) && (q.SourceId != null);
+                const expressionBuilderHtml = (index !== 0 && q.SourceId != null)
+                  ? `<a class="btn btn-sm btn-outline-primary expression-builder"
+                         href="/surveys/Questionnaire/SkipExpressionBuilder/${encodeURIComponent(surveyId)}/${encodeURIComponent(q.SourceId)}/${encodeURIComponent(surveyCode)}">
+                         <i class="fa fa-fast-forward"></i><span>Skip Logic</span>
+                     </a>`
+                  : '';
+
+                const translateHtml = q.SourceId != null
+                    ? `<a class="btn btn-sm btn-outline-primary d-flex align-items-center translate-btn"
+                          href="/surveys/Questionnaire/Manage%20Translations/${encodeURIComponent(surveyId)}/${encodeURIComponent(q.SourceId ?? q.Id)}/${encodeURIComponent(surveyCode)}">
+                          <i class="fa fa-language me-1"></i><span>Translate</span>
+                       </a>`
+                    : '';
+
+                const hasRestrictions = q.Restrictions && Object.keys(q.Restrictions).length > 0;
+                const restrictionsPreview = hasRestrictions ? `<code class="small text-muted">${escapeHtml(JSON.stringify(q.Restrictions).substring(0, 60))}${JSON.stringify(q.Restrictions).length > 60 ? '...' : ''}</code>` : '';
+
+                        return `
+        <div class="card qb-card" draggable="true" data-id="${q.Id}">
+          <div class="card-body p-3 d-flex gap-3 align-items-start">
+
+            ${orderBadge}
+            <div class="me-2 drag-handle" style="cursor:grab">⋮⋮</div>
+
+            <div class="flex-grow-1">
+
+              <!-- QUESTION TEXT -->
+              <label class="form-label fw-bold small">Question Text</label>
+              <input type="text"
+                    class="form-control mb-3 qb-question-input"
+                    data-prop="text"
+                    value="${escapeHtml(q.Text)}"
+                    placeholder="Enter question here" />
+
+              <!-- ANSWER TYPE -->
+              <label class="form-label fw-bold small mt-2">Answer Type</label>
+              <select class="form-select form-select-sm w-auto mb-3" data-prop="type">
+                  ${options}
+              </select>
+
+              <!-- SPECIAL CASES (lookup selects, min/max for select-multiple) -->
+              ${(() => {
+                  let html = "";
+
+                  if (isSelectOneTypeCode(q.Type) || isSelectMultipleTypeCode(q.Type)) {
+                      html += `
+                        <label class="form-label small">Lookup Source</label>
+                        <select class="form-select form-select-sm qb-answer-select mb-3" data-prop="answer">
+                          <option value="" disabled ${!q.LookupId ? 'selected' : ''} hidden>Select lookup source</option>
+                          ${normalizedLookupSources.map(l => {
+                              const sel = q.LookupId && Number(q.LookupId) === Number(l.id) ? 'selected' : '';
+                              return `<option value="${escapeHtml(l.id)}" ${sel}>${escapeHtml(l.name)}</option>`;
+                          }).join('')}
+                        </select>`;
+                  }
+
+                  if (isSelectMultipleTypeCode(q.Type)) {
+                      html += `
+                      <div class="row g-2 mb-3">
+                        <div class="col-auto" style="min-width:140px;">
+                          <label class="form-label small mb-1">Select Min</label>
+                          <input type="number" class="form-control form-control-sm qb-min-selection" placeholder="Min" value="${q.MinSelection ?? ''}" />
+                        </div>
+                        <div class="col-auto" style="min-width:140px;">
+                          <label class="form-label small mb-1">Select Max</label>
+                          <input type="number" class="form-control form-control-sm qb-max-selection" placeholder="Max" value="${q.MaxSelection ?? ''}" />
+                        </div>
+                      </div>`;
+                  }
+
+                  if (isDatasetTypeCode(q.Type)) {
+        html += `
+          <label class="form-label small">Dataset</label>
+          <select class="form-select form-select-sm qb-dataset-select mb-3">
+            <option value="" disabled ${!q.DatasetId ? 'selected' : ''} hidden>
+              Select dataset
+            </option>
+            ${normalizedDatasets.map(d => {
+                const sel = q.DatasetId && Number(q.DatasetId) === Number(d.id) ? 'selected' : '';
+                return `<option value="${escapeHtml(d.id)}" ${sel}>
+                          ${escapeHtml(d.name)}
+                        </option>`;
+            }).join('')}
+          </select>`;
+    }
+
+        if (isAdministrativeLevelTypeCode(q.Type)) {
+            html += `
+              <label class="form-label small">Administrative Level</label>
+
+              <select class="form-select form-select-sm qb-admin-select mb-3">
+                <option value="" disabled ${!q.LookupId ? 'selected' : ''} hidden>
+                  Select administrative level
+                </option>
+
+                ${normalizedAdminLevels.map(a => {
+                    const sel =
+                        q.LookupId && Number(q.LookupId) === Number(a.id)
+                            ? 'selected'
+                            : '';
+
+                    return `
+                        <option value="${escapeHtml(a.id)}" ${sel}>
+                            ${escapeHtml(a.id)} - ${escapeHtml(a.name)}
+                        </option>`;
+                }).join('')}
+              </select>
+            `;
+        }
+
+
+                  return html;
+              })()}
+
+              <!-- BUTTON GROUP MOVED BELOW -->
+              <div class="mt-3 d-flex flex-wrap gap-2">
+
+                <!-- Required -->
+                <button class="btn btn-sm ${q.Required ? 'btn-primary' : 'btn-outline-secondary'} toggle-required">
+                  ${q.Required ? 'Required' : 'Require'}
+                </button>
+
+                <!-- Active -->
+                <button class="btn btn-sm ${q.Active ? 'btn-success' : 'btn-outline-success'} toggle-active">
+                  ${q.Active ? 'Activated' : 'Activate'}
+                </button>
+
+                <!-- SKIP LOGIC -->
+                ${(index !== 0 && q.SourceId != null)
+                  ? `<a class="btn btn-sm ${q.SkipLogic ? 'btn-warning' : 'btn-outline-primary'} expression-builder"
+                        href="/surveys/Questionnaire/SkipExpressionBuilder/${surveyId}/${q.SourceId}/${surveyCode}">
+                        <i class="fa fa-fast-forward me-1"></i>Skip Logic
+                     </a>`
+                  : ''}
+
+                <!-- RESTRICTIONS -->
+                ${(q.SourceId != null)
+                  ? `<button class="btn btn-sm ${q.Restrictions && Object.keys(q.Restrictions).length ? 'btn-warning' : 'btn-outline-secondary'} open-restrictions-btn"
+                             data-qid="${q.SourceId}">
+                        <i class="fa fa-shield-alt me-1"></i>Restrictions
+                     </button>`
+                  : ''}
+
+                <!-- CALCULATED FIELD -->
+                ${(function() {
+                    try {
+                        const isExisting = q.SourceId != null;
+                        const notFirst = index !== 0;
+
+                        const lookupItem = normalizedLookupTypes.find(l =>
+                            String(l.id) === String(q.Type) ||
+                            String(l.code) === String(q.Type)
+                        );
+
+                        const friendlyType = (lookupItem?.text || '').toLowerCase();
+                        const isNumeric = friendlyType.includes('int') || friendlyType.includes('num') || friendlyType.includes('number');
+
+                        if (isExisting && notFirst && isNumeric) {
+                            const highlight = q.ResultExpression ? 'btn-warning' : 'btn-outline-secondary';
+                            const qLabel = escapeHtml(q.Text || '');
+
+                            return `
+                              <button class="btn btn-sm ${highlight} open-calculated-btn"
+                                      data-question-id="${escapeHtml(String(q.SourceId || q.Id))}"
+                                      data-question-label="${qLabel}">
+                                <i class="fa fa-calculator me-1"></i>Calculated Field
+                              </button>`;
+                        }
+                        return '';
+                    } catch {
+                        return '';
+                    }
+                })()}
+
+                <!-- TRANSLATE -->
+                ${q.SourceId != null
+                    ? `<a class="btn btn-sm btn-outline-primary d-flex align-items-center translate-btn"
+                          href="/surveys/Questionnaire/Manage%20Translations/${surveyId}/${q.SourceId}/${surveyCode}">
+                        <i class="fa fa-language me-1"></i>Translate
+                      </a>`
+                    : ''}
+
+                <!-- DELETE -->
+                <button class="btn btn-sm btn-outline-danger ms-auto delete-question">Delete</button>
+
+              </div>
+
+              <!-- OPTIONAL: Restrictions small preview -->
+              ${restrictionsPreview ? `<div class="mt-2"><code>${restrictionsPreview}</code></div>` : ''}
+
+            </div>
+          </div>
+
+          <div class="card-footer d-flex justify-content-between align-items-center"></div>
+        </div>`;
+
+            }
+
+            function renderAll() {
+                listEl.innerHTML = questions.map((q, i) => renderCard(q, i)).join('');
+                bindCardEvents();
+                rebindDraggables();
+            }
+
+            // bind events for each rendered card
+            function bindCardEvents() {
+                const cards = Array.from(document.querySelectorAll('.qb-card'));
+                cards.forEach(card => {
+                    const id = card.dataset.id;
+                    const model = questions.find(x => x.Id === id);
+                    if (!model) return;
+
+                    const input = card.querySelector('.qb-question-input');
+                    const typeSelect = card.querySelector('select[data-prop="type"]');
+                    const btnReq = card.querySelector('.toggle-required');
+                    const btnAct = card.querySelector('.toggle-active');
+                    const btnDel = card.querySelector('.delete-question');
+                    const btnExpr = card.querySelector('.expression-builder');
+                    const answerSelect = card.querySelector('.qb-answer-select');
+                    const minInput = card.querySelector('.qb-min-selection');
+                    const maxInput = card.querySelector('.qb-max-selection');
+                    const btnRestrict = card.querySelector('.open-restrictions-btn');
+                    const datasetSelect = card.querySelector('.qb-dataset-select');
+                    const adminSelect = card.querySelector('.qb-admin-select');
+
+                    if (answerSelect) {
+                        answerSelect.addEventListener('change', (e) => {
+                            const sel = e.target;
+                            const selVal = sel.value;
+                            model.LookupId = selVal ? Number(selVal) : null;
+                        });
+                    }
+
+                            if (datasetSelect) {
+            datasetSelect.addEventListener('change', e => {
+                const val = e.target.value;
+                model.DatasetId = val ? Number(val) : null;
+            });
+        }
+
+                    if (adminSelect) {
+            adminSelect.addEventListener('change', e => {
+
+                const selectedId = Number(e.target.value);
+
+                if (!selectedId) {
+                    model.LookupId = null;
+                    model.Restrictions = null;
+                        renderAll();
+                    return;
+                }
+
+                // find selected admin level
+                const selected = normalizedAdminLevels.find(a => a.id === selectedId);
+
+                if (!selected) return;
+
+                     model.LookupId = selected.id;
+
+
+                // STORE AS RESTRICTION JSON
+                model.Restrictions = {
+                    type: "administrative_level",
+                    value: {
+                        id: selected.id,
+                        name: selected.name
+                    }
+                };
+
+                    renderAll();
+            });
+        }
+
+                    if (input) {
+                        input.addEventListener('input', e => model.Text = e.target.value);
+                    }
+
+              if (typeSelect) {
+                                        typeSelect.addEventListener('change', e => {
+
+                                        const newType = e.target.value;
+                                        model.Type = newType;
+
+                                        const isAdmin = isAdministrativeLevelTypeCode(newType);
+                                        const isSelect =
+                                            isSelectOneTypeCode(newType) ||
+                                            isSelectMultipleTypeCode(newType);
+                                        const isDataset = isDatasetTypeCode(newType);
+
+                                        // ⭐ MASTER RESET (THIS IS THE FIX)
+                                        model.LookupId = null;
+                                        model.DatasetId = null;
+                                        model.MinSelection = null;
+                                        model.MaxSelection = null;
+                                        model.Restrictions = null;
+                                        model.Restriction = null;
+
+                                        renderAll();
+                                    });
+                                 }
+
+                    if (minInput) {
+                        minInput.addEventListener('input', (e) => {
+                            model.MinSelection = e.target.value ? Number(e.target.value) : null;
+                        });
+                    }
+                    if (maxInput) {
+                        maxInput.addEventListener('input', (e) => {
+                            model.MaxSelection = e.target.value ? Number(e.target.value) : null;
+                        });
+                    }
+
+                    if (btnReq) {
+                        btnReq.addEventListener('click', () => {
+                            model.Required = !model.Required;
+                            if (model.Required) {
+                                btnReq.textContent = 'Required';
+                                btnReq.classList.remove('btn-outline-secondary');
+                                btnReq.classList.add('btn-primary');
+                            } else {
+                                btnReq.textContent = 'Require';
+                                btnReq.classList.remove('btn-primary');
+                                btnReq.classList.add('btn-outline-secondary');
+                            }
+                        });
+                    }
+
+                    if (btnAct) {
+                        btnAct.addEventListener('click', () => {
+                            model.Active = !model.Active;
+                            if (model.Active) {
+                                btnAct.textContent = 'Activated';
+                                btnAct.classList.remove('btn-outline-secondary', 'btn-outline-success');
+                                btnAct.classList.add('btn-success');
+                            } else {
+                                btnAct.textContent = 'Activate';
+                                btnAct.classList.remove('btn-success');
+                                btnAct.classList.add('btn-outline-success');
+                            }
+                        });
+                    }
+
+                    if (btnDel) {
+                        btnDel.addEventListener('click', () => {
+
+                            if (!model.SourceId) {
+                                pendingDelete = { local: true, id: model.Id };
+                                deleteModal.show();
+                                return;
+                            }
+
+                            pendingDelete = {
+                                local: false,
+                                id: model.SourceId
+                            };
+                            deleteModal.show();
+                        });
+                    }
+
+                    if (btnRestrict) {
+                      btnRestrict.addEventListener('click', (e) => {
+                        e.stopPropagation();
+
+                        const q = questions.find(x => Number(x.SourceId) === Number(btnRestrict.dataset.qid));
+                            window._currentLookupId = q.LookupId;
+                        if (!q) return console.warn('Restriction: question not found for qid', btnRestrict.dataset.qid);
+
+                        const headerEl = document.getElementById('modalQuestionText');
+                        const typeBadgeEl = document.getElementById('modalQuestionType');
+                        if (headerEl) headerEl.textContent = q.QuestionText ?? q.Text ?? '';
+                        if (typeBadgeEl) {
+                          const t = normalizedLookupTypes.find(l => String(l.code) === String(q.Type));
+                          typeBadgeEl.textContent = t ? t.text : (q.Type || '');
+                        }
+
+                        // global id for server save
+                        window._restrictionsEditingQid = q.SourceId ?? q.Id;
+
+                        // assign restrictions to global and pass global to populateForm (FIX)
+                        currentQuestionId = q.Id;
+                            window.currentRestrictions =
+        q.Restrictions
+            ? { ...q.Restrictions }
+            : (q.Restriction ? JSON.parse(q.Restriction) : {});
+
+
+                        if (typeof renderTypeSpecificFields !== 'function' || typeof populateForm !== 'function') {
+                          console.warn('Restriction modal helper functions missing: renderTypeSpecificFields/populateForm not found');
+                        } else {
+                                  const lookupItem = normalizedLookupTypes.find(l => String(l.code) === String(q.Type));
+
+                                        const friendlyType = (lookupItem && lookupItem.text)
+                                            ? lookupItem.text.toString().toUpperCase()
+                                            : (q.Type || '').toString().toUpperCase();
+
+                                        window._currentRestrictionType = friendlyType;
+
+                                        renderTypeSpecificFields(friendlyType);
+
+                                  const isSelect =
+                                                    friendlyType.includes("SELECT ONE") ||
+                                                    friendlyType.includes("SELECT MANY");
+
+                                                const isNumericOrText =
+                                                    friendlyType.includes("TEXT") ||
+                                                    friendlyType.includes("INT") ||
+                                                    friendlyType.includes("NUM");
+
+                                                if (isSelect) {
+
+                                                    loadLookupDefaultValues();
+
+                                                }
+                                                else if (isNumericOrText) {
+
+                                                        loadStaticDefaultValues(friendlyType);
+
+                                                }
+
+                            resetDefaultUI();
+
+                          // IMPORTANT: pass window.currentRestrictions here 
+                          populateForm(window.currentRestrictions);
+
+                                 restoreDefaultUI(window.currentRestrictions);
+
+                          renderJsonOutput();
+                          renderActiveConstraints();
+                          const preview = document.getElementById('previewInput');
+                          if (preview) { preview.value = ''; preview.focus(); }
+                        }
+
+                        const modalEl = document.getElementById('restrictionsModal');
+                        if (!modalEl) {
+                          console.error('Restriction modal element not found: #restrictionsModal');
+                          return;
+                        }
+                        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        modalInstance.show();
+
+                        modalEl.addEventListener('shown.bs.modal', () => {
+                          const first = modalEl.querySelector('input, select, textarea, button');
+                          if (first) first.focus();
+                        }, { once: true });
+                      });
+                    }
+
+                });
+            }
+
+            // add question
+            addBtn.addEventListener('click', () => {
+                const newQ = {
+                    Id: 'id-' + Math.random().toString(36).slice(2, 9),
+                    SourceId: null,
+                    QuestionOrder: null,
+                    Text: '',
+                    Type: normalizedLookupTypes[0]?.code || "1",
+                    LookupId: null,
+                    DatasetId: null,
+                    MinSelection: null,
+                    MaxSelection: null,
+                    Required: false,
+                    Active: true,
+                    Expression: ''
+                };
+                questions.push(newQ);
+                renderAll();
+
+                setTimeout(() => {
+                    const lastInput = document.querySelector('.qb-card:last-child .qb-question-input');
+                    if (lastInput) lastInput.focus();
+                }, 60);
+            });
+
+            // save -> POST to handler OnPostSave
+            saveBtn.addEventListener('click', async () => {
+
+                    //  VALIDATION: question text required
+        const emptyInput = document.querySelector('.qb-question-input:not([value]), .qb-question-input')
+            ? Array.from(document.querySelectorAll('.qb-question-input'))
+                .find(i => !i.value.trim())
+            : null;
+
+        if (emptyInput) {
+            emptyInput.focus();
+            emptyInput.reportValidity(); // browser popup
+                hideLoader();
+            return; // STOP save
+        }
+                try {
+                        const tokenInput = document.querySelector('#antiforgeryForm input[name="_bravePortalCsrf"]');
+                    const token = tokenInput ? tokenInput.value : null;
+
+                    questions.forEach(q => {
+                        if (!q.Type || isNaN(Number(q.Type))) {
+                            if (normalizedLookupTypes && normalizedLookupTypes.length > 0) {
+                                q.Type = String(normalizedLookupTypes[0].id);
+                            } else {
+                                q.Type = "1";
+                            }
+                        }
+                    });
+
+                    const ids = Array.from(document.querySelectorAll('.qb-card')).map(c => c.dataset.id);
+                    questions = ids.map((id, idx) => {
+                        const q = questions.find(x => x.Id === id);
+                        if (q) q.QuestionOrder = idx + 1;
+                        return q;
+                    });
+
+                            // ---- serialize restrictions before POST ----
+                        questions.forEach(q => {
+                            if (q.Restrictions) {
+                                q.Restriction = JSON.stringify(q.Restrictions);
+                            } else {
+                                q.Restriction = null;
+                            }
+                        });
+
+                    const resp = await fetch('?handler=Save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                                ...(token ? { 'X-BRaVe-Portal-CSRF': token } : {})
+                        },
+                        body: JSON.stringify(questions)
+                    });
+
+                         if (resp.ok) {
+                            const result = await resp.json();
+
+                            if (result.redirectUrl) {
+                                window.location.href = result.redirectUrl;
+                            }
+                        }
+                    else {
+                        const txt = await resp.text();
+                        window.location.href = `?error=${encodeURIComponent(txt)}`;
+                    }
+                } catch (err) {
+                    console.error(err);
+                            hideLoader(); //prevent infinite spinner
+                    window.location.href = `?error=${encodeURIComponent(err)}`;
+                }
+            });
+
+            // --- Drag & drop ordering ---
+            let dragged = null;
+            function rebindDraggables() {
+                const cards = document.querySelectorAll('.qb-card');
+                cards.forEach(card => {
+                    card.ondragstart = dragStart;
+                    card.ondragover = dragOver;
+                    card.ondrop = drop;
+                    card.ondragend = dragEnd;
+                });
+            }
+
+            function dragStart(e) {
+                dragged = e.currentTarget;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', dragged.dataset.id);
+                dragged.classList.add('dragging');
+            }
+
+            function dragOver(e) {
+                e.preventDefault();
+                const target = e.currentTarget;
+                if (target && target !== dragged) {
+                    const rect = target.getBoundingClientRect();
+                    const next = (e.clientY - rect.top) / rect.height > 0.5;
+                    target.parentNode.insertBefore(dragged, next ? target.nextSibling : target);
+                }
+            }
+
+            function drop(e) {
+                e.preventDefault();
+            }
+
+            function dragEnd(e) {
+                if (dragged) dragged.classList.remove('dragging');
+                const ids = Array.from(document.querySelectorAll('.qb-card')).map(c => c.dataset.id);
+                questions = ids.map(id => questions.find(q => q.Id === id));
+                renderAll();
+            }
+
+            // initial render
+            renderAll();
+
+            // --- attach confirm-delete handler (inside IIFE) ---
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', () => {
+                    deleteModal.hide();
+
+                    if (!pendingDelete) return;
+
+                    if (pendingDelete.local) {
+                        questions = questions.filter(q => q.Id !== pendingDelete.id);
+                        renderAll();
+                        pendingDelete = null;
+                        return;
+                    }
+
+                    const form = document.getElementById('deleteForm');
+                    form.querySelector("input[name='QuestionId']").value = pendingDelete.id;
+                    form.submit();
+
+                    pendingDelete = null;
+                });
+            }
+
+        })();
+
+
+                function resetDefaultUI() {
+
+            const manualToggleContainer = document.getElementById("manualToggleContainer");
+            const manualValueContainer = document.getElementById("manualValueContainer");
+            const defaultQuestionContainer = document.getElementById("defaultQuestionContainer");
+
+            if (manualToggleContainer) manualToggleContainer.style.display = "none";
+            if (manualValueContainer) manualValueContainer.style.display = "none";
+            if (defaultQuestionContainer) defaultQuestionContainer.style.display = "none";
+
+        }
+
+                        function restoreDefaultUI(restrictions) {
+
+            const type = (window._currentRestrictionType || "").toUpperCase();
+
+            const isSelect =
+                type.includes("SELECT ONE") ||
+                type.includes("SELECT MANY");
+
+            const useDefault = document.getElementById("useDefault");
+            const manualToggle = document.getElementById("isManual");
+
+            const manualToggleContainer = document.getElementById("manualToggleContainer");
+            const manualValueContainer = document.getElementById("manualValueContainer");
+            const defaultQuestionContainer = document.getElementById("defaultQuestionContainer");
+
+            const dropdown = document.getElementById("defaultValueSelect");
+            const manualInput = document.getElementById("defaultValue");
+            const readonlyToggle = document.getElementById("readonlyToggle");
+            const errorInput = document.getElementById("errorMessage");
+
+            /* SELECT ONE / SELECT MANY BEHAVIOR */
+
+            if (isSelect) {
+
+                if (manualToggleContainer) manualToggleContainer.style.display = "none";
+                if (manualValueContainer) manualValueContainer.style.display = "none";
+
+                if (restrictions?.defaultValue) {
+
+                    if (useDefault) useDefault.checked = true;
+
+                    if (defaultQuestionContainer) defaultQuestionContainer.style.display = "";
+
+                    if (dropdown) dropdown.value = restrictions.defaultValue;
+
+                }
+
+            }
+
+            /* TEXT / INT / NUMERIC BEHAVIOR */
+
+            else {
+
+                if (restrictions?.defaultValue || restrictions?.default) {
+
+                    if (useDefault) useDefault.checked = true;
+
+                    if (manualToggleContainer) manualToggleContainer.style.display = "";
+
+                    if (restrictions.manual) {
+
+                        if (manualToggle) manualToggle.checked = true;
+
+                        if (manualValueContainer) manualValueContainer.style.display = "";
+                        if (defaultQuestionContainer) defaultQuestionContainer.style.display = "none";
+
+                        if (manualInput) manualInput.value = restrictions.default || "";
+
+                    }
+                    else {
+
+                        if (manualToggle) manualToggle.checked = false;
+
+                        if (manualValueContainer) manualValueContainer.style.display = "none";
+                        if (defaultQuestionContainer) defaultQuestionContainer.style.display = "";
+
+                        if (dropdown) dropdown.value = restrictions.defaultValue;
+
+                    }
+
+                }
+
+            }
+
+            /* READONLY */
+
+            if (readonlyToggle && restrictions?.readonly) {
+                readonlyToggle.checked = true;
+            }
+
+            /* ERROR MESSAGE */
+
+            if (errorInput && restrictions?.message) {
+                errorInput.value = restrictions.message;
+            }
+        }
+
+
+
+        //Show hide behavior fields dynamilcally
+
+        document.addEventListener("change", (e) => {
+
+            const type = (window._currentRestrictionType || "").toUpperCase();
+
+            const isSelect =
+                type.includes("SELECT ONE") ||
+                type.includes("SELECT MANY");
+
+            const defaultToggle = document.getElementById("useDefault");
+            const manualToggle = document.getElementById("isManual");
+
+            const manualToggleContainer = document.getElementById("manualToggleContainer");
+            const manualValueContainer = document.getElementById("manualValueContainer");
+            const defaultQuestionContainer = document.getElementById("defaultQuestionContainer");
+
+            if (e.target.id === "useDefault") {
+
+                if (!defaultToggle.checked) {
+
+                    if (manualToggleContainer) manualToggleContainer.style.display = "none";
+                    if (manualValueContainer) manualValueContainer.style.display = "none";
+                    if (defaultQuestionContainer) defaultQuestionContainer.style.display = "none";
+
+                    return;
+                }
+
+                // DEFAULT ON
+
+                if (isSelect) {
+
+                    // SELECT ONE / MANY behaviour
+                    if (manualToggleContainer) manualToggleContainer.style.display = "none";
+                    if (manualValueContainer) manualValueContainer.style.display = "none";
+                    if (defaultQuestionContainer) defaultQuestionContainer.style.display = "";
+
+                } else {
+
+                    // NUMERIC / TEXT behaviour
+                    if (manualToggleContainer) manualToggleContainer.style.display = "";
+                    if (defaultQuestionContainer) defaultQuestionContainer.style.display = "";
+                    if (manualValueContainer) manualValueContainer.style.display = "none";
+
+                }
+            }
+
+            if (e.target.id === "isManual") {
+
+                if (!manualToggle) return;
+
+                if (manualToggle.checked) {
+
+                    if (manualValueContainer) manualValueContainer.style.display = "";
+                    if (defaultQuestionContainer) defaultQuestionContainer.style.display = "none";
+
+                } else {
+
+                    if (manualValueContainer) manualValueContainer.style.display = "none";
+                    if (defaultQuestionContainer) defaultQuestionContainer.style.display = "";
+                }
+            }
+
+        });
+
+
+        //Get lookup values
+
+                async function loadLookupDefaultValues() {
+
+            const lookupId = window._currentLookupId;
+
+                const dropdown = document.getElementById("defaultValueSelect");
+
+            if (!lookupId || !dropdown) return;
+
+            try {
+
+                const resp = await fetch(`?handler=LookupValues&lookupId=${lookupId}`);
+
+                const data = await resp.json();
+
+                dropdown.innerHTML = "";
+
+                data.forEach(v => {
+
+                    const opt = document.createElement("option");
+
+                    opt.value = v.id;
+                    opt.textContent = v.text;
+
+                    dropdown.appendChild(opt);
+
+                });
+
+            }
+            catch (err) {
+
+                console.error("Failed loading lookup values", err);
+
+            }
+
+        }
+
+                    function loadStaticDefaultValues(questionType) {
+
+            const dropdown = document.getElementById("defaultValueSelect");
+            if (!dropdown) return;
+
+            dropdown.innerHTML = `<option value="" disabled selected>Select value</option>`;
+
+            const type = (questionType || "").toUpperCase();
+
+            defaultValueOptions
+                .filter(v => (v.Types || []).some(t => type.includes(t)))
+                .forEach(v => {
+
+                    const opt = document.createElement("option");
+
+                    opt.value = v.Key;
+                    opt.textContent = v.Label;
+
+                    dropdown.appendChild(opt);
+
+                });
+        }
+
+
+                function showSuccessToast(message) {
+
+            const toast = document.createElement("div");
+
+            toast.className = "position-fixed top-0 end-0 m-3 alert alert-success shadow";
+
+            toast.style.zIndex = "2000";
+
+            toast.innerText = message;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 3000);
+
+        }
+
+
+    </script>
+
+    <!-- expose numeric question list for calculated-field operand selects -->
+    <script>
+        // expose numeric question list for calculated-field operand selects (includes saved resultExpression)
+        window.__numericQuestions = (Array.isArray(initialQuestions) ? initialQuestions : [])
+          .map(q => ({
+            questionId: q.SourceId || q.Id,
+            label: q.QuestionText || q.Text || q.label || q.QuestionLabel || '',
+            value: (q.CurrentValue !== undefined ? q.CurrentValue : (q.Value !== undefined ? q.Value : null)),
+            // add saved ResultExpression (string or null) so client can pre-populate the modal
+            resultExpression: (q.ResultExpression !== undefined && q.ResultExpression !== null) ? q.ResultExpression : (q.ResultExpression === null ? null : (q.ResultExpression || q.Expression || null))
+          }));
+    </script>
+
+
+    <!-- calculated-field client script  -->
+    <script src="~/js/calculated-field.js"></script>
+
+}

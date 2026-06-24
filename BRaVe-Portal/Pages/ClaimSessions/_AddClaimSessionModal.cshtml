@@ -1,0 +1,54 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model ClaimSessionDto
+
+
+
+<div class="modal fade" id="addClaimSessionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Claim Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+                    <strong style="color:#2196F3;">ℹ Note:</strong>
+                    <ul style="margin:8px 0 0 18px; padding:0;">
+                        <li><strong>Label Description:</strong> A descriptive name for the claim.</li>
+                        <li><strong>Number of Claims:</strong> Indicates how many devices you will provision at the same time.</li>
+                        <li><strong>TTL (in minutes):</strong> The duration for which this claim remains valid.</li>
+                    </ul>
+                </div>
+
+                <br />
+
+                <form method="post" enctype="multipart/form-data" asp-page-handler="AddClaimSession">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Label (Max 100 characters)</label>
+                        <input asp-for="Label" class="form-control" required  maxlength="100">
+                    </div>      
+
+                    <div class="mb-3">
+                        <label class="form-label">Maximum Claims</label>
+                        <input asp-for="MaxClaims" class="form-control" required />
+                    </div>
+                @*     <div class="mb-3">
+                        <label class="form-label">Issue</label>
+                        <input asp-for="ClaimsIssued" class="form-control">
+                    </div> *@
+                    <div class="mb-3">
+                        <label class="form-label">Expiry(In Minutes)</label>
+                        <input asp-for="TtlMinutes" class="form-control">
+                    </div>
+                    
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

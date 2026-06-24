@@ -1,0 +1,62 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model DistributionItemTypes
+
+
+
+@{
+    CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.UOM ?? new List<LookupItemDto>();
+
+ 
+    // var DistributionItemlIST = ViewData["DistributionItems"] as List<DistributionItem>;
+
+    List<DistributionItemTypes> DistributionItemss = ViewData["DistributionItems"] != null
+                            ? (List<DistributionItemTypes>)ViewData["DistributionItems"]
+                            : new List<DistributionItemTypes>();
+
+
+
+
+}
+
+
+<div class="modal fade" id="EditDistributionKitItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditDistributionKitItem">
+                    <input type="hidden" asp-for="TenantId" id="editTenantId" />
+                    <input type="hidden" asp-for="Id" id="editId" />
+
+
+
+
+                    <div class="mb-3">
+                        <label class="form-label"> </label>
+                        @TempData["KitSKU"]
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"></label>
+                        @TempData["KitName"]
+
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input asp-for="Notes" class="form-control" id="editNotes">
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

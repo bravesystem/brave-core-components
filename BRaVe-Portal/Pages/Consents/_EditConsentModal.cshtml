@@ -1,0 +1,40 @@
+﻿@using BRaVe_Portal.Models
+@model Consent
+
+
+
+<div class="modal fade" id="EditConsentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Consent</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditConsent">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" id="editId" />
+                    <input type="hidden" asp-for="ProgramId" id="editProgramId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Title </label>
+                        <input asp-for="Title" class="form-control" id="editTitle" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Consent Text</label>
+                        <textarea asp-for="Description" class="form-control" rows="4" id="editDescription"></textarea>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="IsActive" class="form-check-input" id="editIsActive" />
+                        <label asp-for="IsActive" class="form-check-label">Active</label>
+                    </div>
+                     
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

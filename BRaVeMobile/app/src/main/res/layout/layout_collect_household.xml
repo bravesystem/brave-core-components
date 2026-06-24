@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+
+    <!-- Household ID (read-only usually) -->
+    <TextView
+        android:id="@+id/tvHouseholdIdLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Household ID"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/etHouseholdId"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:inputType="text"
+        app:layout_constraintStart_toStartOf="@id/tvHouseholdIdLabel"
+        app:layout_constraintTop_toBottomOf="@id/tvHouseholdIdLabel"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Activity Code -->
+    <TextView
+        android:id="@+id/tvActivityCodeLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Activity Code"
+        android:textStyle="bold"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/etHouseholdId"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/etActivityCode"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:inputType="textCapCharacters"
+        app:layout_constraintStart_toStartOf="@id/tvActivityCodeLabel"
+        app:layout_constraintTop_toBottomOf="@id/tvActivityCodeLabel"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Registration Token (optional) -->
+    <TextView
+        android:id="@+id/tvRegistrationTokenLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Registration Token"
+        android:textStyle="bold"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/etActivityCode"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/etRegistrationToken"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Optional"
+        android:inputType="text"
+        app:layout_constraintStart_toStartOf="@id/tvRegistrationTokenLabel"
+        app:layout_constraintTop_toBottomOf="@id/tvRegistrationTokenLabel"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Household Size -->
+    <TextView
+        android:id="@+id/tvHouseholdSizeLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Household Size"
+        android:textStyle="bold"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/etRegistrationToken"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/etHouseholdSize"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="Enter size"
+        app:layout_constraintStart_toStartOf="@id/tvHouseholdSizeLabel"
+        app:layout_constraintTop_toBottomOf="@id/tvHouseholdSizeLabel"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Household Type (spinner of your lookup) -->
+    <TextView
+        android:id="@+id/tvHouseholdTypeLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Household Type"
+        android:textStyle="bold"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/etHouseholdSize"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Spinner
+        android:id="@+id/spHouseholdType"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="@id/tvHouseholdTypeLabel"
+        app:layout_constraintTop_toBottomOf="@id/tvHouseholdTypeLabel"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Container that sits between the label and the head summary -->
+    <LinearLayout
+        android:id="@+id/gpsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/spHouseholdType">
+
+        <include
+            android:id="@+id/gpsCoordinates"
+            layout="@layout/item_gps_coordinates" />
+
+    </LinearLayout>
+
+
+    <!-- Container that sits between the label and the head summary -->
+    <LinearLayout
+        android:id="@+id/locationAddressContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/gpsContainer">
+
+        <!-- Household ID (read-only usually) -->
+        <TextView
+            android:id="@+id/tvHouseholdAddressLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Household Location"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <include
+            android:id="@+id/locationAddress"
+            layout="@layout/item_location_address" />
+
+
+    </LinearLayout>
+
+    <!-- Head of Household area -->
+    <TextView
+        android:id="@+id/tvHeadSectionLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Head of Household"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/locationAddressContainer"
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+    <!-- If head exists: show summary (read-only). Otherwise: show Add Head button -->
+    <LinearLayout
+        android:id="@+id/headSummaryContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="#12CCCCCC"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvHeadSectionLabel"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Photo with overlaid badge -->
+        <FrameLayout
+            android:layout_width="100dp"
+            android:layout_height="100dp">
+
+            <ImageView
+                android:id="@+id/imgPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_report_image" />
+
+            <!-- Badge -->
+            <TextView
+                android:id="@+id/tvBiometricBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BIO"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:background="@drawable/bg_badge_round"
+                android:layout_gravity="start|top"/>
+        </FrameLayout>
+
+        <!-- Details -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/tvHeadName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Name: —" />
+
+            <TextView
+                android:id="@+id/tvHeadGender"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Gender: —" />
+
+            <TextView
+                android:id="@+id/tvHeadAge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Age: —" />
+        </LinearLayout>
+    </LinearLayout>
+
+
+
+    <!--<Button
+        android:id="@+id/btnAddHead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Add Head of Household"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvHeadSectionLabel" />-->
+
+</androidx.constraintlayout.widget.ConstraintLayout>

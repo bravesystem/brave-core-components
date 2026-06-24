@@ -1,0 +1,66 @@
+﻿@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Models.DTOs.MissionDto
+
+
+@{
+
+    List<LookupItemDto> FocalPoints = ViewData["FocalPoints"] != null
+                                ? (List<LookupItemDto>)ViewData["FocalPoints"]
+                                : new List<LookupItemDto>();
+
+}
+
+
+<div class="modal fade" id="editMissionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Mission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-page-handler="EditMission" id="editMissionForm">
+
+                    <!-- Hidden inputs -->
+                    <input type="hidden" asp-for="MissionId" id="EditMissionId"  />
+                   
+                
+                
+
+                    <!-- Mission fields -->
+                    <div class="mb-3">
+                        <label class="form-label">Mission Name</label>
+                        <input asp-for="Name" class="form-control" id="EditMission_Name"  required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Focal Point Type</label>
+                        <select asp-for="FocalpointType" class="form-select" required>
+
+                            @foreach (var f in FocalPoints)
+                            {
+                                <option value="@f.Id">@f.Text</option>
+                            }
+
+                        </select>
+
+
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Note</label>
+                        <input asp-for="Note" class="form-control" id="EditMission_Note"  />
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,51 @@
+﻿@using BRaVe_Portal.Models.ViewModels
+@model BRaVe_Portal.Pages.programs.Activities.ViewEditActivityModel
+
+<div class="modal fade" id="addEnumeratorModal" tabindex="-1" aria-labelledby="addEnumeratorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEnumeratorModalLabel">Attach Enumerator</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post" asp-page-handler="AttachEnumeratorToActivity">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ActivityId" value="@Model.SelectedActivity?.ActivityId" />
+
+
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Enumerator(s)</label>
+
+                        <div class="row">
+                            @foreach (var enumerator in Model.AllEnumerators)
+                            {
+                                <div class="col-md-6 mb-2">
+                                    <label class="border rounded p-2 w-100 d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="checkbox"
+                                               name="EnumeratorCodes"
+                                               value="@enumerator.EnumeratorCode"
+                                               class="form-check-input m-0" />
+
+                                        <div>
+                                            <div class="fw-semibold">@enumerator.FullName</div>
+                                            <small class="text-muted">@enumerator.EnumeratorCode</small>
+                                        </div>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i> Attach
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

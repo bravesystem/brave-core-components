@@ -1,0 +1,226 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.Distributions.DistributionsMappingModel
+<style>
+    .selected-item-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: #e3f2fd;
+        border-radius: 20px;
+        font-size: 13px;
+        border: 1px solid #bbdefb;
+    }
+
+    .remove-chip-btn {
+        border: none;
+        background: none;
+        color: #c62828;
+        cursor: pointer;
+        font-size: 14px;
+    }
+</style>
+<div class="modal fade" id="AddItemToKitModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-sm border-0 rounded-3">
+
+            <div class="modal-header border-0 bg-light py-3">
+                <h5 class="modal-title fw-bold">Add Item To Kit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <form method="post"
+                      asp-page-handler="AddKitItem"
+                      id="AddDistributionKitItemForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Distribution Title</label>
+                        <input class="form-control" value="@Model.DistributionTitle" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Distribution Description</label>
+                        <input class="form-control" value="@Model.Description" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Distribution External Id</label>
+                        <input class="form-control" value="@Model.DistributionExternalId" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Distribution External Id</label>
+                        <input class="form-control" value="@Model.Measure" />
+                    </div>
+                    <div class="mb-3">
+
+                        <button type="button"
+                                class="btn d-flex align-items-center gap-2"
+                                style="background-color:#0d47a1; color:white;"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#ItemTagAssignmentCollapse">
+
+                            <i class="fa fa-box"></i>
+                            <span>Select Items</span>
+
+                            <span class="badge bg-light text-dark ms-2"
+                                  id="selectedItemCount">0</span>
+
+                            <i class="fa fa-chevron-down ms-auto text-light"></i>
+
+                        </button>
+
+                    </div>
+               
+
+                    <div class="collapse" id="ItemTagAssignmentCollapse">
+
+                        <div class="card card-body border-0 shadow-sm rounded-3">
+
+                            <label class="form-label fw-semibold d-flex justify-content-between">
+                                Items
+                                <small class="text-muted">
+                                    <span id="itemsCount">0</span> selected
+                                </small>
+                            </label>
+
+                            <!-- Searchable input -->
+                            <input type="text"
+                                   id="itemSearchInput"
+                                   class="form-control mb-3"
+                                   placeholder="Search items..." />
+
+                            <!-- Available items container -->
+                            <div id="availableItemsContainer" class="list-group mb-3" style="max-height: 300px; overflow-y:auto;">
+                                @foreach (var item in Model.Items)
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center item-row"
+                                         data-id="@item.Id"
+                                         data-name="@item.Name">
+                                        <div>
+                                            <strong>@item.Name</strong>
+                                            <div class="text-muted small">@item.Notes</div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary add-item-btn">
+                                            <i class="fa fa-plus"></i>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Selected items container -->
+                            <div>
+                                <label class="form-label fw-semibold">Selected Items</label>
+                                <div id="selectedItemsContainer" class="d-flex flex-wrap gap-2 mb-2"></div>
+                            </div>
+
+                            <!-- Hidden input for form -->
+                            <input type="hidden" asp-for="SelectedItemIds" id="SelectedItemIds" />
+
+                            <div class="mt-3 d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-outline-secondary" id="clearSelections">
+                                    Clear
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end gap-2">
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save me-1"></i> Save
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+           document.addEventListener("DOMContentLoaded", function () {
+
+        const availableContainer = document.getElementById("availableItemsContainer");
+        const selectedContainer = document.getElementById("selectedItemsContainer");
+        const hiddenInput = document.getElementById("SelectedItemIds");
+        const clearBtn = document.getElementById("clearSelections");
+        const searchInput = document.getElementById("itemSearchInput");
+
+        const countDisplay = document.getElementById("itemsCount");
+
+        let selectedItems = [];
+
+        function refreshHidden() {
+            hiddenInput.value = selectedItems.join(",");
+            countDisplay.textContent = selectedItems.length;
+        }
+
+        function createChip(id, name) {
+            const chip = document.createElement("div");
+            chip.className = "selected-item-chip";
+            chip.dataset.id = id;
+
+            chip.innerHTML = `
+                <span>${name}</span>
+                <button type="button" class="remove-chip-btn">
+                    <i class="fa fa-times"></i>
+                </button>
+            `;
+
+            chip.querySelector(".remove-chip-btn").addEventListener("click", function () {
+                selectedItems = selectedItems.filter(x => x != id);
+                chip.remove();
+                refreshHidden();
+            });
+
+            selectedContainer.appendChild(chip);
+        }
+
+        function addItem(row) {
+            const id = row.dataset.id;
+            const name = row.dataset.name;
+
+            if (selectedItems.includes(id)) return;
+
+            selectedItems.push(id);
+            createChip(id, name);
+            refreshHidden();
+        }
+
+        availableContainer.querySelectorAll(".add-item-btn").forEach(btn => {
+            btn.addEventListener("click", function () {
+                const row = btn.closest(".item-row");
+                addItem(row);
+            });
+        });
+
+        clearBtn.addEventListener("click", function () {
+            selectedItems = [];
+            selectedContainer.innerHTML = "";
+            refreshHidden();
+        });
+
+        // Search filter
+        searchInput.addEventListener("input", function () {
+            const term = searchInput.value.toLowerCase();
+            availableContainer.querySelectorAll(".item-row").forEach(row => {
+                const name = row.dataset.name.toLowerCase();
+                row.style.display = name.includes(term) ? "" : "none";
+            });
+        });
+
+    });
+</script>

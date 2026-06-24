@@ -1,0 +1,244 @@
+﻿@page
+@using BRaVe_Portal.Models
+@model BRaVe_Portal.Pages.Distributions.DistributionsTypeModel
+
+@{
+    ViewData["Title"] = "Distribution Type Management";
+    Layout = "_SectionMenu";
+}
+
+@section SubMenuBar {
+    <div class="page-tabs">
+        <a asp-page="/Distributions/DistributionsType" class="tab-item active">Distribution Types</a>
+        <a asp-page="/Distributions/DistributionKits" class="tab-item">Kit Types</a>
+        <a asp-page="/Distributions/Items/DistributionItems" class="tab-item">Item Types</a>
+    </div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success small py-2">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger small py-2">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="mb-3 text-end">
+    <button type="button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#AddDistributionTypesModal">
+        <i class="fa fa-plus"></i> Add Distribution Type
+    </button>
+</div>
+
+<!-- Search -->
+<div class="mb-3 d-flex justify-content-center">
+    <div class="position-relative" style="max-width: 500px; width: 100%;">
+        <input id="searchInput"
+               type="text"
+               class="form-control shadow-sm rounded-pill ps-5 pe-4"
+               placeholder="Search Distribution Type..."
+               value="@Model.SearchTerm" />
+
+        <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+            <i class="bi bi-search" style="color:#004080;"></i>
+        </span>
+    </div>
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+<div style="background: linear-gradient(90deg, #e3f2fd, #bbdefb); border-left:4px solid #1e88e5; padding:12px; margin-top:10px; font-size:14px; color:#0d47a1; border-radius:4px;">
+    <strong>ℹ Note:</strong>
+    UoM refers to Unit of Measure, and SKU (Stock Keeping Unit) is a unique code used to identify and track each item in the distribution.
+</div>
+
+@if ((Model.FilteredDistributions?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-primary text-white fw-bold">
+            Manage Distribution Types
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Id</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>External Id</th>
+                        <th>Updated Date</th>
+                        <th>Status</th>
+                        <th>Manage Items</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var distribution in Model.FilteredDistributions)
+                    {
+                        <tr>
+                            <td>@distribution.Id</td>
+                            <td>@distribution.Title</td>
+
+                            <td>@distribution.Description</td>
+
+                            <td>@distribution.ExternalId</td>
+
+                            <td>
+                                @((distribution.UpdatedOn ?? distribution.CreatedOn)?.ToString("yyyy-MM-dd"))
+                                <br />
+                                <small class="text-muted">
+                                    @(distribution.UpdatedOn == null ? "Created" : "Updated")
+                                </small>
+                            </td>
+
+                            <td>
+                                @if (distribution.IsActive == true)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i> Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i> Inactive
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   style="background-color:#0056b3;color:ghostwhite; margin-top: 4px; display: inline-block"
+                                   asp-page="/Distributions/DistributionsMapping"
+                                   asp-route-distributionId="@distribution.Id"
+                                   asp-route-Description="@distribution.Description"
+                                   asp-route-DistributionTitle="@distribution.Title"
+                                   asp-route-DistributionExternalId="@distribution.ExternalId"
+                                   class="text-primary d-inline-flex align-items-center"
+                                   title="Manage items">
+
+                                    (@distribution.unitCount)
+                                    - <i class="fa fa-tools"></i>
+                                </a>
+                            </td>
+
+                            <td>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        style="background-color:#198754;color:white"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#EditDistributionTypesModal"
+                                        data-id="@distribution.Id"
+                                        data-title="@distribution.Title"
+                                        data-description="@distribution.Description"
+                                        data-externalid="@distribution.ExternalId"
+                                        data-isactive="@distribution.IsActive">
+
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+
+                <!-- Previous -->
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-page="./DistributionsType"
+                       asp-route-CurrentPage="@(Model.CurrentPage - 1)"
+                       asp-route-SearchTerm="@Model.SearchTerm">
+                        Previous
+                    </a>
+                </li>
+
+                <!-- Page Numbers -->
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link"
+                           asp-page="./DistributionsType"
+                           asp-route-CurrentPage="@i"
+                           asp-route-SearchTerm="@Model.SearchTerm">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <!-- Next -->
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-page="./DistributionsType"
+                       asp-route-CurrentPage="@(Model.CurrentPage + 1)"
+                       asp-route-SearchTerm="@Model.SearchTerm">
+                        Next
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Distribution Types Found</h4>
+    </div>
+}
+
+@section Scripts {
+
+    @* Modals *@
+    <partial name="_EditDistributionTypesModal" model="@Model.UpdatedDistribution" /> 
+    <partial name="_AddDistributionTypesModal" model="@Model.Distribution" />
+
+    <script>
+
+        var editModal = document.getElementById('EditDistributionTypesModal');
+
+        editModal.addEventListener('show.bs.modal', function (event) {
+
+            var button = event.relatedTarget;
+
+            var id = button.getAttribute('data-id');
+            var title = button.getAttribute('data-title');
+            var description = button.getAttribute('data-description');
+            var externalId = button.getAttribute('data-externalid');
+            var isActive = "True" == button.getAttribute('data-isactive');
+
+            document.getElementById('editId').value = id;
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editExternalId').value = externalId;
+            document.getElementById('editIsActive').checked = isActive;
+
+        });
+                document.getElementById("searchInput").addEventListener("keyup", function (e) {
+            if (e.key === "Enter") {
+                const value = this.value;
+                window.location.href = `?SearchTerm=${encodeURIComponent(value)}&CurrentPage =1`;
+            }
+        });
+
+    </script>
+
+}

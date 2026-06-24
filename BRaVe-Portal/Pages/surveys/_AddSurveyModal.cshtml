@@ -1,0 +1,76 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model SurveyDto
+
+@{
+    CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.SurveyTypes ?? new List<LookupItemDto>();
+}
+
+<div class="modal fade" id="addSurveyModal" tabindex="-1" aria-labelledby="addSurveyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="AddSurvey" id="addSurveyForm">
+                @Html.AntiForgeryToken()
+                <input asp-for="ProgramId" type="hidden" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSurveyModalLabel">Create New Survey</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">Title</label>
+                        <input asp-for="Title" class="form-control" required />
+                        <span asp-validation-for="Title" class="text-danger" ></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Details" class="form-label">Description</label>
+                        <textarea asp-for="Details" class="form-control" required></textarea>
+                        <span asp-validation-for="Details" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SurveyType" class="form-label">Type</label>
+                        <select asp-for="SurveyType" class="form-select" required>
+                            <option value="">-- Select Type --</option>
+                            @foreach (var s in lookups)
+                            {
+                                <option value="@s.Id">@s.Text</option>
+                            }
+                        </select>
+                        <span asp-validation-for="SurveyType" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label">Active</label>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success" id="saveSurveyBtn">
+                        <i class="fa fa-save"></i>
+                        <span class="btn-text">Save</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+
+            
+
+<script>
+    document.getElementById("addSurveyForm").addEventListener("submit", function () {
+
+        const btn = document.getElementById("saveSurveyBtn");
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+    });
+</script>
+        </div>
+    </div>
+</div>

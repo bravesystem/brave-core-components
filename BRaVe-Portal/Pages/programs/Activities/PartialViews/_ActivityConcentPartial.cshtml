@@ -1,0 +1,86 @@
+﻿@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model List<BRaVe_Portal.Models.ViewModels.ConcentViewModel>
+
+@{
+    var activityId = ViewData["ActivityId"] as int? ?? 0;
+    CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.SurveyTypes ?? new List<LookupItemDto>();
+}
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"]?.ToString() == "Consent")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"]?.ToString() == "Consent")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        @if (Model == null || !Model.Any())
+        {
+            <div>No consent has been added to this activity yet.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Consent Title</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.ConsentId</td>
+                                <td>@item.Title</td>
+                                <td>@LookupHelper.GetTextById(lookups, @item.ConsentType)</td>
+                                
+                                <td>
+                                    @if (item.Required)
+                                    {
+                                        <span class="badge bg-success">Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">No</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger delete-button"
+                                            data-id="@item.ConsentId"
+                                            data-activityid="@activityId"
+                                            data-name="@item.Title"
+                                            data-handler="RemoveConcentFromActivity"
+                                            data-entity="consent"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#DeleteModal">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+
+
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

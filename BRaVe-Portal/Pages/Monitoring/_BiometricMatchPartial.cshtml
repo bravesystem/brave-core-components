@@ -1,0 +1,715 @@
+﻿@using BRaVe_Portal.Models.DTOs
+@model BiometricMatchWithIndicatorsDto
+
+@{
+    var collapseId = $"match-{Model.Match.SourceUuid}-{Model.Match.MatchedUuid}";
+}
+
+<div class="bg-light border-top">
+    <div class="p-4">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <h6 class="fw-bold text-primary mb-2">
+                    <i class="fa-solid fa-user-plus me-1"></i>
+                    Source Record
+                </h6>
+            </div>
+
+            <div class="col-md-6">
+                <h6 class="fw-bold text-success mb-2">
+                    <i class="fa-solid fa-user-check me-1"></i>
+                    Matched Record
+                </h6>
+            </div>
+            <!-- SOURCE PROFILE -->
+            <div class="col-md-6">
+                <div class="profile-card p-4 h-100">
+                    <div class="profile-header"></div>
+                    <div class="px-2">
+                        <img loading="lazy"
+                             src="@(string.IsNullOrEmpty(Model.Match.SourcePhoto)
+                                      ? "/images/avatar.jpg"
+                                      : $"data:image/jpeg;base64,{Model.Match.SourcePhoto}")"
+                             class="border cursor-pointer rounded"
+                             style="width:240px;height:240px;object-fit:cover;cursor:pointer;display:block;margin:0 auto;"
+                             onclick="openComparePreview(
+                                        '@Model.Match.SourceFullName',
+                                        '@Model.Match.MatchedFullName',
+                                        this.src,
+                                        '@(string.IsNullOrEmpty(Model.Match.MatchedPhoto)
+                                         ? "/images/avatar.jpg"
+                                         : $"data:image/jpeg;base64,{Model.Match.MatchedPhoto}")'
+                                            )" />
+                        <div class="text-muted small text-center mt-1">
+                            Click image to compare
+                        </div>
+
+                        <div class="mt-3">
+                            <h5 class="fw-bold mb-0">@Model.Match.SourceFullName</h5>
+                            <div class="row small text-muted mb-3">
+                                <!-- Relationship (left) -->
+                                <div class="col-6">
+                                    <i class="fa fa-people-roof me-1"></i>
+                                    @Model.Match.SourceRelationship
+                                </div>
+
+                                <!-- Household Size (right) -->
+                                <div class="col-6 text-end">
+                                    <i class="fa fa-users me-1"></i>
+                                    Household Size: @Model.Match.SourceHHSize
+                                </div>
+                            </div>
+
+                            <div class="row g-3 py-3 border-top border-bottom">
+                                <div class="col-6">
+                                    <div class="label-text">Age</div>
+                                    <div class="fw-medium">@Model.Match.SourceAge</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="label-text">Gender</div>
+                                    <div class="fw-medium">@Model.Match.SourceGender</div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="label-text mb-1">Household</div>
+
+                                    @{
+                                        var sourceHouseholdCollapse = $"source-household-{collapseId}";
+                                    }
+
+                                    <button class="btn btn-sm btn-link p-0 text-primary"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#@sourceHouseholdCollapse"
+                                            aria-expanded="false"
+                                            aria-controls="@sourceHouseholdCollapse">
+
+                                        <i class="fa-solid fa-chevron-down me-1"></i>
+                                        View Household (@Model.Match.SourceHouseholdId)
+                                    </button>
+         
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="label-text mb-1">Registration Date</div>
+                                    <div class="fw-medium">
+                                        @Model.Match.SourceRegistrationDate?.ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                <div class="collapse mt-3"
+                                     id="@sourceHouseholdCollapse"
+                                     data-household-id="@Model.Match.SourceHouseholdId"
+                                     data-target="sourceHouseholdMembers">
+
+                                    <div class="card border-0 bg-light shadow-sm">
+                                        <div class="card-body small">
+
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm align-middle mb-0">
+
+                                                <thead class="text-muted small">
+                                                    <tr>
+                                                        <th>PHOTO</th>
+                                                        <th>NAME</th>
+                                                        <th>AGE</th>
+                                                        <th>RELATIONSHIP</th>
+                                                        <th>GENDER</th>
+                                                        <th>FINGERPRINT</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody id="sourceHouseholdMembers">
+                                                    <tr>
+                                                        <td colspan="6" class="text-muted small">
+                                                            Loading household members...
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+
+                                            </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+                                <!-- GPS FULL WIDTH -->
+                                <div class="col-12 mt-3 pt-3 border-top">
+                                    <div class="label-text mb-1">GPS Coordinates</div>
+
+                                    <div class="fw-medium w-100">
+                                        @Model.Match.SourceGps
+                                    </div>
+                                </div>
+
+
+                                <!--Additional information-->
+                                @{
+                                    var sourceExtraId = $"source-extra-{collapseId}";
+                                }
+                                @{
+                                    var sourceProgram = Model.SourceProgrammaticData.FirstOrDefault();
+                                }
+
+
+                                <div class="mt-3">
+
+                                    <button class="btn btn-sm btn-link p-0 text-primary"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#@sourceExtraId"
+                                            aria-expanded="false"
+                                            aria-controls="@sourceExtraId">
+                                        <i class="fa-solid fa-chevron-down me-1"></i>
+                                        More information
+                                    </button>
+
+                                    <div class="collapse mt-3" id="@sourceExtraId">
+                                        <div class="card border-0 bg-light shadow-sm">
+                                            <div class="card-body small">
+
+                                                <div class="row g-3">
+
+                                                    @foreach (var field in sourceProgram?.Fields ?? new Dictionary<string, object>())
+                                                    {
+                                                        <div class="col-6">
+                                                            <div class="text-muted">
+                                                                @field.Key
+                                                            </div>
+
+                                                            <div class="fw-medium">
+                                                                @(field.Value ?? "-")
+                                                            </div>
+                                                        </div>
+                                                    }
+
+
+
+                                                </div>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MATCHED PROFILE -->
+            <div class="col-md-6">
+                <div class="profile-card p-4 h-100">
+                    <div class="profile-header"></div>
+                    <div class="px-2">
+                        <img loading="lazy"
+                             src="@(string.IsNullOrEmpty(Model.Match.MatchedPhoto)
+                                    ? "/images/avatar.jpg"
+                                      : $"data:image/jpeg;base64,{Model.Match.MatchedPhoto}")"
+                             class="border cursor-pointer rounded"
+                             style="width:240px;height:240px;object-fit:cover;cursor:pointer;display:block;margin:0 auto;"
+                             onclick="openComparePreview(
+                                        '@Model.Match.SourceFullName',
+                                        '@Model.Match.MatchedFullName',
+                                        '@(string.IsNullOrEmpty(Model.Match.SourcePhoto)
+                                                                         ? "/images/avatar.jpg"
+                                                                         : $"data:image/jpeg;base64,{Model.Match.SourcePhoto}")',
+                                        this.src
+                                    )" />
+                        <div class="text-muted small text-center mt-1">
+                            Click image to compare
+                        </div>
+
+                        <div class="mt-3">
+                            <h5 class="fw-bold mb-0">@Model.Match.MatchedFullName</h5>
+                            <div class="row small text-muted mb-3">
+                                <!-- Relationship (left) -->
+                                <div class="col-6">
+                                    <i class="fa fa-people-roof me-1"></i>
+                                    @Model.Match.MatchedRelationship
+                                </div>
+
+                                <!-- Household Size (right) -->
+                                <div class="col-6 text-end">
+                                    <i class="fa fa-users me-1"></i>
+                                    Household Size: @Model.Match.MatchedHHSize
+                                </div>
+                            </div>
+
+                            <div class="row g-3 py-3 border-top border-bottom">
+                                <div class="col-6">
+
+                                    <div class="label-text mb-1">Match History</div>
+
+                                    @{
+                                        var matchedHistoryCollapse = $"matched-history-{collapseId}";
+                                    }
+
+                                    <button class="btn btn-sm btn-link p-0 text-primary"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#@matchedHistoryCollapse"
+                                            aria-expanded="false"
+                                            aria-controls="@matchedHistoryCollapse">
+
+                                        <i class="fa-solid fa-clock-rotate-left me-1"></i>
+                                        View History
+                                    </button>
+
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="label-text"> Age / Gender </div>
+                                    <div class="fw-medium">@Model.Match.MatchedAge / @Model.Match.MatchedGender </div>
+                                </div>
+                            </div>
+                            <div class="collapse mt-3"
+                                 id="@matchedHistoryCollapse"
+                                 data-member-id="@Model.Match.MatchedUuid"
+                                 data-target="matchedHistoryMembers">
+
+                                <div class="card border-0 bg-light shadow-sm">
+                                    <div class="card-body small">
+
+                                        <div class="table-responsive">
+                                            <table class="table table-sm align-middle mb-0">
+
+                                                <thead class="text-muted small">
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Age</th>
+                                                        <th>Gender</th>
+                                                        <th>Status</th>
+                                                        <th>Activity</th>
+                                                        <th>Match Date</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody id="matchedHistoryMembers">
+                                                    <tr>
+                                                        <td colspan="5" class="text-muted small">
+                                                            Loading history...
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+
+                                            </table>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="label-text mb-1">Household</div>
+
+                                    @{
+                                        var matchedHouseholdCollapse = $"matched-household-{collapseId}";
+                                    }
+
+                                    <button class="btn btn-sm btn-link p-0 text-primary"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#@matchedHouseholdCollapse"
+                                            aria-expanded="false"
+                                            aria-controls="@matchedHouseholdCollapse">
+
+                                        <i class="fa-solid fa-chevron-down me-1"></i>
+                                        View Household (@Model.Match.MatchedHouseholdId)
+                                    </button>
+
+                                   
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="label-text mb-1">Registration Date</div>
+                                    <div class="fw-medium">
+                                        @Model.Match.MatchedRegistrationDate.ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                <div class="collapse mt-3"
+                                     id="@matchedHouseholdCollapse"
+                                     data-household-id="@Model.Match.MatchedHouseholdId"
+                                     data-target="matchedHouseholdMembers">
+
+                                    <div class="card border-0 bg-light shadow-sm">
+                                        <div class="card-body small">
+
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm align-middle mb-0">
+
+                                                <thead class="text-muted small">
+                                                    <tr>
+                                                        <th>PHOTO</th>
+                                                        <th>NAME</th>
+                                                        <th>AGE</th>
+                                                        <th>RELATIONSHIP</th>
+                                                        <th>GENDER</th>
+                                                        <th>FINGERPRINT</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody id="matchedHouseholdMembers">
+                                                    <tr>
+                                                        <td colspan="6" class="text-muted small">
+                                                            Loading household members...
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+
+                                            </table>
+                                                </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                </div>
+                                <!-- GPS FULL WIDTH -->
+                                <div class="col-12 mt-3 pt-3 border-top">
+                                    <div class="label-text mb-1">GPS Coordinates</div>
+
+                                    <div class="fw-medium w-100">
+                                        @Model.Match.MatchedGps
+                                    </div>
+                                </div>
+
+
+                                <!--Aditional information-->
+                                @{
+                                    var matchedExtraId = $"matched-extra-{collapseId}";
+                                }
+                                @{
+                                    var matchedProgram = Model.MatchedProgrammaticData.FirstOrDefault();
+                                }
+
+                                <div class="mt-3">
+
+                                    <button class="btn btn-sm btn-link p-0 text-primary"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#@matchedExtraId"
+                                            aria-expanded="false"
+                                            aria-controls="@matchedExtraId">
+                                        <i class="fa-solid fa-chevron-down me-1"></i>
+                                        More information
+                                    </button>
+
+                                    <div class="collapse mt-3" id="@matchedExtraId">
+                                        <div class="card border-0 bg-light shadow-sm">
+                                            <div class="card-body small">
+                                                <div class="row g-3">
+                                                @foreach (var field in matchedProgram?.Fields ?? new Dictionary<string, object>())
+                                                {
+                                                    <div class="col-6">
+                                                        <div class="text-muted">
+                                                            @field.Key
+                                                        </div>
+
+                                                        <div class="fw-medium">
+                                                            @(field.Value ?? "-")
+                                                        </div>
+                                                    </div>
+                                                }
+
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+              
+
+
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @{
+            bool hasSourceGps = !string.IsNullOrWhiteSpace(Model.Match.SourceGps);
+            bool hasMatchedGps = !string.IsNullOrWhiteSpace(Model.Match.MatchedGps);
+
+            bool canShowMap = hasSourceGps && hasMatchedGps;
+
+            var mapId = $"map-{Model.Match.SourceUuid}-{Model.Match.MatchedUuid}";
+        }
+
+
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body">
+
+                <h6 class="fw-bold mb-3">
+                    <i class="fa-solid fa-map-location-dot me-2"></i>
+                    Match Location Map
+                </h6>
+
+                @if (canShowMap)
+                {
+                    <!-- MAP -->
+                    <div id="@mapId"
+                         data-source="@Model.Match.SourceGps"
+                         data-matched="@Model.Match.MatchedGps"
+                         style="height:320px; width:100%; border-radius:8px;">
+                    </div>
+
+                    <div class="small text-muted mt-2">
+                        Distance: <span id="distance-@mapId">Calculating...</span>
+                    </div>
+                }
+                else
+                {
+                    <!-- FALLBACK UI -->
+                    <div class="d-flex flex-column align-items-center justify-content-center text-center py-5 text-muted">
+
+                        <i class="fa-solid fa-map-location-dot fa-2x mb-3 opacity-50"></i>
+
+                        <div class="fw-medium">
+                            Location map unavailable
+                        </div>
+
+                        <div class="small mt-1">
+                            @(!hasSourceGps && !hasMatchedGps
+                                                    ? "GPS coordinates are missing for both records."
+                                                    : !hasSourceGps
+                                                    ? "Source GPS coordinates are missing."
+                                                    : "Matched GPS coordinates are missing."
+                                                    )
+                    </div>
+
+                    </div>
+                                }
+
+            </div>
+        </div>
+
+
+        <script>
+
+            function initMatchMap(mapId, sourceGps, matchedGps) {
+
+                if (!window.L) return;
+
+                // prevent double initialization
+                if (document.getElementById(mapId)._leaflet_id) return;
+
+                function parseGps(gps) {
+                    if (!gps) return null;
+
+                    const parts = gps.split(',');
+                    if (parts.length < 2) return null;
+
+                    return [
+                        parseFloat(parts[0]),
+                        parseFloat(parts[1])
+                    ];
+                }
+
+                const source = parseGps(sourceGps);
+                const matched = parseGps(matchedGps);
+
+                if (!source || !matched) return;
+
+                 window.matchMaps = window.matchMaps || {};
+                const map = L.map(mapId);
+                window.matchMaps[mapId] = map;
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                const bounds = L.latLngBounds([source, matched]);
+
+                // store globally
+                window.matchBounds = window.matchBounds || {};
+                window.matchBounds[mapId] = bounds;
+
+                map.fitBounds(bounds.pad(0.4));
+
+                const sourceMarker = L.marker(source)
+                .addTo(map)
+                .bindPopup("Source", {
+                    autoClose: false,
+                    closeOnClick: false
+                })
+                .openPopup();
+
+                const matchedMarker = L.marker(matched)
+                .addTo(map)
+                .bindPopup("Matched", {
+                    autoClose: false,
+                    closeOnClick: false
+                })
+                .openPopup();
+
+                L.polyline([source, matched], { weight: 3 }).addTo(map);
+
+                const distance = map.distance(source, matched);
+
+                const distanceText =
+                    distance > 1000
+                        ? (distance / 1000).toFixed(2) + " km"
+                        : Math.round(distance) + " meters";
+
+                document.getElementById("distance-" + mapId).innerText = distanceText;
+
+                // FIX rendering after collapse animation
+                setTimeout(() => map.invalidateSize(), 300);
+            }
+
+
+             function addHistoryMarkers(mapId, historyList) {
+
+                const map = window.matchMaps?.[mapId];
+                const bounds = window.matchBounds?.[mapId];
+
+                if (!map || !bounds) return;
+
+                function parseGps(gps) {
+                    if (!gps) return null;
+
+                    const parts = gps.split(',');
+                    if (parts.length < 2) return null;
+
+                    return [parseFloat(parts[0]), parseFloat(parts[1])];
+                }
+
+                const greyIcon = L.icon({
+                    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+                    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+                    className: "grey-marker"
+                });
+
+                historyList.forEach(h => {
+
+                    const coords = parseGps(h.otherMemberGps);
+                    if (!coords) return;
+
+                    // add marker
+                    L.marker(coords, { icon: greyIcon })
+                        .addTo(map)
+                        .bindPopup(`<b>${h.otherMemberName}</b>`);
+
+                    //EXTEND BOUNDS
+                    bounds.extend(coords);
+                });
+
+                // REFIT MAP AFTER ADDING ALL
+                map.fitBounds(bounds.pad(0.4));
+            }
+
+        </script>
+
+
+       
+
+        <!-- Deduplication Indicators Card -->
+        @if (Model.DuplicateIndicators.Any())
+        {
+            var grouped = Model.DuplicateIndicators
+            .GroupBy(x => x.ExclusiveGroupId)
+            .OrderBy(g => g.Key)
+            .ToList();
+
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+
+                    <h6 class="fw-bold mb-3">
+                        Deduplication indicators checklist
+                        <span class="text-muted fw-normal">
+                            (Select the relevant options and click the generate button to get a suggestion on the deduplication action)
+                        </span>
+                    </h6>
+
+
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+
+                        @foreach (var group in grouped)
+                        {
+
+                            foreach (var item in group)
+                            {
+                                var radioName = $"group_{group.Key}_{collapseId}";
+                                <div class="col">
+                                    <div class="form-check">
+
+                                        <input class="form-check-input indicator"
+                                               type="radio"
+                                               name="@radioName"
+                                               value="@item.Score"
+                                               id="@( $"indicator_{item.Id}_{collapseId}" )"
+                                               @(item.Selected ? "checked" : "")
+                                               @(item.Disabled ? "disabled" : "") />
+
+                                
+
+                                        <label class="form-check-label"
+                                               for="@( $"indicator_{item.Id}_{collapseId}" )">
+                                            @item.Name
+                                        </label>
+
+                                    </div>
+                                </div>
+                            }
+                        }
+
+
+                    </div>
+
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button"
+                                class="btn btn-outline-primary btn-sm"
+                                onclick="generateSuggestion(this)">
+                            <i class="fa-solid fa-lightbulb me-1"></i>
+                            Generate Suggestion
+                        </button>
+
+                    </div>
+
+                    <div id="suggestionBox"
+                         class="alert alert-secondary mt-3 d-none">
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+
+            <button class="btn btn-outline-danger btn-sm"
+                    onclick="openReject(
+            '@Model.Match.SourceFullName',
+            '@Model.Match.MatchedFullName',
+            '@Model.Match.SourceUuid',
+            '@Model.Match.MatchedUuid'
+        );">
+                Reject Match
+            </button>
+
+            <button class="btn btn-primary btn-sm"
+                    onclick="openConfirm(
+            '@Model.Match.SourceFullName',
+            '@Model.Match.MatchedFullName',
+            '@Model.Match.SourceUuid',
+            '@Model.Match.MatchedUuid'
+        );">
+                Confirm Match
+            </button>
+
+        </div>
+    </div>
+</div>

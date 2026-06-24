@@ -1,0 +1,46 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model CreatePrintSessionRequest
+
+
+
+<div class="modal fade" id="addPrintSessionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Claim Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+                    <strong style="color:#2196F3;">ℹ Note:</strong>
+                    <ul style="margin:8px 0 0 18px; padding:0;">
+                        <li><strong>Label Description:</strong> A descriptive name for the claim.</li>
+                        <li><strong>Number of Devices:</strong> Indicates how many devices you will provision at the same time.</li>
+                      
+                    </ul>
+                </div>
+
+                <br />
+
+                <form method="post" enctype="multipart/form-data" asp-page-handler="Create">
+
+                    <div class="mb-3">
+                        <label class="form-label">Label (Max 100 characters)</label>
+                        <input name="NewPrintSession.Label" class="form-control" required maxlength="100">
+                    </div>      
+
+                    <div class="mb-3">
+                        <label class="form-label">Maximum Claims</label>
+                        <input name="NewPrintSession.MaxDevices" class="form-control" required />
+                    </div>
+                    
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

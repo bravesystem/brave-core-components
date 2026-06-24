@@ -1,0 +1,79 @@
+/* Raw data page styles (keeps visual language similar to dashboard) */
+
+.rawdata-container {
+    padding: 0;
+}
+
+/* Reuse filter-card look */
+.filter-card {
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(20,33,61,0.06);
+    margin-bottom: 1rem;
+}
+
+.table-responsive {
+    padding: 0.5rem 1rem;
+}
+
+/* Animated row entrance */
+.fade-in-rows .rd-row {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: rdFadeIn 360ms ease-out forwards;
+}
+
+@keyframes rdFadeIn {
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Spinner position */
+#loadingSpinner {
+    margin-right: .5rem;
+}
+
+/* Smaller table and tighter padding for compactness */
+#rawTable th, #rawTable td {
+    vertical-align: middle;
+    padding: .55rem .6rem;
+}
+
+/* Sortable header cursor */
+#rawTable thead th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Pagination */
+.pagination {
+    margin: 0;
+}
+
+/* Toast style */
+.toast {
+    min-width: 180px;
+}
+
+/* Buttons */
+.btn-outline-primary, .btn-outline-secondary, .btn-outline-success {
+    transition: transform .08s ease, box-shadow .12s ease;
+}
+
+    .btn-outline-primary:hover, .btn-outline-secondary:hover, .btn-outline-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(13,110,253,0.08);
+    }
+
+/* Small screens: make table horizontally scrollable */
+@media (max-width: 767px) {
+    .table-responsive {
+        padding: 0.25rem;
+    }
+
+    #rawTable th, #rawTable td {
+        padding: .45rem .4rem;
+        font-size: .88rem;
+    }
+}

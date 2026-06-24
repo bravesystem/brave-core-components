@@ -1,0 +1,521 @@
+﻿@page
+@model BRaVe_Portal.Pages.Targeting.TargetingResultsModel
+@{
+    ViewData["Title"] = "Targeting Results";
+}
+
+<div class="container py-4">
+
+    <!-- Back Button (Top Row) -->
+    <div class="mb-2">
+        <a asp-page="/Targeting/ApplyTargeting"
+           class="btn btn-sm btn-outline-primary px-2 py-1">
+            <i class="fa fa-arrow-left me-1"></i>
+            Back
+        </a>
+    </div>
+
+    <!-- Title Section -->
+    <div class="mb-4">
+        <h3 class="mb-1">Targeting Results - @Model.TargetingRule</h3>
+        <p class="text-muted mb-0 small">
+            From @Model.FromDate.ToString("dd MMM yyyy")
+            to @Model.ToDate.ToString("dd MMM yyyy")
+           Targeting Id: @Model.TargetingId
+        </p>
+    </div>
+
+    <input type="hidden" id="TargetingId" value="@Model.TargetingId" />
+
+
+    <div id="resultsSection" class="mt-4">
+
+        <!-- Secondary Filtering (Styled Panel Restored) -->
+        <div class="card bg-light border mb-3">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-uppercase fw-bold text-muted">
+                            Filter By
+                        </label>
+                        <select class="form-select form-select-sm" id="filterCol">
+                            <option value="score">Score</option>
+                            <option value="rank">Rank</option>
+                            <option value="denseRank">Dense Rank</option>
+                            <option value="rowNumber">Row Number</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-uppercase fw-bold text-muted">
+                            Operator
+                        </label>
+                        <select class="form-select form-select-sm" id="filterOp">
+                            <option value="gte">&ge; Greater than or equal</option>
+                            <option value="lte">&le; Less than or equal</option>
+                            <option value="gt">&gt; Greater than</option>
+                            <option value="lt">&lt; Less than</option>
+                            <option value="eq">= Equal to</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small text-uppercase fw-bold text-muted">
+                            Threshold
+                        </label>
+                        <input type="number"
+                               class="form-control form-control-sm"
+                               id="filterVal"
+                               placeholder="Enter number...">
+                    </div>
+
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="button"
+                                class="btn btn-outline-primary btn-sm w-100"
+                                id="btnFilter">
+                            Filter
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-outline-danger btn-sm w-100"
+                                id="btnClear">
+                            Clear
+                        </button>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Table -->
+        <div class="card shadow-sm border-0">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white">
+                <h5 class="mb-0">Resulting Set</h5>
+                <div class="btn-group">
+                    <button class="btn btn-success btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#enrollModal">
+                        Enroll to Distribution
+                    </button>
+
+                    <button class="btn btn-outline-success btn-sm"
+                            id="btnExport">
+                        Export to Excel
+                    </button>
+                </div>
+
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th></th>
+                                <th>Household ID</th>
+                                <th>Household Size</th>
+                                <th>Full Name</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th class="text-primary">Score</th>
+                                <th>Rank</th>
+                                <th>Dense Rank</th>
+                                <th>Row Number</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            @foreach (var item in Model.Results)
+                            {
+                                <tr>
+                                    <td><input type="checkbox" class="selectAll" checked /></td>
+                                    <td>
+                                        @item.HouseholdId
+
+
+                                        <a asp-page="/dashboard/RawData/HouseholdDetails"
+                                           asp-route-householdId="@item.HouseholdId"
+                                           class="fw-normal ms-1">
+
+                                            View <i class="fa-solid fa-eye me-1"></i>
+                                        </a>
+                                    </td>
+                                    <td>@item.HouseholdSize</td>
+
+                                    <td>@item.FullName</td>
+                                    <td>@item.Age</td>
+                                    <td>@item.Gender</td>
+                                    <td class="fw-bold text-primary">@item.Score.ToString("F3")</td>
+                                    <td>@item.Rank</td>
+                                    <td>@item.DenseRank</td>
+                                    <td>@item.RowNumber</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enroll Modal -->
+        <div class="modal fade" id="enrollModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Select Distribution</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <form method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="mb-3">
+                                <label for="distSelect" class="form-label fw-semibold">
+                                    Select Distribution
+                                </label>
+                         
+                              
+                                <select id="distSelect"
+                                        class="form-select"
+                                        required>
+
+                                    <option value="" disabled selected>-- Select Distribution --</option>
+
+                                    @if (Model.Distributions != null)
+                                    {
+                                        foreach (var d in Model.Distributions)
+                                        {
+                                            <option value="@d.Id">@d.Id - @d.Title</option>
+                                        }
+                                    }
+                                </select>
+
+                                <div id="distributionError" class="text-danger small d-none">
+                                    Please select a distribution.
+                                </div>
+                            </div>
+                            <div>
+                                <br />
+                            </div>
+                            <div>
+                                <strong style="color:#2196F3;">ℹ Note:</strong>
+                                Only Active distributions are displayed in this list.
+                            </div>
+                        </form>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button class="btn btn-success" id="confirmEnroll" data-bs-toggle="modal" data-bs-target="#confirmEnrollModal">
+                            Enroll beneficiaries
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Enrollment Modal -->
+        <div class="modal fade" id="confirmEnrollModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title">
+                            Confirm Enrollment
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p class="mb-2">
+                            You are about to enroll
+                            <strong id="confirmCount"></strong>
+                            households to:
+                        </p>
+
+                        <p class="fw-bold text-primary mb-0" id="confirmDistribution"></p>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button class="btn btn-success" id="finalConfirmEnroll">
+                            Yes, Enroll
+                        </button>
+                    </div>
+                    <a id="household-link-template"
+                       asp-page="/dashboard/RawData/HouseholdDetails"
+                       asp-route-householdId="__ID__"
+                       style="display:none;">
+                    </a>
+
+
+                </div>
+            </div>
+        </div>
+
+
+
+    </div>
+
+    <script>
+
+                    const templateLink = document.getElementById("household-link-template");
+        const templateHref = templateLink.getAttribute("href");
+
+
+                   document.addEventListener("DOMContentLoaded", function () {
+
+
+            let allData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Results));
+            let filteredData = [...allData];
+
+                    // Sort by RowNumber ascending
+        allData.sort((a, b) => a.RowNumber - b.RowNumber);
+        filteredData = [...allData];
+        renderTable(filteredData);
+
+
+            function renderTable(data) {
+                const body = document.getElementById('tableBody');
+                body.innerHTML = data.map(x => `
+                    <tr>
+                         <td>
+                            <input type="checkbox"
+                                   class="rowCheckbox"
+                                   data-id="${x.HouseholdId}"
+                                   checked />
+                        </td>
+                                               <td>
+            ${x.HouseholdId}
+            <a href="${templateHref.replace('__ID__', x.HouseholdId)}"
+               class="fw-normal ms-1">
+                View <i class="fa-solid fa-eye me-1"></i>
+            </a>
+        </td>
+
+
+                        <td>${x.HouseholdSize}</td>
+                        <td>${x.FullName}</td>
+                        <td>${x.Age}</td>
+                        <td>${x.Gender}</td>
+                        <td class="fw-bold text-primary">${x.Score.toFixed(3)}</td>
+                        <td>${x.Rank}</td>
+                        <td>${x.DenseRank}</td>
+                        <td>${x.RowNumber}</td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('btnFilter').onclick = function () {
+                const col = document.getElementById('filterCol').value;
+                const op = document.getElementById('filterOp').value;
+                const val = parseFloat(document.getElementById('filterVal').value);
+
+                if (isNaN(val)) {
+                    filteredData = [...allData];
+                    renderTable(filteredData);
+                    return;
+                }
+
+                const filtered = allData.filter(item => {
+                    let itemVal;
+
+                    switch (col) {
+                        case "score": itemVal = item.Score; break;
+                        case "rank": itemVal = item.Rank; break;
+                        case "denseRank": itemVal = item.DenseRank; break;
+                        case "rowNumber": itemVal = item.RowNumber; break;
+                        default: return true;
+                    }
+
+                    switch (op) {
+                        case 'gt': return itemVal > val;
+                        case 'gte': return itemVal >= val;
+                        case 'lt': return itemVal < val;
+                        case 'lte': return itemVal <= val;
+                        case 'eq': return itemVal === val;
+                        default: return true;
+                    }
+                });
+
+                filteredData = filtered;
+                filteredData.sort((a, b) => a.RowNumber - b.RowNumber);
+
+                renderTable(filteredData);
+            };
+                        document.getElementById('btnClear').onclick = function () {
+
+            // Reset dropdowns
+            document.getElementById('filterCol').value = "score";
+            document.getElementById('filterOp').value = "gte";
+            document.getElementById('filterVal').value = "";
+
+            // Reset data
+            filteredData = [...allData];
+            filteredData.sort((a, b) => a.RowNumber - b.RowNumber);
+            renderTable(filteredData);
+        };
+
+        debugger;
+
+                    var grp = document.getElementsByClassName('selectAll');
+
+                    debugger;
+                    
+                    Array.from(grp).forEach(el => {
+    el.addEventListener('change', function () {
+        const checkboxes = document.querySelectorAll('.rowCheckbox');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+});
+
+
+        debugger;
+
+
+            document.getElementById('btnExport').onclick = function () {
+
+                if (!filteredData || filteredData.length === 0) {
+                    alert("No data to export.");
+                    return;
+                }
+
+                let csv = "HouseholdId,HouseholdSize,FullName,Age,Gender,Score,Rank,DenseRank,RowNumber\n";
+
+                filteredData.forEach(x => {
+                    csv += `${x.HouseholdId},${x.HouseholdSize},${x.FullName},${x.Age},${x.Gender},${x.Score},${x.Rank},${x.DenseRank},${x.RowNumber}\n`;
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "FilteredResults.csv";
+                link.click();
+            };
+
+                    document.getElementById('confirmEnroll').onclick = function () {
+
+            const select = document.getElementById('distSelect');
+            const distributionId = select.value;
+            const distributionName = select.options[select.selectedIndex].text;
+
+            if (!distributionId) {
+                alert("Please select a distribution.");
+                return;
+            }
+
+            if (!filteredData || filteredData.length === 0) {
+                alert("No households to enroll.");
+                return;
+            }
+
+            // Populate confirmation modal
+                       const checkedCount = document.querySelectorAll('.rowCheckbox:checked').length;
+
+        if (checkedCount === 0) {
+            alert("Please select at least one household.");
+            return;
+        }
+
+        document.getElementById('confirmCount').textContent = checkedCount;
+
+            document.getElementById('confirmDistribution').textContent = distributionName;
+
+                       // Get first modal instance
+        const enrollModalEl = document.getElementById('enrollModal');
+        const enrollModal = bootstrap.Modal.getInstance(enrollModalEl);
+
+        // Hide first modal
+        enrollModal.hide();
+
+        // After it fully closes, open confirmation modal
+        enrollModalEl.addEventListener('hidden.bs.modal', function handler() {
+
+            // Remove listener so it doesn't stack
+            enrollModalEl.removeEventListener('hidden.bs.modal', handler);
+
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmEnrollModal'));
+
+            confirmModal.show();
+        });
+
+
+            // Store distributionId temporarily
+            document.getElementById('finalConfirmEnroll').dataset.distributionId = distributionId;
+        };
+
+           document.getElementById('finalConfirmEnroll').onclick = async function () {
+
+
+            const distributionId = this.dataset.distributionId;
+
+            console.log("distributionId id");
+            console.log(distributionId);
+
+            if (!distributionId) return;
+
+                        const householdIds = Array.from(
+            document.querySelectorAll('.rowCheckbox:checked')
+        ).map(cb => cb.dataset.id);
+
+                console.log("households");
+                    console.log(householdIds);
+
+                debugger;
+
+
+            const antiForgery =
+                        document.querySelector('input[name="_bravePortalCsrf"]')?.value;
+
+            try {
+
+                        var data = {
+                                distributionId: parseInt(distributionId),
+                                targetingId : document.getElementById('TargetingId').value,
+                                householdIds: householdIds
+                            }
+
+                            console.log(data);
+
+                            debugger;
+
+                const response = await fetch("?handler=EnrollBeneficiaries", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                                ...(antiForgery ? { "X-BRaVe-Portal-CSRF": antiForgery } : {})
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    alert(result.message || "Enrollment failed.");
+                    return;
+                }
+
+                window.location.href = result.redirectUrl;
+
+            } catch (err) {
+                console.error(err);
+                alert("Unexpected error during enrollment.");
+            }
+        };
+
+
+
+
+
+        });
+
+
+    </script>
+
+</div>

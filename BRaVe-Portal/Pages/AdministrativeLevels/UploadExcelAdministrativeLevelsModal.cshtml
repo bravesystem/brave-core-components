@@ -1,0 +1,88 @@
+﻿<!-- Upload Excel Modal -->
+<div class="modal fade" id="UploadExcelAdministrativeLevelsModal" tabindex="-1" aria-labelledby="UploadExcelAdministrativeLevelsModal" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-file-excel me-2"></i> Upload Lookup Excel Sheet
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" asp-page-handler="UploadExcelAdministrativeLevels" id="UploadExcelAdministrativeLevelForm">
+                <div class="modal-body bg-light">
+
+                    <div class="alert alert-info d-flex align-items-center py-2 small mb-3" role="alert">
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        <span>
+                            Please upload an Excel file in <strong>.xlsx</strong> or <strong>.xls</strong> format.<br>
+                            You can also download the lookup template below.
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ExcelFile" class="form-label fw-semibold">Select Excel File</label>
+                        <input type="file" id="ExcelFile" name="ExcelFile" accept=".xlsx,.xls"
+                               class="form-control shadow-sm" required />
+                    </div>
+
+                    <div class="text-center mb-3">
+                        <a href="~/templates/DistributionItemTemplate.xlsx" class="text-decoration-none small" download>
+                            <i class="fa-solid fa-download me-1 text-primary"></i>
+                            Download Excel Template
+                        </a>
+                    </div>
+
+                    <!-- Hidden processing overlay -->
+                    <div id="uploadProcessing" class="text-center py-4" style="display: none;">
+                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        <p class="mt-3 mb-0 fw-semibold text-muted small">Processing your upload...</p>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer bg-white">
+                    <button type="submit" id="uploadButton" class="btn btn-success rounded-pill px-4 fw-semibold">
+                        <i class="fa-solid fa-upload me-2"></i> Upload
+                    </button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript: Show processing spinner for 2-3 seconds -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const uploadForm = document.getElementById("UploadExcelAdministrativeLevelForm");
+        const uploadButton = document.getElementById("uploadButton");
+        const processingDiv = document.getElementById("uploadProcessing");
+        const modalEl = document.getElementById("uploadExcelModal");
+        const bootstrapModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+        uploadForm.addEventListener("submit", function () {
+            // Hide form elements
+            uploadButton.disabled = true;
+            processingDiv.style.display = "block";
+
+            // Optional: visually fade out form fields for clarity
+            const inputs = uploadForm.querySelectorAll("input, a");
+            inputs.forEach(el => el.style.opacity = "0.5");
+
+            // Show spinner for 2.5 seconds before closing modal
+            setTimeout(() => {
+                bootstrapModal.hide();
+
+                // Reset UI for next time
+                uploadButton.disabled = false;
+                processingDiv.style.display = "none";
+                inputs.forEach(el => el.style.opacity = "1");
+            }, 2500);
+        });
+    });
+</script>

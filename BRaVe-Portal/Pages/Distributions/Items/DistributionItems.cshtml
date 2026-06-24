@@ -1,0 +1,482 @@
+﻿@page
+@using BRaVe_Portal.Models
+@model BRaVe_Portal.Pages.Distributions.Items.DistributionItemsModel
+
+@{
+    ViewData["Title"] = "Item Management";
+    Layout = "_SectionMenu";
+}
+
+@section SubMenuBar {
+    <div class="page-tabs">
+        <a asp-page="/Distributions/DistributionsType" class="tab-item">Distribution Types</a>
+        <a asp-page="/Distributions/DistributionKits" class="tab-item">Kit Types</a>
+        <a asp-page="/Distributions/Items/DistributionItems" class="tab-item active">Item Types</a>
+    </div>
+}
+<div class="mb-3 text-end">
+    <button type="button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#DistributionItemModal"
+            onclick="openAddItemModal()">
+        <i class="fa fa-plus"></i> Add Item
+    </button>
+</div>
+
+<!-- Search -->
+<form method="get" class="mb-3 d-flex justify-content-center">
+    <div class="position-relative" style="max-width:500px;width:100%;">
+        <input name="SearchTerm"
+               type="text"
+               class="form-control shadow-sm rounded-pill ps-5 pe-4"
+               placeholder="Search Items..."
+               value="@Model.SearchTerm" />
+
+        <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+            <i class="bi bi-search" style="color:#004080;"></i>
+        </span>
+    </div>
+
+    <input type="hidden" name="PageSize" value="@Model.PageSize" />
+    <input type="hidden" name="CurrentPage" value="1" />
+</form>
+
+@if (TempData["ItemsMessage"] != null)
+{
+    var status = TempData["ItemStatus"]?.ToString();
+
+    <div class="alert @(status == "success" ? "alert-success" : "alert-danger")">
+        @TempData["ItemsMessage"]
+    </div>
+}
+<div style="background: linear-gradient(90deg, #e3f2fd, #bbdefb); border-left:4px solid #1e88e5; padding:12px; margin-top:10px; font-size:14px; color:#0d47a1; border-radius:4px;">
+    <strong>ℹ Note:</strong>
+    SKU refers (Stock Keeping Unit) is a unique code used to identify and track each item in the distribution.
+</div>
+<!-- Page Size + Pagination -->
+<div class="d-flex justify-content-between align-items-center mb-2 p-3 small">
+    <form method="get" class="d-inline-flex align-items-center mb-0">
+        <span>Show</span>
+
+        <select name="PageSize"
+                class="form-select form-select-sm"
+                style="width:auto;display:inline-block;margin:0 4px;"
+                onchange="this.form.submit()">
+
+            <option value="5" selected="@(Model.PageSize == 5)">5</option>
+            <option value="10" selected="@(Model.PageSize == 10)">10</option>
+            <option value="25" selected="@(Model.PageSize == 25)">25</option>
+            <option value="50" selected="@(Model.PageSize == 50)">50</option>
+
+        </select>
+
+        <span>entries</span>
+
+        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+        <input type="hidden" name="CurrentPage" value="1" />
+    </form>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination justify-content-center mb-0">
+
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-page="./DistributionItems"
+                   asp-route-CurrentPage="@(Model.CurrentPage - 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   asp-route-SearchTerm="@Model.SearchTerm">Previous</a>
+            </li>
+
+       @for (int i = 1; i <= Model.TotalPages; i++)
+{
+    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+        <a class="page-link" asp-page="./DistributionItems"
+           asp-route-CurrentPage="@i"
+           asp-route-PageSize="@Model.PageSize"
+           asp-route-SearchTerm="@Model.SearchTerm">@i</a>
+    </li>
+}
+
+<li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+    <a class="page-link" asp-page="./DistributionItems"
+       asp-route-CurrentPage="@(Model.CurrentPage + 1)"
+       asp-route-PageSize="@Model.PageSize"
+       asp-route-SearchTerm="@Model.SearchTerm">Next</a>
+</li>
+
+        </ul>
+    </nav>
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+@if ((Model.FilteredItems?.Count ?? 0) > 0)
+{
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-primary text-white fw-bold">
+            Manage Items
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table table-bordered table-hover align-middle mb-0" id="itemsTable">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Notes</th>
+                        <th>Source</th>
+                        <th>SKU</th>
+                        <th>QR Code</th>
+                        <th>External Id</th>
+                        <th>Activity Date</th>
+                        <th>Status</th>
+                        <th>Edit</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model.FilteredItems)
+                    {
+
+                        <tr>
+                            <td>@item.Id</td>
+                            <td>@item.Name</td>
+                            <td>@item.Notes</td>
+                         
+                            <td>
+                                @{
+                                    var typeName = item.Source switch
+                                    {
+                                        "E" => "External",
+                                        "I" => "Internal",
+                                        _ => "Unknown"
+                                    };
+                                }
+                                @typeName
+                            </td>
+                            <td>@item.SKU</td>
+                            <td>@item.QRCode</td>
+                            <td>@item.ExternalId</td>
+                            <td>
+                                @((item.UpdatedOn ?? item.CreatedOn).ToString("yyyy-MM-dd"))
+                                <br />
+                                <small class="text-muted">
+                                    @(item.UpdatedOn == null ? "Created" : "Updated")
+                                </small>
+                            </td>
+                            <td>
+
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                }
+
+
+
+                            </td>
+
+                            <td>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        style="background-color:#198754;color:white"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#DistributionItemModal"
+                                        data-id="@item.Id"
+                                        data-name="@item.Name"
+                                        data-notes="@item.Notes"
+                                        data-source="@item.Source"
+                                        data-sku="@item.SKU"
+                                        data-qrcode="@item.QRCode"
+                                        data-externalid="@item.ExternalId"
+                                        data-isactive="@item.IsActive.ToString().ToLower()"
+                                        data-tenantid="@item.TenantId">
+
+                                    <i class="fa fa-edit"></i>
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    }
+
+                </tbody>
+
+            </table>
+            @* <div class="modal fade" id="DistributionItemModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitle">Add Item</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <form method="post" asp-page-handler="SaveDistributionItem">
+
+                            @Html.AntiForgeryToken()
+
+                            <div class="modal-body">
+                                <input type="hidden" id="Id" name="UpdatedItem.Id" />
+                                <input type="hidden" id="TenantId" name="UpdatedItem.TenantId" />
+
+                                <div class="mb-3">
+                                    <label class="form-label">Name</label>
+                                    <input class="form-control" id="Name" name="UpdatedItem.Name" required />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Notes</label>
+                                    <input class="form-control" id="Notes" name="UpdatedItem.Notes" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Source</label>
+                                    <select class="form-select"
+                                            id="Source"
+                                            name="UpdatedItem.Source"
+                                            onchange="toggleExternalId()"
+                                            required>
+                                        <option value="">-- Select Source --</option>
+                                        <option value="E">External</option>
+                                        <option value="I">Internal</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">SKU</label>
+                                    <input class="form-control" id="SKU" name="UpdatedItem.SKU" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">QR Code</label>
+                                    <input class="form-control" id="QRCode" name="UpdatedItem.QRCode" />
+                                </div>
+                                <div class="mb-3" id="externalIdGroup">
+                                    <label class="form-label">External Id</label>
+                                    <input class="form-control" id="ExternalId" name="UpdatedItem.ExternalId" />
+                                </div>
+                                <div class="form-check">
+                                    <!-- keep hidden to always submit false if unchecked -->
+                                    <input type="hidden" name="IsActive" value="false" />
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="IsActive"
+                                           name="UpdatedItem.IsActive"
+                                           value="true" />
+                                    <label class="form-check-label">Active</label>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-success">Save</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div> *@
+        
+        
+        </div>
+
+    </div>
+
+}
+else
+{
+
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Items Found</h4>
+    </div>
+
+}
+
+<a class="btn btn-sm btn-outline-secondary"
+   style="background-color:#198754;color:ghostwhite"
+   asp-page="/Distributions/DistributionKits">
+    Back to Kits
+</a>
+
+@* <div>
+    <partial name="_AddActivityModal" model="Model.UpdatedDistributionItemKit" />
+</div> *@
+
+<div class="modal fade" id="DistributionItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="post" asp-page-handler="SaveDistributionItem">
+
+                @Html.AntiForgeryToken()
+
+                <div class="modal-body">
+                    <input type="hidden" id="Id" name="UpdatedItem.Id" />
+                    <input type="hidden" id="TenantId" name="UpdatedItem.TenantId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" id="Name" name="UpdatedItem.Name" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <input class="form-control" id="Notes" name="UpdatedItem.Notes" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Source</label>
+                        <select class="form-select"
+                                id="Source"
+                                name="UpdatedItem.Source"
+                                onchange="toggleExternalId()"
+                                required>
+                            <option value="">-- Select Source --</option>
+                            <option value="E">External</option>
+                            <option value="I">Internal</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">SKU</label>
+                        <input class="form-control" id="SKU" name="UpdatedItem.SKU" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">QR Code</label>
+                        <input class="form-control" id="QRCode" name="UpdatedItem.QRCode" />
+                    </div>
+                    <div class="mb-3" id="externalIdGroup">
+                        <label class="form-label">External Id</label>
+                        <input class="form-control" id="ExternalId" name="UpdatedItem.ExternalId" />
+                    </div>
+                    <div class="form-check">
+                        <!-- keep hidden to always submit false if unchecked -->
+                        <input type="hidden" name="IsActive" value="false" />
+                        <input class="form-check-input"
+                               type="checkbox"
+                               id="IsActive"
+                               name="UpdatedItem.IsActive"
+                               value="true" />
+                        <label class="form-check-label">Active</label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // Toggle ExternalId field visibility based on Source
+            function toggleExternalId() {
+                const source = document.getElementById("Source").value;
+                const group = document.getElementById("externalIdGroup");
+
+                if (source === "E") {
+                    group.style.display = "block";
+                } else {
+                    group.style.display = "none";
+                    document.getElementById("ExternalId").value = "";
+                }
+            }
+
+            // Open Add Modal
+            window.openAddItemModal = function () {
+                document.getElementById("modalTitle").innerText = "Add Item";
+                document.getElementById("Id").value = "";
+                document.getElementById("TenantId").value = "";
+                document.getElementById("Name").value = "";
+                document.getElementById("Notes").value = "";
+                document.getElementById("Source").value = "";
+                document.getElementById("SKU").value = "";
+                document.getElementById("QRCode").value = "";
+                document.getElementById("ExternalId").value = "";
+                document.getElementById("IsActive").checked = true;
+
+                toggleExternalId();
+            };
+
+            // Modal edit handler
+            const modal = document.getElementById("DistributionItemModal");
+
+            if (modal) {
+                modal.addEventListener("show.bs.modal", function (event) {
+                    const button = event.relatedTarget;
+
+                    if (!button || !button.getAttribute("data-id")) return;
+
+                    document.getElementById("modalTitle").innerText = "Edit Item";
+
+                    document.getElementById("Id").value = button.getAttribute("data-id");
+                    document.getElementById("TenantId").value = button.getAttribute("data-tenantid");
+                    document.getElementById("Name").value = button.getAttribute("data-name");
+                    document.getElementById("Notes").value = button.getAttribute("data-notes");
+
+                    const src = button.getAttribute("data-source");
+                    document.getElementById("Source").value = src;
+
+                    document.getElementById("SKU").value = button.getAttribute("data-sku");
+                    document.getElementById("QRCode").value = button.getAttribute("data-qrcode");
+                    document.getElementById("ExternalId").value = button.getAttribute("data-externalid");
+
+                    const isActiveAttr = button.getAttribute("data-isactive");
+                    document.getElementById("IsActive").checked =
+                        isActiveAttr && isActiveAttr.toLowerCase() === "true";
+
+                    toggleExternalId();
+                });
+            }
+
+            // Bind Source dropdown change
+            const sourceDropdown = document.getElementById("Source");
+            if (sourceDropdown) {
+                sourceDropdown.addEventListener("change", toggleExternalId);
+            }
+
+            // Initial state
+            toggleExternalId();
+
+            // Safer form submit logging (targets modal form only)
+            const modalForm = document.querySelector("#DistributionItemModal form");
+
+            if (modalForm) {
+                modalForm.addEventListener("submit", function () {
+                    console.log(
+                        "IsActive checked:",
+                        document.getElementById("IsActive").checked
+                    );
+                });
+            }
+
+        });
+    </script>
+}

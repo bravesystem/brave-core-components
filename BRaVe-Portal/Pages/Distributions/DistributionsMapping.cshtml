@@ -1,0 +1,525 @@
+﻿@page
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.Distributions.DistributionsMappingModel
+
+@{
+    ViewData["Title"] = "Distribution Type Management";
+    Layout = "_SectionMenu";
+
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.UOM ?? new List<LookupItemDto>();
+
+}
+
+@section SubMenuBar {
+    <div class="page-tabs">
+        <a asp-page="/Distributions/DistributionsType" class="tab-item active">Distribution Types</a>
+        <a asp-page="/Distributions/DistributionKits" class="tab-item">Kit Types</a>
+        <a asp-page="/Distributions/Items/DistributionItems" class="tab-item">Item Types</a>
+    </div>
+}
+<div class="mb-3 text-end">
+     <button type="button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#AddItemToDistributionModal">
+        <i class="fa fa-plus"></i> Add Item to this distribution
+    </button> 
+
+    <button type="button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            id="btnKit"
+            data-bs-target="#AddKitItemModal">
+        <i class="fa fa-plus"></i> Add Kit to this distribution
+    </button>
+
+  
+</div>
+
+
+<!-- Search -->
+<div class="mb-3 d-flex justify-content-center">
+    <div class="position-relative" style="max-width: 500px; width: 100%;">
+        <input id="searchInput"
+               type="text"
+               class="form-control shadow-sm rounded-pill ps-5 pe-4"
+               placeholder="Search Distribution Type..."
+               value="@Model.SearchTerm" />
+
+        <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+            <i class="bi bi-search" style="color:#004080;"></i>
+        </span>
+    </div>
+</div>
+
+@if (TempData["DistSuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["DistSuccessMessage"]</div>
+}
+
+@if (TempData["DistErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["DistErrorMessage"]</div>
+}
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+<div class="d-flex justify-content-between align-items-center mb-2 p-3 small">
+
+    <!-- Page Size -->
+    <form method="get" class="d-inline-flex align-items-center mb-0">
+        
+        <span>Show</span>
+
+        <select asp-for="PageSize"
+                class="form-select form-select-sm"
+                style="width:auto;display:inline-block;margin:0 4px;"
+                onchange="this.form.submit()">
+
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+        </select>
+
+        <span>entries</span>
+
+        <!-- Preserve state -->
+        <input type="hidden" asp-for="SearchTerm" />
+        <input type="hidden" asp-for="distributionId" />
+        <input type="hidden" asp-for="Description" />
+        <input type="hidden" asp-for="DistributionTitle" />
+        <input type="hidden" asp-for="DistributionExternalId" />
+        <input type="hidden" asp-for="CurrentPage" />
+    </form>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination justify-content-center mb-0">
+
+            <!-- Previous -->
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   href="?distributionId=@Model.distributionId
+         &Description=@System.Net.WebUtility.UrlEncode(Model.Description ?? "")
+         &DistributionTitle=@System.Net.WebUtility.UrlEncode(Model.DistributionTitle ?? "")
+         &DistributionExternalId=@System.Net.WebUtility.UrlEncode(Model.DistributionExternalId ?? "")
+         &CurrentPage=@(Model.CurrentPage - 1)
+         &PageSize=@Model.PageSize
+         &SearchTerm=@System.Net.WebUtility.UrlEncode(Model.SearchTerm ?? "")">
+                    Previous
+                </a>
+            </li>
+
+            <!-- Page Numbers -->
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link"
+                       href="?distributionId=@Model.distributionId
+             &Description=@System.Net.WebUtility.UrlEncode(Model.Description ?? "")
+             &DistributionTitle=@System.Net.WebUtility.UrlEncode(Model.DistributionTitle ?? "")
+             &DistributionExternalId=@System.Net.WebUtility.UrlEncode(Model.DistributionExternalId ?? "")
+             &CurrentPage=@i
+             &PageSize=@Model.PageSize
+             &SearchTerm=@System.Net.WebUtility.UrlEncode(Model.SearchTerm ?? "")">
+                        @i
+                    </a>
+                </li>
+            }
+
+            <!-- Next -->
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   href="?distributionId=@Model.distributionId
+         &Description=@System.Net.WebUtility.UrlEncode(Model.Description ?? "")
+         &DistributionTitle=@System.Net.WebUtility.UrlEncode(Model.DistributionTitle ?? "")
+         &DistributionExternalId=@System.Net.WebUtility.UrlEncode(Model.DistributionExternalId ?? "")
+         &CurrentPage=@(Model.CurrentPage + 1)
+         &PageSize=@Model.PageSize
+         &SearchTerm=@System.Net.WebUtility.UrlEncode(Model.SearchTerm ?? "")">
+                    Next
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+</div>
+<div style="background: linear-gradient(90deg, #e3f2fd, #bbdefb); border-left:4px solid #1e88e5; padding:12px; margin-top:10px; font-size:14px; color:#0d47a1; border-radius:4px;">
+    <strong>ℹ Note:</strong>
+    UoM refers to Unit of Measure, and SKU (Stock Keeping Unit) is a unique code used to identify and track each item in the distribution.
+</div>
+
+@if ((Model.FilteredDistributions?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Manage Distribution: @Model.Description
+        </div>
+        <form method="post">
+            @Html.AntiForgeryToken()
+        </form>
+        <div class="card-body p-0">
+            <div class="px-3 pb-2 small text-muted">
+                Showing @((Model.CurrentPage - 1) * Model.PageSize + 1)
+                -
+                @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords))
+                of @Model.TotalRecords entries
+            </div>
+            <table class="table table-bordered table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+
+                        <th>#</th>
+                        <th>Unit Title</th>
+                        <th>Target Type</th>
+                        <th>QR Code</th>
+                        <th>SKU</th>
+                        <th>Quantity</th>
+                        <th>Measure</th>
+                        <th>Uom</th>
+                        <th>Status</th>
+                        <th>View Composition</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var distribution in Model.FilteredDistributions)
+                    {
+                        <tr>
+
+                            <td>
+                                @{
+                                    var index = Model.FilteredDistributions.IndexOf(distribution)
+                                    + 1
+                                    + ((Model.CurrentPage - 1) * Model.PageSize);
+                                }
+                                @index
+                            </td>
+                            <td>@distribution.UnitTitle</td>
+                            <td>
+                                @{
+                                    var typeName = distribution.TargetType switch
+                                    {
+                                        "K" => "Kit",
+                                        "I" => "Item",
+                                        _ => "Unknown"
+                                    };
+                                }
+                                @typeName
+                            </td>
+                           
+                            <td>@distribution.QRCode</td>
+                            <td>@distribution.SKU</td>
+                            <td>
+                                <span class="display-value">@distribution.Quantity</span>
+                                <input type="number"
+                                       class="form-control form-control-sm edit-quantity d-none"
+                                       value="@distribution.Quantity" />
+                            </td>
+
+                            <td>
+                                <span class="display-value">@distribution.Measure</span>
+                                <input type="number"
+                                       class="form-control form-control-sm edit-measure d-none"
+                                       value="@distribution.Measure" />
+                            </td>
+
+                         
+                            <td>
+                                <span class="display-value">
+                                    @lookups.FirstOrDefault(x => x.Id.ToString() == distribution.UoM)?.Text
+                                </span>
+                             
+                                <select class="form-select form-select-sm edit-uom d-none">
+                                    @foreach (var u in lookups)
+                                    {
+                                        <option value="@u.Id" selected="@(u.Text == distribution.UoM)">
+                                            @u.Text
+                                        </option>
+                                    }
+                                </select>
+                            </td>
+            
+
+                            <td>
+                                @if (distribution.IsActive)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i> Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i> Inactive
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (distribution.TargetType == "K")
+                                {
+                               
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       style="background-color:#0056b3;color:ghostwhite; margin-top: 4px; display: inline-block"
+                                       asp-page="/Distributions/KitItems/Index"
+                                       asp-route-KitID="@distribution.KitTypeId"
+                                       asp-route-distributionId="@distribution.DistributionId"
+                                       asp-route-Description="@Model.Description"
+                                       asp-route-KitName="@distribution.UnitTitle"
+                                       asp-route-Source="mapping"
+                                       class="text-primary d-inline-flex align-items-center"
+                                       title="Manage items">
+
+                                        (@distribution.ItemCount)
+                                        - <i class="fa fa-eye"></i>
+                                    </a>
+                                }
+                            </td>
+
+                            <td>
+                                @if (distribution.TargetType == "I")
+                                {
+                                    <button type="button" class="btn btn-sm btn-success edit-item">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-primary save-item d-none"
+                                            data-id="@distribution.ItemTypeId">
+                                        <i class="fa fa-save"></i>
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-secondary cancel-item d-none">
+                                        Cancel
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-success edit-kit">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-primary save-kit d-none"
+                                            data-kitid="@distribution.KitTypeId"
+                                            data-distributionid="@distribution.DistributionId">
+
+                                        <i class="fa fa-save"></i>
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-secondary cancel-kit d-none">
+                                        Cancel
+                                    </button>
+                                }
+                                    
+                              
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No kit or item attached</h4>
+    </div>
+}
+<a class="btn btn-sm btn-outline-secondary" style="background-color:#198754;color:ghostwhite" asp-page="/Distributions/DistributionsType">Back</a>
+<!-- MODALS -->
+<partial name="~/Pages/Distributions/DistributionItems/_AddItemToDistributionModal.cshtml"
+         model="Model" />
+
+         <div>
+    <partial name="~/Pages/Distributions/DistributionKits/_AddKitItemModal.cshtml"
+             model="Model" />
+         </div>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // =========================
+            // SEARCH (debounced)
+            // =========================
+            const searchInput = document.getElementById("searchInput");
+            let debounceTimer;
+
+            if (searchInput) {
+                searchInput.addEventListener("input", function () {
+                    clearTimeout(debounceTimer);
+
+                    debounceTimer = setTimeout(() => {
+                        const searchTerm = encodeURIComponent(searchInput.value);
+                        const pageSize = @Model.PageSize;
+
+                        // Preserve extra parameters
+                        const distributionId = @Model.distributionId;
+                        const description = encodeURIComponent("@Model.Description");
+                        const distributionTitle = encodeURIComponent("@Model.DistributionTitle");
+                        const distributionExternalId = encodeURIComponent("@Model.DistributionExternalId");
+
+                        window.location.href =
+                            `?distributionId=${distributionId}` +
+                            `&Description=${description}` +
+                            `&DistributionTitle=${distributionTitle}` +
+                            `&DistributionExternalId=${distributionExternalId}` +
+                            `&SearchTerm=${searchTerm}` +
+                            `&PageSize=${pageSize}` +
+                            `&CurrentPage=1`;
+
+                    }, 400); // debounce delay
+                });
+            }
+
+            // =========================
+            // GLOBAL CLICK HANDLER (edit/save/cancel for items & kits)
+            // =========================
+            document.addEventListener("click", function (e) {
+
+                // ITEM EDIT
+                if (e.target.closest(".edit-item")) {
+                    const row = e.target.closest("tr");
+                    row.querySelectorAll(".display-value").forEach(el => el.classList.add("d-none"));
+                    row.querySelector(".edit-quantity").classList.remove("d-none");
+                    row.querySelector(".edit-measure").classList.remove("d-none");
+                    row.querySelector(".edit-uom").classList.remove("d-none");
+
+                    row.querySelector(".edit-item").classList.add("d-none");
+                    row.querySelector(".save-item").classList.remove("d-none");
+                    row.querySelector(".cancel-item").classList.remove("d-none");
+                }
+
+                // KIT EDIT
+                if (e.target.closest(".edit-kit")) {
+                    const row = e.target.closest("tr");
+                    row.querySelector(".display-value").classList.add("d-none");
+                    row.querySelector(".edit-quantity").classList.remove("d-none");
+
+                    row.querySelector(".edit-kit").classList.add("d-none");
+                    row.querySelector(".save-kit").classList.remove("d-none");
+                    row.querySelector(".cancel-kit").classList.remove("d-none");
+                }
+
+                // ITEM CANCEL
+                if (e.target.closest(".cancel-item")) {
+                    const row = e.target.closest("tr");
+                    row.querySelectorAll(".display-value").forEach(el => el.classList.remove("d-none"));
+                    row.querySelector(".edit-quantity").classList.add("d-none");
+                    row.querySelector(".edit-measure").classList.add("d-none");
+                    row.querySelector(".edit-uom").classList.add("d-none");
+
+                    row.querySelector(".edit-item").classList.remove("d-none");
+                    row.querySelector(".save-item").classList.add("d-none");
+                    row.querySelector(".cancel-item").classList.add("d-none");
+                }
+
+                // KIT CANCEL
+                if (e.target.closest(".cancel-kit")) {
+                    const row = e.target.closest("tr");
+                    row.querySelector(".display-value").classList.remove("d-none");
+                    row.querySelector(".edit-quantity").classList.add("d-none");
+
+                    row.querySelector(".edit-kit").classList.remove("d-none");
+                    row.querySelector(".save-kit").classList.add("d-none");
+                    row.querySelector(".cancel-kit").classList.add("d-none");
+                }
+
+                // ITEM SAVE
+                if (e.target.closest(".save-item")) {
+                    const btn = e.target.closest(".save-item");
+                    const row = btn.closest("tr");
+
+                    const id = btn.dataset.id;
+                    const quantity = row.querySelector(".edit-quantity").value;
+                    const measure = row.querySelector(".edit-measure").value;
+
+                    const uomSelect = row.querySelector(".edit-uom");
+                    const uom = uomSelect.value;
+                    const uomText = uomSelect.options[uomSelect.selectedIndex].text;
+
+                    fetch("?handler=UpdateInlineDistribution", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-BRaVe-Portal-CSRF": document.querySelector('input[name="_bravePortalCsrf"]').value
+                        },
+                        body: JSON.stringify({
+                            Id: id,
+                            Quantity: quantity,
+                            Measure: measure,
+                            UoM: uom
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            const displayValues = row.querySelectorAll(".display-value");
+                            displayValues[0].textContent = quantity;
+                            displayValues[1].textContent = measure;
+                            displayValues[2].textContent = uomText;
+                            displayValues.forEach(el => el.classList.remove("d-none"));
+
+                            row.querySelector(".edit-quantity").classList.add("d-none");
+                            row.querySelector(".edit-measure").classList.add("d-none");
+                            row.querySelector(".edit-uom").classList.add("d-none");
+
+                            row.querySelector(".edit-item").classList.remove("d-none");
+                            row.querySelector(".save-item").classList.add("d-none");
+                            row.querySelector(".cancel-item").classList.add("d-none");
+                        } else {
+                            alert("Update failed");
+                        }
+                    });
+                }
+
+                // KIT SAVE
+                if (e.target.closest(".save-kit")) {
+                    const btn = e.target.closest(".save-kit");
+                    const row = btn.closest("tr");
+
+                    const kitId = btn.dataset.kitid;
+                    const distributionId = btn.dataset.distributionid;
+                    const quantity = row.querySelector(".edit-quantity").value;
+
+                    fetch("?handler=UpdateInlineKit", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-BRaVe-Portal-CSRF": document.querySelector('input[name="_bravePortalCsrf"]').value
+                        },
+                        body: JSON.stringify({
+                            KitTypeId: kitId,
+                            DistributionId: distributionId,
+                            Quantity: quantity
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            row.querySelector(".display-value").textContent = quantity;
+                            row.querySelector(".display-value").classList.remove("d-none");
+                            row.querySelector(".edit-quantity").classList.add("d-none");
+
+                            row.querySelector(".edit-kit").classList.remove("d-none");
+                            row.querySelector(".save-kit").classList.add("d-none");
+                            row.querySelector(".cancel-kit").classList.add("d-none");
+                        } else {
+                            alert("Update failed");
+                        }
+                    });
+                }
+
+            }); // end click
+        });
+    </script>
+}

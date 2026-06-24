@@ -1,0 +1,57 @@
+﻿@model BRaVe_Portal.Models.SectionA
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.AssessmentPurposeOfProcessing ?? new List<LookupItemDto>();
+
+
+}
+
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Data Manager Name</label>
+        <input asp-for="DataManagerName" class="form-control" />
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Data Manager Contacts</label>
+        <input asp-for="DataManagerContacts" class="form-control" />
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Primary Purpose</label>
+
+        <select asp-for="PrimaryPurposeId" class="form-select">
+            @foreach (var c in lookups)
+            {
+                <option value="@c.Id">@c.Text</option>
+
+            }
+        </select>
+        <input asp-for="PrimaryPurposeOther" class="form-control mt-2" placeholder="If Other, specify..." />
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Secondary Purpose</label>
+        <select asp-for="SecondaryPurposeId" class="form-select">
+            @foreach (var c in lookups)
+            {
+                <option value="@c.Id">@c.Text</option>
+
+            }
+        </select>
+        <input asp-for="SecondaryPurposeOther" class="form-control mt-2" placeholder="If Other, specify..." />
+    </div>
+</div>
+<div class="row">
+    <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#saveSectionAModal">
+        <i class="fa fa-plus"></i> Edit
+    </button>
+</div>
+
+
+
+
+
+

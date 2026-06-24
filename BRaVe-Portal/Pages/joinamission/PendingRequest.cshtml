@@ -1,0 +1,39 @@
+﻿@page
+@model BRaVe_Portal.Pages.joinamission.PendingRequestModel
+@{
+    ViewData["Title"] = "Pending Request -";
+}
+
+
+
+<!-- Confirmation Card -->
+<div class="card shadow-lg mb-4 text-center rounded-3"
+     style="background: linear-gradient(135deg, #e0f2ff, #cfe8ff); transition: transform 0.3s;">
+    <div class="card-body p-5">
+        <h2 class="card-title fw-bold text-primary mb-3" 
+            style="font-family: 'Segoe UI', sans-serif; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+            Request Pending Approval
+        </h2>
+
+        <p class="card-text mb-3" style="font-size: 1.2rem; color: #004080; font-family: 'Segoe UI', sans-serif;">
+            Your request was submitted on:
+        </p>
+        <p class="fw-bold mb-4" style="font-size: 1.2rem; color: #00264d;">
+            @Model.SubmissionDate.ToString("MMMM dd, yyyy hh:mm tt")
+        </p>
+
+        <!-- Amber Status Alert -->
+        <div class="alert alert-warning shadow-sm mx-auto mb-5" role="alert" style="max-width:600px; background-color:#ffecb3; color:#7a4f00; border:1px solid #ffda80;">
+            <i class="bi bi-hourglass-split me-2"></i>
+            <strong>Status:</strong> Under Review
+        </div>
+
+        <p class="card-text mb-4" style="font-size: 1.3rem; color: #004080; font-family: 'Segoe UI', sans-serif;">
+            Once your status is approved, please <strong>log out</strong> and <strong>log in again</strong> 
+            to access the application features based on your assigned role.
+        </p>
+    </div>
+</div>
+
+
+

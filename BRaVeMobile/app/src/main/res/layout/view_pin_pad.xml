@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Centered vertical column inside the PinPadView (which is a ConstraintLayout) -->
+    <LinearLayout
+        android:id="@+id/pinPadColumn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/tvPinTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enter PIN"
+            android:textStyle="bold"
+            android:textAppearance="?attr/textAppearanceHeadline6" />
+
+        <TextView
+            android:id="@+id/tvUser"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="(User: EN-0007)"
+            android:layout_marginTop="4dp" />
+
+        <LinearLayout
+            android:id="@+id/llPinDots"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <View android:id="@+id/dot1" android:layout_width="14dp" android:layout_height="14dp"
+                android:layout_marginEnd="12dp" android:background="@drawable/bg_pin_dot_empty"/>
+            <View android:id="@+id/dot2" android:layout_width="14dp" android:layout_height="14dp"
+                android:layout_marginEnd="12dp" android:background="@drawable/bg_pin_dot_empty"/>
+            <View android:id="@+id/dot3" android:layout_width="14dp" android:layout_height="14dp"
+                android:layout_marginEnd="12dp" android:background="@drawable/bg_pin_dot_empty"/>
+            <View android:id="@+id/dot4" android:layout_width="14dp" android:layout_height="14dp"
+                android:background="@drawable/bg_pin_dot_empty"/>
+        </LinearLayout>
+
+        <GridLayout
+            android:id="@+id/gridKeypad"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:columnCount="3"
+            android:rowCount="4"
+            android:alignmentMode="alignMargins"
+            android:useDefaultMargins="true">
+
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn1" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="1"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn2" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="2"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn3" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="3"/>
+
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn4" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="4"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn5" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="5"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn6" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="6"/>
+
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn7" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="7"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn8" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="8"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn9" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="9"/>
+
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnClear" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="Clr"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn0" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="0"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnBackspace" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="56dp" android:text="" app:icon="@drawable/ic_backspace_24" app:iconPadding="0dp" app:iconGravity="textStart"/>
+        </GridLayout>
+
+        <LinearLayout
+            android:id="@+id/llError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/ivError"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_error_24"
+                app:tint="@color/purple_500"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/tvError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Incorrect PIN. Try again." />
+        </LinearLayout>
+    </LinearLayout>
+</merge>

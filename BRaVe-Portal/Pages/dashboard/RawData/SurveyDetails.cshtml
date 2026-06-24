@@ -1,0 +1,143 @@
+﻿@page "{type}/{householdId?}/{individualId?}/{name?}"
+@using System.Text
+@model BRaVe_Portal.Pages.dashboard.Raw_Data.SurveyDetailsModel
+@{
+    ViewData["Title"] = "Survey Details";
+
+@functions {
+    string ToRoman(int number)
+    {
+        var map = new (int value, string symbol)[]
+        {
+            (1000, "M"), (900, "CM"), (500, "D"), (400, "CD"),
+            (100, "C"), (90, "XC"), (50, "L"), (40, "XL"),
+            (10, "X"), (9, "IX"), (5, "V"), (4, "IV"),
+            (1, "I")
+        };
+
+        var result = new StringBuilder();
+
+        foreach (var (value, symbol) in map)
+        {
+            while (number >= value)
+            {
+                result.Append(symbol);
+                number -= value;
+            }
+        }
+
+        return result.ToString();
+    }
+}
+
+}
+
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <a href="javascript:history.back()"
+               data-no-loader
+               class="btn btn-outline-primary d-inline-flex align-items-center">
+                <i class="fa fa-arrow-left me-2"></i> Back
+            </a>
+
+            <br /><br />
+
+            <h4 class="mb-1">Survey Details -All surveys </h4>
+
+
+            @if (Model.Type == "individual")
+                {
+                <span class="badge bg-primary">
+                Full Name: @Model.Name
+                </span >
+                    }else
+                    {
+                <span class="badge bg-primary">
+                    Household ID: @Model.HouseholdId
+                </span>
+            }
+                    
+           
+        </div>
+    </div>
+
+    <!-- Survey Content -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <div class="accordion" id="surveyAccordion">
+
+                @if (Model.SurveyDetails != null && Model.SurveyDetails.Any())
+                {
+                    var groupedSurveys = Model.SurveyDetails
+                    .GroupBy(x => new { x.SurveyId, x.SurveyName })
+                    .Select((g, index) => new { Group = g, Index = index + 1 });
+
+                    foreach (var survey in groupedSurveys)
+                    {
+                        var collapseId = $"survey{survey.Index}";
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@collapseId">
+                                    <b>@survey.Index. @survey.Group.Key.SurveyName</b>
+                                </button>
+                            </h2>
+
+                            <div id="@collapseId" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+
+                                    @{
+                                        int qNo = 1;
+                                    }
+
+                                    @foreach (var q in survey.Group.OrderBy(x => x.QuestionId))
+                                    {
+                                        <p class="mb-1">
+                                            <strong>@ToRoman(qNo):</strong>
+                                            <em><strong>@q.Question</strong></em>
+                                        </p>
+
+                                        @if (q.AnswerType == 9 && !string.IsNullOrEmpty(q.QuestionAnswer))
+                                        {
+                                            <p class="mb-3">
+                                                <img src="data:image/png;base64,@q.QuestionAnswer"
+                                                     class="img-fluid"
+                                                     style="max-width: 300px; max-height: 300px; object-fit: contain;"
+                                                     alt="Answer Image" />
+                                            </p>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted mb-3">
+                                                <em>Answer: @q.QuestionAnswer</em>
+                                            </p>
+                                        }
+
+                                        qNo++;
+                                    }
+
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-muted text-center py-3">
+                        No survey data available.
+                    </div>
+                }
+
+            </div>
+
+        </div>
+    </div>
+
+
+</div>

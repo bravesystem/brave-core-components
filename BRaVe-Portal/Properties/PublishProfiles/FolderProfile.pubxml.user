@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- https://go.microsoft.com/fwlink/?LinkID=208121. -->
+<Project>
+  <PropertyGroup>
+    <_PublishTargetUrl>C:\Users\aguillaume\source\repos\BRaVe2025\BRaVe-Portal\bin\Release\net8.0\publish\</_PublishTargetUrl>
+    <History>True|2026-02-27T07:09:12.3171084Z||;True|2026-02-27T10:07:41.4864680+03:00||;True|2026-02-23T18:27:24.6788861+03:00||;True|2026-02-05T10:05:55.5712499+03:00||;True|2026-02-04T07:25:45.0298444+03:00||;True|2026-01-30T23:56:29.7819548+03:00||;True|2026-01-11T01:56:14.1774037+03:00||;True|2026-01-11T00:06:07.0022541+03:00||;True|2025-11-30T14:28:57.0450014+03:00||;True|2025-11-30T12:26:27.6237000+03:00||;True|2025-11-30T12:25:49.5366875+03:00||;True|2025-11-30T11:57:36.7231805+03:00||;True|2025-11-26T23:09:31.1628909+03:00||;True|2025-11-26T21:45:24.6432843+03:00||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+</Project>

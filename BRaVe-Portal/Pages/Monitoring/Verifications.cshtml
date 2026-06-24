@@ -1,0 +1,207 @@
+﻿@page
+@model BRaVe_Portal.Pages.Verifications.VerificationsModel
+@{
+
+    ViewData["Title"] = "Biometric verification";
+    Layout = "_SectionMenu";
+}
+
+@section SubMenuBar {
+    <div class="page-tabs">
+        <a asp-page="/Monitoring/BiometricMatchComparison" class="tab-item">Deduplication</a>
+        <a asp-page="/Monitoring/Verifications" class="tab-item active">Biometric Verification</a>
+
+    </div>
+
+}
+
+
+<div class="container-fluid py-4">
+    <div id="actionAlert"
+         class="alert alert-success alert-dismissible fade d-none"
+         role="alert">
+        <span id="actionAlertText">Action successful</span>
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close"></button>
+    </div>
+
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Biometric verifications</h1>
+            <p class="text-muted">View biometric verifications</p>
+        </div>
+    </div>
+
+
+
+    @if (Model.VerificationLoadFailed)
+    {
+        <div class="alert alert-danger">
+            Failed to load verifications, please try again.
+            <button class="btn btn-sm btn-outline-danger"
+                    onclick="location.reload()">
+                Retry
+            </button>
+        </div>
+    }
+    else if (!Model.Verifications.Any())
+    {
+        <div class="text-muted text-center py-4">
+            No verification records found.
+        </div>
+    }
+    else
+    {
+        @foreach (var v in Model.Verifications)
+        {
+            bool hasMatch = v.Match == "Match Found";
+            var collapseId = $"verify-{v.BiometricId}";
+
+            <div class="card mb-3 match-row">
+
+                <div class="card-body p-3 d-flex align-items-center gap-4">
+
+                    <!-- ACTIVITY CODE  -->
+                    <div class="flex-shrink-0 text-center"
+                         style="width:96px; white-space:nowrap;">
+
+                        <div class="fw-bold text-primary">
+                            Activity Code
+                        </div>
+                        <div class="small text-muted">
+                            <span class="badge bg-primary"> @v.ActivityCode</span>
+
+                        </div>
+                    </div>
+
+
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">
+                            Job ID: @v.JobId
+                        </div>
+
+                        <div class="small text-muted">
+                            Processed on: @v.ProcessedOn.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+
+                    <span class="badge @(hasMatch ? "bg-warning" : "bg-primary")">
+                        @v.Match
+                    </span>
+
+                    @* ONLY SHOW TOGGLE IF MATCH FOUND *@
+                    @if (hasMatch)
+                    {
+                        <button class="btn btn-sm btn-link text-muted ms-3 p-0"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#@collapseId"
+                                aria-expanded="false"
+                                aria-controls="@collapseId">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    }
+                </div>
+
+
+                @* COLLAPSE ONLY EXISTS IF MATCH FOUND *@
+                @if (hasMatch)
+                {
+                    <div class="collapse bg-light border-top" id="@collapseId">
+                        <partial name="_VerificationPartial" model="v" />
+                    </div>
+                }
+
+            </div>
+        }
+
+        @if (Model.VerificationTotalPages > 1)
+        {
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+
+                    <li class="page-item @(Model.VerificationPageNumber == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-page="/Monitoring/Deduplication"
+                           asp-route-verificationPageNumber="@(Model.VerificationPageNumber - 1)"
+                           asp-route-activeTab="verifications">
+                            Previous
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= Model.VerificationTotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.VerificationPageNumber ? "active" : "")">
+                            <a class="page-link"
+                                asp-page="/Monitoring/Verifications"
+                               asp-route-verificationPageNumber="@i"
+                              >
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.VerificationPageNumber == Model.VerificationTotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                               asp-page="/Monitoring/Verifications"
+                           asp-route-verificationPageNumber="@(Model.VerificationPageNumber + 1)"
+                          >
+                            Next
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        }
+
+
+
+    }
+</div>
+
+@section Scripts {
+
+    <script>
+        let activeVerificationCollapseId = null;
+
+        function toggleVerificationExpand(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            const collapse = bootstrap.Collapse.getOrCreateInstance(el);
+
+            if (activeVerificationCollapseId && activeVerificationCollapseId !== id) {
+                const prev = document.getElementById(activeVerificationCollapseId);
+                if (prev) {
+                    bootstrap.Collapse.getOrCreateInstance(prev).hide();
+                }
+            }
+
+            collapse.toggle();
+            activeVerificationCollapseId = id;
+        }
+    </script>
+
+    <script>
+        function showSuccess(message) {
+            const alert = document.getElementById('actionAlert');
+            const text = document.getElementById('actionAlertText');
+
+            text.innerText = message;
+
+            alert.classList.remove('d-none', 'fade');
+            alert.classList.add('show');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+                alert.classList.add('d-none', 'fade');
+            }, 3000);
+        }
+    </script>
+
+}
+

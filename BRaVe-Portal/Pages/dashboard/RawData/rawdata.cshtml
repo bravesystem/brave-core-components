@@ -1,0 +1,943 @@
+﻿@page
+
+@using BRaVe_Portal.Helpers
+
+@model BRaVe_Portal.Pages.Dashboard.IndexModel
+
+@{
+    ViewData["Title"] = "Raw Data";
+}
+
+<link rel="stylesheet" href="~/css/brave-rawdata.css" asp-append-version="true" />
+
+
+<div id="enrollAlert"
+     class="alert alert-danger alert-dismissible fade d-none"
+     role="alert">
+    <span id="enrollAlertText">Failed to enroll beneficiaries.</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+
+<div class="rawdata-container">
+
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="mb-0">Raw Data</h4>
+            <small class="text-muted">Browse, filter and export raw record</small>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+            <div id="loadingSpinner" class="spinner-border text-primary" role="status" style="display:none;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+
+            <button id="btnExportCsv" class="btn btn-outline-success btn-sm"> <i class="fa fa-file-csv me-1"></i>Export CSV</button>
+           
+            
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <a asp-page="/dashboard/Index" class="btn btn-outline-primary d-inline-flex align-items-center">
+            <i class="fa fa-arrow-left me-2"></i> Back
+        </a>
+    </div>
+  
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success small py-2">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger small py-2">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Filters -->
+    <div class="card mb-3 filter-card">
+        <div class="card-body">
+            <form id="rawFilters" class="row g-2 align-items-end flex-nowrap">
+                <div class="col-md-4">
+                    <label class="form-label">Mission</label>
+                    <select id="missionFilter" class="form-select">
+
+                        @if (User.IsInRole(EnumUserRoles.Admin.ToString()))
+                        {
+                            <option value="all">All Mission</option>
+                        }
+
+                        @foreach (var m in Model.Missions)
+                        {
+                            <option value="@m.Name.ToLower()">
+                                @m.Name
+                            </option>
+                        }
+                    </select>
+
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Program</label>
+                    <select id="filterProgram"
+                            name="SelectedProgramId"
+                            class="form-select modern-select"
+                            >
+
+                        @if (User.IsInRole(EnumUserRoles.Admin.ToString())
+                                                || User.IsInRole(EnumUserRoles.PA.ToString())
+                                                || User.IsInRole(EnumUserRoles.PM.ToString()))
+                        {
+                            <option value="all" selected="@(Model.SelectedProgramId == null)">
+                                All programs
+                            </option>
+                        }
+
+                        @foreach (var program in Model.Programs)
+                        {
+                            <option value="@program.ProgramId" selected="@(program.ProgramId == Model.SelectedProgramId)">
+                                @program.Title
+                            </option>
+                        }
+                    </select>
+                </div>
+
+
+                <div class="col-md-2">
+                    <label class="form-label">Activity</label>
+                    <select id="activityFilter"
+                            name="SelectedActivityId"
+                            class="form-select modern-select"
+                            >
+
+                        <option value="">All activities</option>
+
+                        @foreach (var activity in Model.Activities)
+                        {
+                            <option value="@activity.ActivityId"
+                                    selected="@(activity.ActivityId == Model.SelectedActivityId)">
+                                @activity.Title
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                 <div class="col-md-2">
+                    <label class="form-label">From</label>
+                    <input id="rdFrom"
+                           type="date"
+                           class="form-control"
+                           value="@((Model.StartDate ?? DateTime.Today.AddDays(-30)).ToString("yyyy-MM-dd"))" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">To</label>
+                    <input id="rdTo"
+                           type="date"
+                           class="form-control"
+                           value="@((Model.EndDate ?? DateTime.Today).ToString("yyyy-MM-dd"))" />
+                </div> 
+
+            
+              
+
+                <div class="col-12 col-md-2">
+                    <button id="rdApply" type="button" class="btn btn-primary w-100">Apply</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <form method="get" class="mb-3 d-flex justify-content-center align-items-center" id="searchForm">
+        <div class="position-relative" style="max-width: 450px; width: 100%;">
+            <input type="text"
+                   name="SearchTerm"
+                   value="@Model.SearchTerm"
+                   class="form-control rounded-pill ps-5 shadow-sm"
+                   placeholder="Search household, head name, mission, activity..." />
+            <i class="fa-solid fa-magnifying-glass
+                  position-absolute top-50 start-0 translate-middle-y
+                  ps-3 text-primary"></i>
+        </div>
+
+        <div id="searchSpinner"
+             class="spinner-border text-primary ms-2"
+             role="status"
+             style="display:none; width:1.2rem; height:1.2rem;">
+        </div>
+    </form>
+
+                    @if (User.IsInRole(EnumUserRoles.PA.ToString()) || User.IsInRole(EnumUserRoles.PO.ToString()) )
+                {
+        <div class="d-flex gap-2 align-items-center mb-3">
+
+            <button type="button"
+                    id="EnrollSelected"
+                    class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-person-plus-fill"></i>
+                <span>Enroll Selected</span>
+            </button>
+
+            <button type="button"
+                     class="btn btn-danger d-flex align-items-center justify-content-center"
+                     id="btnFlagSelected">
+                <i class="fa-solid fa-flag me-1"></i>
+                Flag for review
+            </button>
+
+        </div>
+        <form method="post"
+              asp-page-handler="FlagBeneficiaries"
+              id="flagForm">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   id="flaggedBeneficiaries"
+                   name="FlaggedBeneficiariesJson" />
+
+            <input type="hidden"
+                   id="flagReasonInput"
+                   name="FlagReason" />
+
+        </form>
+                }
+
+    <br />
+
+
+    <!-- Table + pagination -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0" id="rawTable">
+                    <thead class="table-light">
+                        <tr id="rawTableHead">
+                            @if (User.IsInRole(EnumUserRoles.PA.ToString()) || User.IsInRole(EnumUserRoles.PO.ToString()))
+                            {
+                                <th class="text-center">
+                                    <input type="checkbox"
+                                           id="selectVisibleRows" />
+                                </th>
+                            }     
+                            <th data-key="date" class="sortable">Date</th>
+                            <th data-key="mission" class="sortable">Mission</th>
+                            <th data-key="activity" class="sortable">Activity</th>
+                            <th data-key="householdId" class="sortable">Household ID</th>
+                            <th data-key="householdType" class="sortable">Household Type</th>            
+                            <th data-key="headName" class="sortable">Head Name</th>
+                            <th data-key="gender" class="sortable">Head Gender</th>
+                            <th data-key="fingerprint" class="sortable">Fingerprint</th>
+                            <th data-key="familySize" class="sortable">Family Size</th>
+                            <th data-key="ageYears" class="sortable">Head Age (Years)</th>
+                           @*  <th data-key="Surveys" class="sortable">Total Surveys</th> *@
+                            <th class="text-center">Flagged</th>
+                            <th data-key="actions" class="sortable">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="rawTbody">
+
+                        @{
+                            var i = 0;
+                        }
+
+                        @foreach (var r in Model.RawDashboardData)
+                        {
+
+                            <tr class="rd-row"
+                                data-mission="@r.MissionName?.ToLower()"
+                                data-program="@r.ProgramName?.ToLower()"
+                                data-activity="@r.ActivityTitle?.ToLower()"
+                                data-created="@(r.CreatedOn?.ToString("yyyy-MM-dd"))">
+                                    @if (User.IsInRole(EnumUserRoles.PA.ToString()) || User.IsInRole(EnumUserRoles.PO.ToString()))
+                                    {
+                                        <td>
+
+                                            <!-- Checkbox posts "true" when checked -->
+
+                                        <input type="checkbox"
+                                               name="RawDashboardData[@i].Selected"
+                                               value="true"
+                                               data-household-id="@r.HouseholdId"
+                                               data-activity-code="@r.ActivityCode"
+                                               data-beneficiary-id="@r.BeneficiaryId"
+                                               @(r.Selected ? "checked" : "") />
+
+                                            <input type="hidden" name="RawDashboardData[@i].Selected" value="false" />
+                                            <input type="hidden" name="RawDashboardData[@i].HouseholdId" value="@r.HouseholdId" />
+
+                                        </td>
+                                    }
+                                <td>@r.CreatedOn?.ToString("dd MMM yyyy")</td>
+                                    <td>@r.MissionName</td>
+                                    <td>@r.ActivityCode</td>
+                                    <td>@r.HouseholdId</td>
+                                    <td>@r.HouseHoldType</td>
+                                    <td>@r.HeadFullName</td>
+                                    <td>@r.HeadGender</td>
+                                    <td class="text-center">
+                                        @if (r.HeadFingerprintCollected)
+                                        {
+                                        <div class="badge-fingerprint badge-success-light"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             title="Fingerprint collected">
+                                            <i class="fa fa-fingerprint"></i>
+                                        </div>
+                                        }
+                                        else
+                                        {
+                                        <div class="badge-fingerprint badge-gray-light"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             title="No fingerprint collected">
+                                            <i class="fa fa-fingerprint"></i>
+                                        </div>
+                                        }
+
+                                    </td>
+                                    <td class="text-center">@r.HouseholdSize</td>
+                                    <td class="text-center">@r.HeadAgeYears</td>
+                                   @*  <td class="text-center">
+                                        <span class="fw-bold">
+                                            @r.HouseholdSurveys
+                                        @if (r.HouseholdSurveys > 0)
+                                        {
+                                            <a asp-page="/Dashboard/RawData/SurveyDetails"
+                                                   asp-route-type="household"
+                                               asp-route-householdId="@r.HouseholdId"
+                                                   
+                                               class="fw-normal ms-1">
+                                                <i class="fa-solid fa-eye" style="font-size:0.9em;"></i> View
+                                            </a>
+                                        }
+                                        </span>
+
+                                    </td> *@
+                                <td class="text-center">
+                                    @if (r.IsFlagged)
+                                    {
+                                        <i class="fa-solid fa-flag text-danger"
+                                           title="Flagged for review"></i>
+                                    }
+                                </td>
+       
+                                    <td>
+                                        <a asp-page="/dashboard/RawData/HouseholdDetails"
+                                           asp-route-householdId="@r.HouseholdId"
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fa-solid fa-eye me-1"></i>
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            i++;
+                        }
+
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+
+        <div class="card-footer d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <label class="mb-0 small text-muted">Show</label>
+                <select id="pageSize" class="form-select form-select-sm" style="width:80px;">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+                <span class="small text-muted">rows</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <nav>
+                    <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+                </nav>
+            </div>
+
+            <div class="small text-muted">Showing <span id="showingRange">0</span> of <span id="showingTotal">0</span> records</div>
+        </div>
+    </div>
+
+    <!-- Toasts for actions -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1060">
+        <div id="rdToast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="rdToastBody">Action completed</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="modal fade" id="noSelectionModal" tabindex="-1" aria-labelledby="noSelectionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="noSelectionLabel">No beneficiaries selected</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Please select at least one beneficiary to proceed.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="enrollModal" tabindex="-1" aria-labelledby="enrollLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="enrollLabel">Enroll Selected Beneficiaries</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="enrollForm" method="post" action="EnrollBeneficiaries">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="distributionSelect" class="form-label">Choose distribution</label>
+                            <select id="distributionSelect" class="form-select" required>
+                                <option value="" disabled>-- Select --</option>
+
+
+                                @if (Model.Distributions != null)
+                                {
+                                    foreach (var d in Model.Distributions)
+                                    {
+                                        <option value="@d.Id">@d.Id - @d.Title</option>
+                                    }
+                                }
+                            </select>
+
+                            <div id="distributionError" class="text-danger small d-none">
+                                Please select a distribution.
+                            </div>
+                        </div>
+                        <div>
+                            <br />
+                        </div>
+                        <div>
+                            <strong style="color:#2196F3;">ℹ Note:</strong>
+                            Only Active distributions are displayed in this list.
+                        </div>
+                        <input type="hidden" id="selectedBeneficiariesJson" />
+
+                        <!-- SUBMIT BUTTON INSIDE THE FORM -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-primary">
+                                Enroll
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade"
+         id="flagBeneficiaryModal"
+         tabindex="-1"
+         aria-labelledby="flagBeneficiaryLabel"
+         aria-hidden="true">
+
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"
+                        id="flagBeneficiaryLabel">
+                        Flag Selected Beneficiaries
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <p>
+                        Are you sure you want to flag the selected beneficiaries?
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Reason
+                        </label>
+
+                        <textarea id="flagReason"
+                                  class="form-control"
+                                  rows="4"
+                                  required></textarea>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-danger"
+                            id="submitFlagBtn">
+                        Confirm
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/brave-rawdata.js" asp-append-version="true"></script>
+
+  
+    <!--Search script-->
+    <script>
+        let searchTimer;
+        const searchInput = document.querySelector('input[name="SearchTerm"]');
+        const searchForm = document.getElementById('searchForm');
+        const searchSpinner = document.getElementById('searchSpinner');
+
+        if (searchInput && searchForm && searchSpinner) {
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimer);
+
+                searchTimer = setTimeout(() => {
+                    // show spinner
+                    searchSpinner.style.display = 'inline-block';
+
+                    // FORCE browser repaint
+                    searchSpinner.getBoundingClientRect();
+
+                    // submit after paint
+                    searchForm.submit();
+                }, 400);
+            });
+        }
+    </script>
+
+
+
+    <!--Spinner script-->
+    <script>
+        //const searchSpinner = document.getElementById('searchSpinner');
+
+        if (searchForm && searchSpinner) {
+            searchForm.addEventListener('submit', () => {
+                searchSpinner.style.display = 'inline-block';
+            });
+        }
+
+    </script>
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const form = document.getElementById("enrollForm");
+
+            form.addEventListener("submit", async function (e) {
+                e.preventDefault(); // prevent full page reload
+
+                const householdIds = JSON.parse(
+                    document.getElementById("selectedBeneficiariesJson").value || "[]"
+                );
+
+                const select = document.getElementById("distributionSelect");
+                const distributionId = parseInt(select.value, 10);
+                const error = document.getElementById("distributionError");
+
+                if (!distributionId) {
+                    error.classList.remove("d-none");
+                    select.focus();
+                    return;
+                }
+
+               const url = "?handler=EnrollBeneficiaries";
+
+                  const antiForgery =
+                    document.querySelector('input[name="_bravePortalCsrf"]')?.value;
+
+
+                try {
+                    const resp = await fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...(antiForgery ? { "X-BRaVe-Portal-CSRF": antiForgery } : {})
+                        },
+                        body: JSON.stringify({
+                            distributionId: distributionId,
+                            householdIds: householdIds
+                        })
+                    });
+
+                    if (!resp.ok) {
+                        const txt = await resp.text();
+                        throw new Error(txt || "Enrollment failed");
+                    }
+
+                    // Success → close modal
+
+        window.location.href = `/assistances?SelectedDistributionId=${distributionId}`;
+
+
+                       } catch (err) {
+            console.error("Enrollment error:", err);
+
+            const alertEl = document.getElementById("enrollAlert");
+            const alertText = document.getElementById("enrollAlertText");
+
+            alertText.textContent = err.message || "Failed to enroll beneficiaries.";
+            alertEl.classList.remove("d-none");
+            alertEl.classList.add("show");
+        }
+
+            });
+
+            // Utility: Bootstrap modal helpers (BS5)
+            function showModalById(id) {
+                const el = document.getElementById(id);
+                const modal = new bootstrap.Modal(el);
+                modal.show();
+                return modal;
+            }
+
+            // Collect selected beneficiary IDs from checkboxes
+                 function getSelectedBeneficiaries() {
+
+            const checked = document.querySelectorAll(
+                'input[type="checkbox"][data-beneficiary-id]:checked'
+            );
+
+            return Array.from(checked).map(cb => ({
+                beneficiaryId: cb.dataset.beneficiaryId,
+                householdId: cb.dataset.householdId,
+                activityCode: cb.dataset.activityCode
+            }));
+        }
+
+            // Click handler: Enroll all selected
+            document.getElementById('EnrollSelected').addEventListener('click', function () {
+                const selected = getSelectedBeneficiaries();
+
+                if (selected.length === 0) {
+                    showModalById('noSelectionModal');
+                    return;
+                }
+
+        document.getElementById('selectedBeneficiariesJson').value =
+            JSON.stringify(selected.map(x => x.householdId));
+
+                const select = document.getElementById('distributionSelect');
+                const error = document.getElementById('distributionError');
+                if (select) select.value = '';
+                if (error) error.classList.add('d-none');
+
+                showModalById('enrollModal');
+            });
+
+                    document.getElementById('btnFlagSelected')
+            .addEventListener('click', function (e) {
+
+                const selected = getSelectedBeneficiaries();
+
+                      if (selected.length === 0) {
+            showModalById('noSelectionModal');
+            return;
+        }
+
+        showModalById('flagBeneficiaryModal');
+            });
+
+
+        document.getElementById('submitFlagBtn')
+            .addEventListener('click', function () {
+
+                const selected = getSelectedBeneficiaries();
+
+                if (selected.length === 0) {
+                    showModalById('noSelectionModal');
+                    return;
+                }
+
+                const reason =
+                    document.getElementById('flagReason').value?.trim();
+
+                if (!reason) {
+                    alert('Please enter a reason.');
+                    return;
+                }
+
+                document.getElementById('flaggedBeneficiaries').value =
+                    JSON.stringify(selected);
+
+                document.getElementById('flagReasonInput').value =
+                    reason;
+
+                            console.log("SELECTED:", selected);
+
+        console.log(
+            "HIDDEN FIELD:",
+            document.getElementById('flaggedBeneficiaries').value
+        );
+
+                document.getElementById('flagForm').submit();
+            });
+
+                    // Select visible rows
+        document.getElementById('selectVisibleRows')
+            .addEventListener('change', function () {
+
+                const isChecked = this.checked;
+
+                // only rows currently visible
+                const visibleRows = document.querySelectorAll(
+                    '#rawTbody tr:not([style*="display: none"])'
+                );
+
+                visibleRows.forEach(row => {
+
+                    const checkbox = row.querySelector(
+                        'input[type="checkbox"][name^="RawDashboardData"][name$=".Selected"]'
+                    );
+
+                    if (checkbox) {
+                        checkbox.checked = isChecked;
+                    }
+                });
+            });
+                    document.querySelectorAll(
+            'input[type="checkbox"][name^="RawDashboardData"][name$=".Selected"]'
+        ).forEach(cb => {
+
+            cb.addEventListener('change', function () {
+
+                if (!this.checked) {
+                    document.getElementById('selectVisibleRows').checked = false;
+                }
+            });
+        });
+
+                const programSelect =
+            document.getElementById('filterProgram');
+
+        const activitySelect =
+            document.getElementById('activityFilter');
+
+        programSelect.addEventListener('change', loadActivities);
+
+        async function loadActivities() {
+
+            const programId = programSelect.value;
+
+            activitySelect.innerHTML =
+                '<option value="">Loading...</option>';
+
+            if (!programId || programId === 'all') {
+
+                activitySelect.innerHTML =
+                    '<option value="">All activities</option>';
+
+                return;
+            }
+
+            try {
+
+                const res =
+                    await fetch(
+                        `/Dashboard/RawData/RawData?handler=ActivitiesByProgram&programId=${programId}`
+                    );
+
+                const activities = await res.json();
+
+                activitySelect.innerHTML =
+                    '<option value="">All activities</option>';
+
+                activities.forEach(a => {
+
+                    activitySelect.innerHTML +=
+                        `<option value="${a.activityId}">
+                            ${a.title}
+                        </option>`;
+                });
+
+            }
+            catch (err) {
+
+                console.error('Failed loading activities', err);
+
+                activitySelect.innerHTML =
+                    '<option value="">All activities</option>';
+            }
+        }
+
+        //         document.getElementById('rdApply')
+        //     .addEventListener('click', applyFilters);
+
+        // function applyFilters() {
+
+        //     const mission =
+        //         document.getElementById('missionFilter')
+        //             .value
+        //             .toLowerCase();
+
+        //     const selectedProgramText =
+        //         programSelect.options[programSelect.selectedIndex]
+        //             ?.text
+        //             ?.toLowerCase();
+
+        //     const selectedActivityText =
+        //         activitySelect.options[activitySelect.selectedIndex]
+        //             ?.text
+        //             ?.toLowerCase();
+
+        //                     const fromDate =
+        //     document.getElementById('rdFrom').value;
+
+        // const toDate =
+        //     document.getElementById('rdTo').value;
+
+        //     const rows =
+        //         document.querySelectorAll('#rawTbody tr');
+
+        //     rows.forEach(row => {
+
+        //         const rowMission =
+        //             row.dataset.mission || '';
+
+        //         const rowProgram =
+        //             row.dataset.program || '';
+
+        //         const rowActivity =
+        //             row.dataset.activity || '';
+
+        //                 const rowDate =
+        // row.dataset.created || '';
+
+        //         let visible = true;
+
+        //         // MISSION
+        //         if (
+        //             mission !== 'all' &&
+        //             mission !== '' &&
+        //             !rowMission.includes(mission)
+        //         ) {
+        //             visible = false;
+        //         }
+
+        //         // PROGRAM
+        //         if (
+        //             selectedProgramText &&
+        //             selectedProgramText !== 'all programs' &&
+        //             !rowProgram.includes(selectedProgramText)
+        //         ) {
+        //             visible = false;
+        //         }
+
+        //         // ACTIVITY
+        //         if (
+        //             selectedActivityText &&
+        //             selectedActivityText !== 'all activities' &&
+        //             !rowActivity.includes(selectedActivityText)
+        //         ) {
+        //             visible = false;
+        //         }
+
+        //         //DATE
+        //                 // FROM DATE
+        // if (
+        //     fromDate &&
+        //     rowDate &&
+        //     rowDate < fromDate
+        // ) {
+        //     visible = false;
+        // }
+
+        // // TO DATE
+        // if (
+        //     toDate &&
+        //     rowDate &&
+        //     rowDate > toDate
+        // ) {
+        //     visible = false;
+        // }
+
+        //         row.style.display =
+        //             visible ? '' : 'none';
+        //     });
+        // }
+
+
+            document.getElementById('rdApply')
+        .addEventListener('click', function () {
+
+            const programId =
+                document.getElementById('filterProgram').value;
+
+            const activityId =
+                document.getElementById('activityFilter').value;
+
+            const startDate =
+                document.getElementById('rdFrom').value;
+
+            const endDate =
+                document.getElementById('rdTo').value;
+
+            const params = new URLSearchParams();
+
+            if (programId && programId !== 'all')
+                params.append('SelectedProgramId', programId);
+
+            if (activityId)
+                params.append('SelectedActivityId', activityId);
+
+            if (startDate)
+                params.append('StartDate', startDate);
+
+            if (endDate)
+                params.append('EndDate', endDate);
+
+            window.location.href =
+                `${window.location.pathname}?${params.toString()}`;
+        });
+        
+    });
+    </script>
+
+
+
+
+}

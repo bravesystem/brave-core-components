@@ -1,0 +1,61 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Models.ViewModels.DataProcessingSourceOfData
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.SourceOfData ?? new List<LookupItemDto>();
+    }
+
+<div class="modal fade" id="addSourceOfDataModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Source of Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="AddSourceOfData">
+                    <div class="mb-3">
+                        <label class="form-label">Primary Source</label>
+                        <input asp-for="AssessmentId" type="hidden" />
+                        <select asp-for="PrimarySourceId" class="form-select" id="primarySourceSelect">
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                        <input asp-for="PrimarySourceOther" class="form-control mt-2" placeholder="If Other, specify..." id="primarySourceOther" maxlength="100"/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Secondary Source</label>
+                        <select asp-for="SecondarySourceId" class="form-select" id="secondarySourceSelect">
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                        <input asp-for="SecondarySourceOther" class="form-control mt-2" placeholder="If Other, specify..." id="secondarySourceOther" maxlength="100"/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Attachment</label>
+                        <input type="file" class="form-control" name="SourceFile" />
+
+                      
+
+
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

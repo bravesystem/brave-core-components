@@ -1,0 +1,63 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@using BRaVe_Portal.Models.ViewModels
+@model BRaVe_Portal.Pages.programs.Activities.ViewEditActivityModel
+
+@{
+  
+    Models.CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.SurveyTypes ?? new List<LookupItemDto>();
+    
+}
+
+<div class="modal fade" id="addDataPointModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Attach Data Point</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-page-handler="AddActivityDataPoint">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ActivityId" value="@Model.SelectedActivity?.ActivityId" />
+
+                    <strong style="color:#2196F3;">ℹ Note:</strong>
+                    Only active datapoints will be displayed here.
+               
+                    <div class="mb-3">
+                        <label class="form-label">Select Data Point</label>
+                        <select name="Id" class="form-select" required>
+                            <option value="">-- Select Data Point --</option>
+                            @foreach (var dp in Model.DataPoints)
+                            {
+                                <option value="@dp.Id">@dp.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Select Datapoint Type</label>
+                        <select name="DatapointType" class="form-select" required>
+                            <option value="">-- Select Datapoint type --</option>
+                            @foreach (var consentType in lookups)
+                            {
+                                <option value="@consentType.Id">@consentType.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="Required" type="checkbox" class="form-check-input"  />
+                        <label asp-for="Required" class="form-check-label">Is Required?</label>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

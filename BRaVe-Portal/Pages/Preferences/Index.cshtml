@@ -1,0 +1,268 @@
+﻿@page
+@model BRaVe_Portal.Pages.Preferences.IndexModel
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models.DTOs
+
+@{
+    ViewData["Title"] = "Preferences";
+
+    bool hasMissionPreferences = Model.MissionPreferences != null && Model.MissionPreferences.Any();
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    // Combine mission prefs + missing defaults
+    var preferencesToShow = new List<Preference>();
+
+    if (hasMissionPreferences)
+    {
+        // Add mission prefs
+        preferencesToShow.AddRange(Model.MissionPreferences.Select(mp => new Preference
+        {
+            PreferenceId = mp.PreferenceId,
+            PreferenceName = mp.PreferenceName,
+            Description = mp.Description,
+            PreferenceType = mp.PreferenceType,
+            DefaultValue = mp.DefaultValue,
+            IsFromDefault = false
+        }));
+
+        // Add defaults missing from mission
+        var defaults = Model.Preferences ?? new List<Preference>();
+        foreach (var def in defaults)
+        {
+            if (!preferencesToShow.Any(p => p.PreferenceId == def.PreferenceId))
+            {
+                preferencesToShow.Add(new Preference
+                {
+                    PreferenceId = def.PreferenceId,
+                    PreferenceName = def.PreferenceName,
+                    Description = def.Description,
+                    PreferenceType = def.PreferenceType,
+                    DefaultValue = def.DefaultValue,
+                    IsFromDefault = true
+                });
+            }
+        }
+    }
+    else
+    {
+        // No mission prefs → show all defaults
+        preferencesToShow = (Model.Preferences ?? new List<Preference>())
+            .Select(p => { p.IsFromDefault = true; return p; })
+            .ToList();
+    }
+
+    var selectedProgramId = Model.SelectedProgramId ?? 0;
+}
+
+<style>
+    /* Row background for default preferences (applied dynamically via JS) */
+    .default-pref-row {
+        background-color: #fff3cd !important;
+    }
+
+    /* Input/select background inside default preference rows */
+    .default-pref-input {
+        background-color: #fff3cd !important;
+        color: #000 !important;
+    }
+</style>
+
+<div>
+    <h3 class="mb-4">@((hasMissionPreferences ? "Mission Preferences" : "Default Preferences"))</h3>
+
+    @if (!hasMissionPreferences)
+    {
+        <div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+            <strong style="color:#2196F3;">ℹ Note:</strong>
+            These are the default system preferences applied regardless of the mission. Set default values according to your mission.
+        </div>
+        <br />
+    }
+</div>
+
+@if (!preferencesToShow.Any())
+{
+    <div class="alert alert-info">
+        No mission preferences exist. Edit defaults below to create them.
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+        <span>@(hasMissionPreferences ? "Edit Mission Preferences" : "Default Preferences — Edit Values and Save")</span>
+
+        <div class="d-flex gap-2">
+            @* Load Defaults only if mission preferences does not exist *@
+            @if (hasMissionPreferences)
+            {
+                <form method="post" asp-page-handler="LoadDefaults" asp-route-SelectedProgramId="@selectedProgramId" id="loadDefaultsForm">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-warning btn-sm">
+                        <i class="fa fa-refresh me-1"></i> Load Defaults
+                    </button>
+                </form>
+            }
+
+            @if (hasMissionPreferences)
+            {
+                <button type="button" class="btn btn-light btn-sm" id="editPrefsBtn">
+                    <i class="fa fa-edit me-1"></i> Edit
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="card-body">
+        <form method="post" id="prefsForm"
+              asp-page-handler="@(hasMissionPreferences ? "EditMissionPreferences" : "AddMissionPreferences")">
+
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="UpdatedPreferences.ProgramId" value="@selectedProgramId" />
+            <input type="hidden" name="UpdatedPreferences.Description" value="Batch Add/Edit" />
+
+            <table class="table table-sm table-bordered align-middle mb-3">
+                <thead class="table-light">
+                    <tr>
+                        <th>Id</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Default Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pref in preferencesToShow)
+                    {
+                        <tr data-is-default="@pref.IsFromDefault" class="">
+                            <td>@pref.PreferenceId</td>
+                            <td>@pref.PreferenceName</td>
+                            <td>@pref.Description</td>
+                            <td>@pref.PreferenceType</td>
+                            <td>
+                                @if (pref.PreferenceType?.ToLower() == "boolean")
+                                {
+                                    <select name="PreferenceValues[@pref.PreferenceId]"
+                                            class="form-select pref-input"
+                                            @(hasMissionPreferences && !pref.IsFromDefault ? "disabled" : "")>
+                                        <option value="true" selected="@(pref.DefaultValue?.ToLower() == "true")">True</option>
+                                        <option value="false" selected="@(pref.DefaultValue?.ToLower() == "false")">False</option>
+                                    </select>
+                                }
+                                else if (pref.PreferenceType?.ToLower() == "int" || pref.PreferenceType?.ToLower() == "numeric")
+                                {
+                                    <input type="number"
+                                           class="form-control form-control-sm pref-input"
+                                           name="PreferenceValues[@pref.PreferenceId]"
+                                           value="@pref.DefaultValue"
+                                           inputmode="numeric"
+                                           pattern="[0-9]*"
+                                           oninput="this.value = this.value.replace(/[^0-9]/g,'');"
+                                           @(hasMissionPreferences && !pref.IsFromDefault ? "disabled" : "") />
+                                }
+                                else
+                                {
+                                    <input type="text"
+                                           class="form-control form-control-sm pref-input"
+                                           name="PreferenceValues[@pref.PreferenceId]"
+                                           value="@pref.DefaultValue"
+                                           @(hasMissionPreferences && !pref.IsFromDefault ? "disabled" : "") />
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="text-end">
+                <button type="submit" id="savePrefsBtn" class="btn btn-success @(hasMissionPreferences ? "d-none" : "")">
+                    <i class="fa fa-save me-2"></i>
+                    @(hasMissionPreferences ? "Save Changes" : "Attach Default Preferences to this Mission")
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
+     
+
+            const editBtn = document.getElementById("editPrefsBtn");
+            const saveBtn = document.getElementById("savePrefsBtn");
+            const inputs = document.querySelectorAll(".pref-input");
+            const rows = document.querySelectorAll("tbody tr");
+
+            console.log("JS Loaded");
+
+            // ============================
+            // EDIT BUTTON CLICK
+            // ============================
+            if (editBtn) {
+                editBtn.addEventListener("click", function () {
+
+                    console.log("Edit clicked");
+
+                    // Show save button
+                    if (saveBtn) {
+                        saveBtn.classList.remove("d-none");
+                    }
+
+                    // Enable ALL inputs
+                    inputs.forEach(input => {
+                        input.removeAttribute("disabled");
+                    });
+
+                    // Highlight default rows
+                    rows.forEach(row => {
+                        const isDefault = row.getAttribute("data-is-default");
+
+                        if (isDefault === "True") {
+                            row.classList.add("default-pref-row");
+
+                            const input = row.querySelector(".pref-input");
+                            if (input) {
+                                input.classList.add("default-pref-input");
+                            }
+                        }
+                    });
+
+                });
+            }
+
+            // LOAD DEFAULTS FORM
+            // ============================
+            const loadDefaultsForm = document.getElementById("loadDefaultsForm");
+
+            if (loadDefaultsForm) {
+                loadDefaultsForm.addEventListener("submit", function () {
+
+                    console.log("Load Defaults clicked");
+
+                    // Show save button
+                    if (saveBtn) {
+                        saveBtn.classList.remove("d-none");
+                    }
+
+                    // Hide edit button (optional)
+                    if (editBtn) {
+                        editBtn.classList.add("d-none");
+                    }
+
+                    // Enable inputs after postback (small delay)
+                    setTimeout(() => {
+                        document.querySelectorAll(".pref-input").forEach(i => {
+                            i.removeAttribute("disabled");
+                        });
+                    }, 200);
+
+                });
+            }
+
+        
+    </script>
+}

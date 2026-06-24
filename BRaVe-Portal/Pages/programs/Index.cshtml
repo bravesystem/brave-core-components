@@ -1,0 +1,388 @@
+﻿@page
+@model BRaVe_Portal.Pages.programs.IndexModel
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@using BRaVe_Portal.Models.Enums
+
+
+
+@{
+
+var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.CommonStatuses ?? new List<LookupItemDto>();
+    ViewData["Title"] = "Programs";
+}
+
+@if (User.IsInRole(EnumUserRoles.PM.ToString()))
+{
+    
+    <div class="mb-4 text-end">
+        <button class="btn btn-success btn-sm"
+                data-bs-toggle="modal"
+                data-bs-target="#addProgramModal"
+                title="Create">
+            <i class="fa fa-plus"></i> Create Program
+        </button>
+    </div>
+
+}
+
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+
+@if ((Model.Programs?.Count ?? 0) > 0)
+{
+    <br />
+    <span>RBA : Risk Benefit Assessment</span>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white fw-bold">Programs</div>
+        <div class="card-body p-0">
+            <table class="table table-striped table-bordered mb-0">
+               <thead class="table-light">
+             <tr>
+                 <th>Title</th>
+                 <th>Code</th>
+                 <th>Description</th>
+              @*    <th>Manager</th> *@
+                 <th>Created On</th>
+                 <th>RBA (Actions/Status)</th>
+                 <th>Manage Activities</th>
+    @if (User.IsInRole(EnumUserRoles.PM.ToString()))
+    {
+                 <th>Edit</th>
+    }
+             </tr>
+         </thead>
+                <tbody>
+                    @foreach (var program in Model.Programs.OrderByDescending(p => p.CreatedOn))
+
+                    {
+                        <tr>
+                   <td>@program.Title</td>
+                     <td>@program.ProgramCode</td>
+                     <td title="@program.Description">
+
+                         @Helpers.StringHelper.TruncateWithEllipsis(
+                                @program.Description, 150
+                         )
+                     
+                     </td>
+                   @*   <td></td> *@
+                     <td>@program.CreatedOn</td>
+                            <td>
+                                @{
+                                    // find assessment for this program if any
+                                    var assessment = Model.Ongoing_Assessments.FirstOrDefault(a => a.AssessmentId == program.AssessmentId);
+                                                   // ?? Model.Decided_Assessments.FirstOrDefault(a => a.AssessmentId == program.AssessmentId);
+                                }
+
+                                @if (program.AssessmentId == null && User.IsInRole(EnumUserRoles.PM.ToString()))
+                                {
+                                    <button type="button"
+                                            class="btn btn-success btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#approvalModal"
+                                            data-program-id="@program.ProgramId">
+                                        <i class="fa fa-plus"></i> Create New
+                                    </button>
+                                }
+                                else if (program.AssessmentId == null )
+                                {
+                                   
+                                }
+                                else if (assessment != null && UserRoles.UserHasPendingJob(User, assessment.Status) && User.IsInRole(EnumUserRoles.PM.ToString())
+                                && (assessment.Status == AssessmentStatus.Draft || assessment.Status == AssessmentStatus.PendingReview))
+                                {
+
+                                    <a asp-page="/Assessments/EditAssessment"
+                                       asp-route-assessmentId="@assessment.AssessmentId"
+                                       asp-route-statusId="@assessment.StatusId"
+                                       class="btn btn-sm text-white" style="background-color:#0056b3;"
+                                       title="Edit">
+                                        <i class="fa fa-edit"></i> Edit
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-page="/Assessments/ViewAssessment"
+                                       asp-route-assessmentId="@assessment.AssessmentId"
+                                       asp-route-statusId="@assessment.StatusId"
+                                       class="btn btn-sm text-white" style="background-color:#0056b3;"
+                                       title="View">
+                                        <i class="fa fa-eye"></i> View
+                                    </a>
+
+                                }
+
+                                @* Status badge *@
+                                @if (assessment?.StatusText is not null)
+                                {
+                                    @if (@assessment.StatusText == "Approved")
+                                    {
+                                        <span class="badge bg-success text-light" title="status">
+                                            @assessment.StatusText
+                                        </span>
+                                    }
+                                    else if (@assessment.StatusText == "Rejected")
+                                    {
+                                        <span class="badge bg-danger text-light" title="status">
+                                            @assessment.StatusText
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-dark" title="status">
+                                            @assessment.StatusText
+                                        </span>
+                                    }
+
+                                }
+                                else if (program.AssessmentId == null)
+                                {
+                                    <span class="badge bg-secondary">Not created</span>
+                                }
+
+                                @* Pending action badge *@
+                                @if (assessment != null && UserRoles.UserHasPendingJob(User, assessment.Status))
+                                {
+                                    <span class="badge bg-warning text-dark" title="Pending your action">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                        Pending Action
+                                    </span>
+
+                                }
+                            </td>
+
+
+                            <td>
+                                @if (assessment != null && assessment.Status == AssessmentStatus.Approved)
+
+                                {
+                                    <a class="btn btn-sm text-white" style="background-color:#0056b3;" asp-page="/programs/Activities/ManageActivities" asp-route-SelectedProgramId="@program.ProgramId">
+                                    <i class="fa fa-tools"></i>
+                                    </a>
+                                }
+                                else
+                                {
+
+                                    @: -
+                                }
+                                
+                            </td>
+
+        @if (User.IsInRole(EnumUserRoles.PM.ToString()))
+        {
+                               
+                                <td>
+                            
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editProgramModal"
+                                        data-id="@program.ProgramId"
+                                        data-title="@program.Title"
+                                        data-description="@program.Description"
+                                        
+                                        data-programid="@program.ProgramId"
+                                        data-active="@(program.StatusId)"
+                                        data-user-ids="@string.Join(',', program.UserProgAssignments?.Select(a => a.UserId) ?? new List<string>())">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                
+
+
+                            </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Programs Found</h4>
+    </div>
+}
+
+<partial name="_EditProgramModal" model="Model.UpdateProgram" />
+<partial name="Modals/_AddProgramModal.cshtml" model="new ProgramDto()" />
+<partial name="Modals/_AssessmentConfirmationModal.cshtml" />
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          // Single combined select id
+          const selectId = 'edit_rolesUsers';
+          const selectEl = document.getElementById(selectId);
+          const hiddenCsv = document.getElementById('Edit_SelectedUserIdsHidden');
+
+          // badges / counters
+          const usersCountEl = document.getElementById('editUsersCount');
+          const totalBadge = document.getElementById('editTotalUsersBadge');
+
+          // Button that toggles the collapse (we'll update aria-expanded state automatically via Bootstrap)
+          const toggleBtn = document.getElementById('toggleEditRoleAssignBtn');
+
+          // Utility: create/destroy Choices instance safely
+          function destroyChoices(el) {
+            if (!el) return;
+            if (el.__choicesInstance) {
+              try { el.__choicesInstance.destroy(); } catch (e) { /* ignore */ }
+              el.__choicesInstance = null;
+            }
+          }
+
+          function createChoices(el) {
+            if (!el) return null;
+            destroyChoices(el);
+            el.multiple = true;
+            try {
+              el.__choicesInstance = new Choices(el, {
+                removeItemButton: true,
+                searchEnabled: true,
+                shouldSort: false,
+                itemSelectText: '',
+                position: 'bottom'
+              });
+              return el.__choicesInstance;
+            } catch (err) {
+              console.error('Choices init error for', el.id, err);
+              return null;
+            }
+          }
+
+          // Preselect by CSV of IDs (e.g., from trigger button data-user-ids)
+          function preselectByCsv(el, csv) {
+            if (!el) return;
+            if (el.__choicesInstance) el.__choicesInstance.removeActiveItems();
+            Array.from(el.options).forEach(o => o.selected = false);
+            if (!csv) return;
+            csv.split(',').map(s => s.trim()).filter(Boolean).forEach(id => {
+              const opt = Array.from(el.options).find(o => String(o.value) === String(id));
+              if (opt) {
+                opt.selected = true;
+                if (el.__choicesInstance) {
+                  try { el.__choicesInstance.setChoiceByValue(opt.value); } catch (e) { /* ignore */ }
+                }
+              } else {
+                console.debug('edit preselect: option not found', id, 'in', el.id);
+              }
+            });
+          }
+
+          // Update counters (selected count)
+          function updateCounts() {
+            if (!selectEl) return;
+            const selected = Array.from(selectEl.selectedOptions).map(o => o.value);
+            const total = selected.length;
+            if (usersCountEl) usersCountEl.textContent = total;
+            if (totalBadge) totalBadge.textContent = total;
+          }
+
+          // Aggregate selected option values into hidden CSV input before submit
+          function aggregateHidden() {
+            if (!hiddenCsv || !selectEl) return '';
+            const all = Array.from(selectEl.selectedOptions).map(o => o.value);
+            hiddenCsv.value = Array.from(new Set(all)).join(',');
+            return hiddenCsv.value;
+          }
+
+          // Clear selections
+          const clearBtn = document.getElementById('editClearRoleSelections');
+          if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+              if (!selectEl) return;
+              if (selectEl.__choicesInstance) {
+                try { selectEl.__choicesInstance.removeActiveItems(); } catch (e) { /* ignore */ }
+              }
+              for (let i = 0; i < selectEl.options.length; i++) {
+                selectEl.options[i].selected = false;
+              }
+              updateCounts();
+              if (hiddenCsv) hiddenCsv.value = '';
+            });
+          }
+
+          // Modal hooks
+          const editModal = document.getElementById('editProgramModal');
+          if (!editModal) {
+            console.error('editProgramModal not found. Ensure this partial is rendered before the script.');
+            return;
+          }
+
+          // When modal is shown, initialize Choices and preselect using trigger's data-user-ids attribute
+          editModal.addEventListener('shown.bs.modal', function (evt) {
+            const trigger = evt.relatedTarget;
+            // init choices once modal visible
+            if (selectEl) requestAnimationFrame(() => createChoices(selectEl));
+
+            // small tick then preselect and populate other fields
+            setTimeout(function () {
+              const userIdsCsv = trigger ? trigger.getAttribute('data-user-ids') || '' : '';
+              preselectByCsv(selectEl, userIdsCsv);
+
+              // populate other fields as before
+              if (trigger) {
+                document.getElementById('editProgramId').value = trigger.getAttribute('data-id') || '';
+                document.getElementById('editProgramTitle').value = trigger.getAttribute('data-title') || '';
+                document.getElementById('editProgramDescription').value = trigger.getAttribute('data-description') || '';
+                const statusSel = document.getElementById('editProgramActive');
+                if (statusSel) statusSel.value = trigger.getAttribute('data-active') || '';
+              }
+
+              // update counts & hidden CSV
+              updateCounts();
+              aggregateHidden();
+
+              // If the toggle is collapsed we also update the button badge in case counts changed externally
+              if (toggleBtn) {
+                // Keep it simple: setting text on the badge node is enough (we already updated totalBadge)
+              }
+            }, 60);
+          });
+
+          // Destroy Choices when modal hidden
+          editModal.addEventListener('hidden.bs.modal', function () {
+            destroyChoices(selectEl);
+            updateCounts();
+          });
+
+          // keep hidden CSV up to date when user changes selection
+          if (selectEl) {
+            selectEl.addEventListener('change', function () {
+              updateCounts();
+              aggregateHidden();
+            });
+          }
+
+          // Ensure aggregation before submit
+          const editForm = document.getElementById('editProgramForm');
+          if (editForm) {
+            editForm.addEventListener('submit', function () {
+              aggregateHidden();
+            });
+          }
+
+          // initial sync (if modal reused)
+          updateCounts();
+        });
+    </script>
+}
+
+

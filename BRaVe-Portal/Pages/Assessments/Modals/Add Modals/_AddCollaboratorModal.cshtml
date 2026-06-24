@@ -1,0 +1,59 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+@model BRaVe_Portal.Models.ViewModels.DataProcessingCollaborator
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.PartnerOganizations ?? new List<LookupItemDto>();
+}
+
+
+
+
+
+<div class="modal fade" id="addCollaboratorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Collaborator</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="AddCollaborator">
+                    <div class="mb-3">
+                        <input asp-for="AssessmentId" type="hidden" />
+                        <label class="form-label">Partner</label>
+                         <select asp-for="PartnerId" class="form-select" required>
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select> 
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Organization Name</label>
+                        <input asp-for="PartnerOrganizationName" class="form-control" maxlength="100" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contacts</label>
+                        <input asp-for="PartnerOrganizationContacts" class="form-control" maxlength="250" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-control" maxlength="500" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Attachment (MoU/Agreement)</label>
+                        <input type="file" class="form-control" name="CollaboratorFile" />
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

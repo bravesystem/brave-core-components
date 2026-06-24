@@ -1,0 +1,48 @@
+﻿@model BRaVe_Portal.Pages.Setup.Lookups.IndexModel;
+<!-- Add New Lookup Item Modal -->
+<div class="modal fade" id="addLookupItemModal" tabindex="-1" aria-labelledby="addLookupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle me-2"></i>Add New Lookup Item</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- FORM posts to OnPostAddLookupValueAsync -->
+            <form method="post" asp-page-handler="AddLookupValue">
+                @Html.AntiForgeryToken()
+                <div class="modal-body bg-light">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Lookup Name</label>
+                        <select asp-for="NewLookupValue.LookupId" class="form-select shadow-sm" required>
+                            <option value="">-- Select Lookup --</option>
+                            @foreach (var lookup in Model.LookupNames)
+                            {
+                                <option value="@lookup.Id">@lookup.LookupName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Item Name</label>
+                        <input asp-for="NewLookupValue.ItemName" class="form-control shadow-sm" placeholder="Enter item name..." required />
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input asp-for="NewLookupValue.IsActive" class="form-check-input shadow-sm" type="checkbox" id="isActiveNew" checked />
+                        <label class="form-check-label fw-semibold" for="isActiveNew">Is Active</label>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-white">
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-semibold">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> Save
+                    </button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

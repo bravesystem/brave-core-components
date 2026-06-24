@@ -1,0 +1,213 @@
+﻿@model ActivityViewModel
+@using BRaVe_Portal.Models.DTOs
+@using BRaVe_Portal.Models.ViewModels
+
+@{
+    var locationCascadeViewModel = ViewData["LocationCascade"] as LocationCascadeViewModel;
+}
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "EditActivity")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "EditActivity")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="modal fade" id="editActivityModal" tabindex="-1" aria-labelledby="editActivityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Loading Overlay -->
+            <div id="editActivityLoading"
+                 class="position-absolute top-0 start-0 w-100 h-100 d-none"
+                 style="background: rgba(255,255,255,0.7); z-index: 1055;">
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="EditActivity">
+
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editActivityModalLabel">Edit Activity</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" asp-for="ActivityId" id="editActivityId" />
+                    <input type="hidden" asp-for="ProgramId" id="ProgramId" />
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">Title</label>
+                        <input asp-for="Title" class="form-control" id="editTitle" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-control" id="editDescription" rows="3" required></textarea>
+                    </div>
+                    <!-- START & END DATE -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="StartDate" class="form-label">Start Date</label>
+                            <input asp-for="StartDate"
+                                   type="date"
+                                   class="form-control"
+                                   id="editStartDate" />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="EndDate" class="form-label">End Date</label>
+                            <input asp-for="EndDate"
+                                   type="date"
+                                   class="form-control"
+                                   id="editEndDate" />
+                        </div>
+                    </div>
+
+                    <partial name="PartialViews/_LocationCascadePartial"
+                             model="locationCascadeViewModel" />
+
+                    <div class="form-check mb-3">
+                        <input asp-for="RestrictToEnumerator" class="form-check-input" id="editRestrictToEnumerator" />
+                        <label asp-for="RestrictToEnumerator" class="form-check-label">Restricted to Enumerator</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="AllowRegistration" class="form-check-input" id="editAllowRegistration" />
+                        <label asp-for="AllowRegistration" class="form-check-label">Allow Registration</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input asp-for="AllowBiometricRecordCheck" class="form-check-input" id="editAllowBiometricRecordCheck" />
+                        <label asp-for="AllowBiometricRecordCheck" class="form-check-label">Allow Biometric Record Check</label>
+                    </div>
+
+                    <p>Data collection central point</p>
+
+                    <div class="mb-3">
+                        <label asp-for="latitude" class="form-label">Latitude</label>
+                        <input asp-for="latitude" class="form-control" id="editLatitude" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Longitude" class="form-label">Longitude</label>
+                        <input asp-for="Longitude" class="form-control" id="editLongitude" required />
+                    </div>
+
+                    <!-- Map container -->
+                    <div id="editMap" style="height: 350px; width: 100%; border: 1px solid #ccc;"></div>
+                </div> <!-- modal-body -->
+
+                <div class="modal-footer">
+
+                    <button type="button" class="btn btn-secondary" id="editActivityCancelBtn" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+
+                    <button type="submit" class="btn btn-primary" id="editActivitySubmitBtn">
+                        Update Activity
+                    </button>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CDN -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<script>
+    let editMap, editMarker;
+
+    function initEditMap(lat, lng) {
+        if (!editMap) {
+            editMap = L.map('editMap').setView([lat, lng], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(editMap);
+
+            editMarker = L.marker([lat, lng], { draggable: true }).addTo(editMap);
+
+            // Click map to set coordinates
+            editMap.on("click", function (e) {
+                const clickedLat = e.latlng.lat;
+                const clickedLng = e.latlng.lng;
+
+                document.getElementById("editLatitude").value = clickedLat.toFixed(6);
+                document.getElementById("editLongitude").value = clickedLng.toFixed(6);
+
+                editMarker.setLatLng([clickedLat, clickedLng]);
+            });
+
+            // Drag marker to update coordinates
+            editMarker.on("dragend", function () {
+                const pos = editMarker.getLatLng();
+                document.getElementById("editLatitude").value = pos.lat.toFixed(6);
+                document.getElementById("editLongitude").value = pos.lng.toFixed(6);
+            });
+        } else {
+            editMap.setView([lat, lng]);
+            editMarker.setLatLng([lat, lng]);
+        }
+    }
+
+    function updateEditMap() {
+        const lat = parseFloat(document.getElementById("editLatitude").value);
+        const lng = parseFloat(document.getElementById("editLongitude").value);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+            initEditMap(lat, lng);
+        }
+    }
+
+    // Update map when typing coordinates
+    document.getElementById("editLatitude").addEventListener("input", updateEditMap);
+    document.getElementById("editLongitude").addEventListener("input", updateEditMap);
+
+    // Initialize map when modal is opened
+    const editModal = document.getElementById('editActivityModal');
+    editModal.addEventListener('shown.bs.modal', function () {
+        setTimeout(updateEditMap, 200);
+    });
+</script>
+<script>
+    const editForm = document.querySelector('#editActivityModal form');
+    const loadingOverlay = document.getElementById('editActivityLoading');
+    const submitBtn = document.getElementById('editActivitySubmitBtn');
+
+    editForm.addEventListener('submit', function () {
+        loadingOverlay.classList.remove('d-none');
+        submitBtn.disabled = true;
+    });
+</script>
+<script>
+    const cancelBtn = document.getElementById('editActivityCancelBtn');
+    const editModalEl = document.getElementById('editActivityModal');
+
+    cancelBtn.addEventListener('click', function () {
+        // Show loader
+        loadingOverlay.classList.remove('d-none');
+
+        // Hide loader after modal closes
+        editModalEl.addEventListener('hidden.bs.modal', function () {
+            loadingOverlay.classList.add('d-none');
+        }, { once: true });
+    });
+</script>
+
+

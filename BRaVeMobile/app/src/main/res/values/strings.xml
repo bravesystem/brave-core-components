@@ -1,0 +1,115 @@
+<resources>
+    <string name="app_name">BRaVe</string>
+    <string name="app_version">Version: 3.3.1</string>
+    <string name="title_activity_activation_page">ActivationPage</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="title_activity_login_page">LoginPage</string>
+    <string name="title_activity_dashboard">Dashboard</string>
+    <string name="title_activity_list_page">ActivityListPage</string>
+    <string name="splash_tagline">Welcome to the BRaVe App</string>
+
+
+    <string name="no_gps_collected">No coordinates collected</string>
+
+    <string name="biometric_collection_success">Biometric data collected successfully</string>
+    <string name="biometric_permanently_removed">The biometric data was removed and cannot be restored. Please recapture if necessary.</string>
+    <string name="biometric_collected_not_saved">The collected biometric data was not saved</string>
+
+    <string name="individual_min_age">A Head of Household must be at least %d years old.</string>
+    <string name="individual_max_age">Maximum allowed age is 150 years</string>
+
+    <string name="brave_network_error">Network error: Unable to reach the server. Please check your connection and try again.</string>
+    <string name="brave_unknown_error">Something went wrong and the operation couldn’t be completed. Please check your connection and try again.</string>
+    <string name="brave_server_error">Server reached, request not processed. Please try again later.</string>
+    <string name="beneficiary_no_enrolled">Beneficiary is not enrolled in the distribution. Please contact your supervisor.</string>
+    <string name="device_unauthorized">Unauthorized. Please contact your supervisor.</string>
+
+    <string name="head_of_household_name">Name: %s</string>
+    <string name="head_of_household_gender">Gender: %s</string>
+    <string name="head_of_household_age">Age: %s</string>
+    <string name="household_id">Household Id %s</string>
+    <string name="individual_id">Individual Id %s</string>
+    <string name="individual_no">Individual # %s</string>
+
+    <string name="add_registration">New Registration</string>
+    <string name="edit_registration">Edit Registration</string>
+    <string name="add_individual">Add Individual</string>
+    <string name="edit_individual">Edit Individual</string>
+    <string name="label_biometric_captured">Biometric captured: %s</string>
+
+    <string name="select_decision">Select decision</string>
+    <string name="all_items_provided">All Items were provided</string>
+    <string name="some_items_provided">Some Items were provided</string>
+
+    <string-array name="reason_options">
+        <item>@string/all_items_provided</item>
+        <item>@string/some_items_provided</item>
+    </string-array>
+
+    <string name="distribution_not_found">Unable to find the distribution. Please reach out to your supervisor.</string>
+    <string name="wrong_distribution_mode">Unknown distribution mode. Expected: Offline, Online, or Hybrid. Please reach out to your supervisor.</string>
+    <string name="unable_to_launch_biometric">Unable to launch the biometric module.</string>
+
+
+    <string name="online_dist_beneficiary_not_enrolled">Beneficiary not found or not enrolled for this distribution. Attempting online lookup—please try again.</string>
+    <string name="offline_dist_beneficiary_not_enrolled">Beneficiary not found or not enrolled for this distribution.</string>
+
+    <string name="activy_data_synced_success">Field activity data synced successfully, and local data has been removed from the device.</string>
+
+    <string name="activy_data_empty_no_synced">Data collection is empty. No records are available for synchronization.</string>
+    <string name="activy_data_review_before_synced">Please review your collected entries and correct any issues before synchronizing.</string>
+
+
+    <string name="required_survey_not_collected">One or more required surveys were not collected.</string>
+    <string name="individual_survey_not_collected">One or more individual surveys are missing.</string>
+
+    <string name="required_biometric_not_collected">One or more individuals are missing biometric data.</string>
+    <string name="individual_biometric_not_collected">biometric data is missing</string>
+
+    <string name="incomplete_data_collected">Incomplete data.</string>
+    <string name="household_with_multiple_heads">Multiple individuals are designated as the head of household.</string>
+
+    <string name="activy_del_biometric_after_synced_success">Removing biometric data collected on this device…</string>
+
+    <string name="pin_error_icon_desc">Incorrect PIN</string>
+    <string name="title_activity_test">Test</string>
+
+    <string name="household_data_deleted_success">Household data deleted successfully.</string>
+    <string name="individual_data_deleted_success">Individual data deleted successfully.</string>
+    <string name="title_activity_fill_survey_page_updated">FillSurveyPageUpdated</string>
+
+    <string name="survey_reponse_household">Survey response for Household %s</string>
+    <string name="survey_response_individual">Survey response for Individual %s</string>
+
+
+    <string name="activity_closed_lbl">Activity Closed</string>
+    <string name="activity_closed_text">You can\'t perform this action because the activity is closed.</string>
+    <string name="title_activity_pending_verification">PendingVerificationActivity</string>
+
+    <string name="beneficiary_enrollment_required_lbl">Household Enrollment Required</string>
+    <string name="beneficiary_enrolled_to_distr">Enroll the household into this distribution.</string>
+
+
+    <string name="beneficiary_under_different_activity">Household doesn\'t exist or is under a different activity.</string>
+    <string name="beneficiary_possible_entry_error">Household may exist; open the registration section and check for entry errors.</string>
+
+    <string name="label_record_type_kit">Record type: Kit</string>
+    <string name="label_record_type_item">Record type: Item</string>
+
+    <string name="label_item_singular">Item</string>
+    <string name="label_item_plural">Items</string>
+
+    <string name="device_provisioning_response">Device Provisioning Response</string>
+
+
+
+    <string name="download_failed_invalid_code">Download failed: invalid or incorrect partition code.</string>
+    <string name="data_download_success_review">Data downloaded successfully for review.</string>
+    <string name="error_connection_failed">Unable to connect to the server. Please check your internet connection and try again.</string>
+
+</resources>

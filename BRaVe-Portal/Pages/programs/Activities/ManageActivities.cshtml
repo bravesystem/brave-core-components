@@ -1,0 +1,189 @@
+﻿@page
+@model BRaVe_Portal.Pages.programs.Activities.ManageActivitiesModel
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models.DTOs
+@using BRaVe_Portal.Pages.programs.Activities
+@{
+    ViewData["Title"] = "Activities";
+}
+
+<div class="d-flex align-items-center mb-4">
+    <!-- Back Button on Top Left -->
+    <a href="/programs/Index" class="btn btn-outline-secondary me-auto">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+
+<div id="programInfo" class="alert alert-info mb-4 mx-auto w-100 w-md-50">
+    @if (Model.SelectedProgram != null)
+    {
+        <p class="mb-3">
+            <i class="fa-solid fa-circle-info me-2"></i>
+            <strong>Note:</strong> Program - <strong>@Model.SelectedProgram.Title</strong>.
+        </p>
+        <table class="table table-borderless align-middle mb-0" style="--bs-table-bg: transparent;">
+            <tr>
+                <th class="text-secondary">Description:</th>
+                <td class="description-cell">@Model.SelectedProgram.Description</td>
+            </tr>
+            <tr>
+                <th class="text-secondary">Program created on:</th>
+                <td>@Model.SelectedProgram.CreatedOn.ToString("yyyy-MM-dd")</td>
+            </tr>
+            <tr>
+                <th class="text-secondary">Assesment Approved on:</th>
+                <td>@Model.Assessment.CreatedOn.ToString("yyyy-MM-dd")</td>
+            </tr>
+        </table>
+    }
+    else
+    {
+        <p class="text-muted mb-0">No program selected.</p>
+    }
+</div>
+
+
+<style>
+    .description-cell {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        max-width: 50vw;
+    }
+</style>
+
+
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+<div class="d-flex justify-content-end mb-3">
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addActivityModal">
+        <i class="fa fa-plus"></i> Setup Activity
+    </button>
+</div>
+
+<div>
+    <partial name="_AddActivityModal" model="Model.NewActivity" view-data='new ViewDataDictionary(ViewData) { { "ProgramId", Model.SelectedProgramId } , {   "LocationCascade", Model.LocationCascade}}' />
+
+    @* <partial name="_AddActivityModal" model="Model.NewActivity" /> *@
+</div>
+
+<div class="card mb-3">
+
+    <div class="card-body p-0">
+        <partial name="PartialViews/_ActivityListPartial" model="Model.Activities" />
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            function initLocationCascade(container) {
+                
+                if (!container || container.dataset.initialized === 'true') return;
+                container.dataset.initialized = 'true';
+
+                const endpoint = container.dataset.endpoint;
+
+                const selects = Array.from(container.querySelectorAll('select[data-level-index]'));
+
+                function clearSelect(select) {
+                    const label = select.previousElementSibling?.textContent?.trim() || 'Location';
+                    select.innerHTML = `<option value="">-- Select ${label} --</option>`;
+                    select.value = '';
+                    select.disabled = true;
+                }
+
+                function fillSelect(select, items) {
+                    clearSelect(select);
+                    items.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.name;
+                        select.appendChild(option);
+                    });
+                    select.disabled = false;
+                }
+
+                async function loadChildren(nextSelect, levelId, parentLocationId) {
+                    const url = new URL(endpoint, window.location.origin);
+                    url.searchParams.set('levelId', String(levelId));
+                    url.searchParams.set('parentLocationId', String(parentLocationId));
+                    const response = await fetch(url.toString(), { method: 'GET' });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    fillSelect(nextSelect, data || []);
+                }
+
+                selects.forEach(select => {
+                    select.addEventListener('change', async function () {
+                        const currentIndex = Number(this.dataset.levelIndex);
+                        const selectedParentId = this.value ? Number(this.value) : null;
+
+                        for (let i = currentIndex + 1; i < selects.length; i++) {
+                            clearSelect(selects[i]);
+                        }
+
+                        const nextSelect = selects[currentIndex + 1];
+                        if (!nextSelect || !selectedParentId) return;
+
+                        const nextLevelId = Number(nextSelect.id.replace('admin-level-', ''));
+                        try {
+                            await loadChildren(nextSelect, nextLevelId, selectedParentId);
+                        } catch {
+                            clearSelect(nextSelect);
+                        }
+                    });
+                });
+            }
+
+            initLocationCascade(document.getElementById('locationCascadeContainer'));
+
+            const addModal = document.getElementById('addActivityModal');
+            if (addModal) {
+                addModal.addEventListener('shown.bs.modal', function () {
+                    initLocationCascade(document.getElementById('locationCascadeContainer'));
+                });
+            }
+
+            // EDIT MODAL
+            const editModal = document.getElementById('editActivityModal');
+            if (editModal) {
+                editModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+
+                    document.getElementById('editActivityId').value = button.getAttribute('data-id');
+                    document.getElementById('editTitle').value = button.getAttribute('data-title');
+                    document.getElementById('editDescription').value = button.getAttribute('data-description');
+                    document.getElementById('editStart').value = button.getAttribute('data-start');
+                    document.getElementById('editEnd').value = button.getAttribute('data-end');
+                    document.getElementById('editRestrictToEnumerator').checked = button.getAttribute('data-restrict') === 'True';
+                    document.getElementById('editLatitude').value = button.getAttribute('data-latitude');
+                    document.getElementById('editLongitude').value = button.getAttribute('data-longitude');
+                });
+
+            }
+
+
+        });
+    </script>
+}

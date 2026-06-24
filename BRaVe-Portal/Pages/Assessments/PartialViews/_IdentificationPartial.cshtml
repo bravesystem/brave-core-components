@@ -1,0 +1,148 @@
+﻿@model BRaVe_Portal.Models.ViewModels.DataProcessing
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.AssessmentPurposeOfProcessing ?? new List<LookupItemDto>();
+
+   // var (name, contacts) = ((string, string))ViewData["ProgramManagerInfo"];
+
+    var (name, contacts) =
+    (ViewData["ProgramManagerInfo"] as (string, string)?) ?? (string.Empty, string.Empty);
+
+
+    bool IsReadOnly = ViewData["IsReadOnly"]!= null && (bool) ViewData["IsReadOnly"];
+
+
+   
+}
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "SectionA")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "SectionA")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Program Manager Name</label>
+        <input class="form-control" readonly value="@name" />
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Program Manager Contacts</label>
+        <input class="form-control" readonly value="@contacts" />
+    </div>
+</div>
+
+@if (!Model.IsCaptured)
+{
+
+    <button type="button"
+            class="btn btn-success rounded-pill shadow px-5 py-2 d-flex align-items-center gap-2"
+            data-bs-toggle="modal"
+            data-bs-target="#saveSectionAModal">
+        <i class="fa fa-plus-circle"></i>
+        <span>Provide Section Details</span>
+    </button>
+
+
+
+}
+else
+{
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Data Manager Name</label>
+            <input asp-for="DataManagerName" class="form-control" readonly />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Data Manager Contacts</label>
+            <input asp-for="DataManagerContacts" class="form-control" readonly/>
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Primary Purpose</label>
+
+            <select asp-for="PrimaryPurposeId" class="form-select" disabled>
+                @foreach (var c in lookups)
+                {
+                    <option value="@c.Id">@c.Text</option>
+
+                }
+            </select>
+            <input asp-for="PrimaryPurposeOther" class="form-control mt-2"  readonly />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Secondary Purpose</label>
+            <select asp-for="SecondaryPurposeId" class="form-select" disabled>
+                @foreach (var c in lookups)
+                {
+                    <option value="@c.Id">@c.Text</option>
+
+                }
+            </select>
+            <input asp-for="SecondaryPurposeOther" class="form-control mt-2"  readonly />
+        </div>
+    </div>
+
+    @if(!IsReadOnly)
+    {
+        <div class="d-flex justify-content-end my-3">
+            <button type="button"
+                    class="btn btn-primary rounded-pill shadow px-4 py-2 d-flex align-items-center gap-2"
+                    data-bs-toggle="modal"
+                    data-bs-target="#saveSectionAModal">
+                <i class="fa fa-edit"></i>
+                <span>Edit Details</span>
+            </button>
+        </div>
+    }
+
+    
+}
+
+<script>
+    function toggleOtherInput(selectId, inputId) {
+        const select = document.getElementById(selectId);
+        const input = document.getElementById(inputId);
+
+        if (!select || !input) return;
+
+        if (select.value === "99") {
+            input.disabled = false;
+        } else {
+            input.disabled = true;
+            input.value = "";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const primarySelect = document.getElementById("primaryPurposeSelect");
+        const secondarySelect = document.getElementById("secondaryPurposeSelect");
+
+        if (primarySelect) {
+            primarySelect.addEventListener("change", () =>
+                toggleOtherInput("primaryPurposeSelect", "primaryPurposeOther")
+            );
+            toggleOtherInput("primaryPurposeSelect", "primaryPurposeOther");
+        }
+
+        if (secondarySelect) {
+            secondarySelect.addEventListener("change", () =>
+                toggleOtherInput("secondaryPurposeSelect", "secondaryPurposeOther")
+            );
+            toggleOtherInput("secondaryPurposeSelect", "secondaryPurposeOther");
+        }
+    });
+</script>

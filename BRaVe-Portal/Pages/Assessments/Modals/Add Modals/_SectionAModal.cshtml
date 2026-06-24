@@ -1,0 +1,82 @@
+﻿@model BRaVe_Portal.Models.ViewModels.DataProcessing
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.AssessmentPurposeOfProcessing ?? new List<LookupItemDto>();
+}
+
+
+
+<div class="modal fade" id="saveSectionAModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Complete Section</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+
+                <form method="post" asp-page-handler="SaveSectionA">
+
+
+                    <input asp-for="AssessmentId" type="hidden" />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Data Manager Name</label>
+                            <input asp-for="DataManagerName" class="form-control" maxlength="100" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Data Manager Contacts</label>
+                            <input asp-for="DataManagerContacts" class="form-control" maxlength="250" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Primary Purpose</label>
+
+                            <select asp-for="PrimaryPurposeId" class="form-select" id="primaryPurposeSelect" required>
+                                @foreach (var c in lookups)
+                                {
+                                    <option value="@c.Id">@c.Text</option>
+
+                                }
+                            </select>
+                            <input asp-for="PrimaryPurposeOther"
+                                   class="form-control mt-2"
+                                   id="primaryPurposeOther"
+                                   placeholder="If Other, specify..."
+                                   maxlength="250" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Secondary Purpose</label>
+                            <select asp-for="SecondaryPurposeId" class="form-select" id="secondaryPurposeSelect" required>
+                                @foreach (var c in lookups)
+                                {
+                                    <option value="@c.Id">@c.Text</option>
+
+                                }
+                            </select>
+                            <input asp-for="SecondaryPurposeOther"
+                                   class="form-control mt-2"
+                                   id="secondaryPurposeOther"
+                                   placeholder="If Other, specify..."
+                                   maxlength="250" />
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+

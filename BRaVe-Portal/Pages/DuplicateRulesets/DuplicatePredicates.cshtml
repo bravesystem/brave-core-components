@@ -1,0 +1,84 @@
+﻿@page
+@model BRaVe_Portal.Pages.DuplicateRulesets.DuplicatePredicatesModel
+@using System.Linq
+@using BRaVe_Portal.Models.ViewModels
+@{
+    ViewData["Title"] = "Duplicate Predicates";
+    var predicates = Model.Predicates ?? new List<DuplicatePredicates>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-page="/DuplicateRulesets/Index" class="text-decoration-none small text-secondary mb-1 d-block">
+            <i class="fa fa-arrow-left"></i> Back to Rulesets
+        </a>
+        <h2 class="mb-0">Duplicate Predicates — @(Model.RulesetName)</h2>
+    </div>
+    @* <a asp-page="/DuplicateRulesets/DuplicatePredicates/Create" asp-route-rulesetId="@Model.RulesetId" class="btn btn-primary">
+        <i class="fa fa-plus"></i> Add
+    </a> *@
+    <form method="post" asp-page-handler="Add">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="@Model.RulesetId" />
+        <button type="submit" class="btn btn-primary">
+            <i class="fa fa-plus"></i> Add
+        </button>
+    </form>
+
+</div>
+
+
+
+
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Fields</th>
+            <th>Operation</th>
+            <th>Value</th>
+            <th class="text-end">Score</th>
+            <th>Edit</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in predicates.OrderBy(p => p.Id))
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@(item.Description ?? "—")</td>
+                <td><code class="small">@item.Fields</code></td>
+                <td>@item.OperationName</td>
+                <td>@(item.Value?.ToString() ?? "—")</td>
+                <td class="text-end">@item.Score.ToString("N2")</td>
+                <td>
+                    @if (item.TenantId != null)
+                    {
+                        <a asp-page="/DuplicatePredicates/Edit" asp-route-id="@item.Id" asp-route-rulesetId="@Model.RulesetId" class="btn btn-sm btn-outline-primary" title="Edit">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span>—</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!predicates.Any())
+{
+    <p class="text-muted">No predicates in this ruleset. Use <strong>Add</strong> to add predicates.</p>
+}

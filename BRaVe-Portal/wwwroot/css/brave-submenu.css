@@ -1,0 +1,49 @@
+:root {
+    --active-blue: #0056B3;
+    --success-green: #28A745;
+}
+
+/* ===== SUBMENU BAR ===== */
+.submenu-bar {
+    background: white;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+
+.page-tabs {
+    display: flex;
+}
+
+.tab-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+    .tab-item:hover {
+        color: #212529;
+    }
+
+    .tab-item.active {
+        color: var(--active-blue);
+        border-bottom-color: var(--active-blue);
+        font-weight: 600;
+        background-color: rgba(0, 86, 179, 0.05);
+    }
+
+.btn-add {
+    background-color: var(--success-green);
+    color: white;
+    border: none;
+    font-size: 0.875rem;
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+}

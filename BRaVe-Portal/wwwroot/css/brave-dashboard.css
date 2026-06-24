@@ -1,0 +1,160 @@
+/* Dashboard Wrapper */
+.brave-dashboard {
+}
+
+/* Filter Card */
+.filter-card {
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(20,33,61,0.06);
+}
+
+/* Metric Cards */
+.metric-card {
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+}
+.chart-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+    .chart-card canvas {
+        flex-grow: 1;
+        max-height: 320px;
+    }
+
+@media (min-width: 992px) {
+    .chart-card {
+        min-height: 380px;
+    }
+}
+
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 10px;
+    color: #0d6efd;
+    background: linear-gradient(135deg, rgba(59,130,246,0.09), rgba(79,70,229,0.05));
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.metric-label {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+/* Chart Cards */
+.chart-card {
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+}
+
+
+    .chart-card canvas {
+        width: 100% !important;
+    }
+
+/* Limit pie chart height */
+#chartAssistances {
+    max-height: 240px !important;
+    height: 240px !important;
+}
+
+/* Limit doughnut chart height */
+#chartAssessmentsStatus {
+    max-height: 240px !important;
+    height: 240px !important;
+}
+
+/* Bar charts can remain slightly taller */
+#chartRegistrations,
+#chartResponses {
+    max-height: 340px !important;
+    height: 340px !important;
+}
+
+/* Select look */
+.modern-select {
+    background-color: #f9fafb;
+    border: 1px solid #dee2e6;
+}
+
+    .modern-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.15rem rgba(13,110,253,0.12);
+    }
+
+
+/* Pending tasks static bar */
+.static-notification {
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+    color: #1f2937;
+}
+
+    .static-notification .left {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+        .static-notification .left .icon {
+            width: 40px;
+            height: 40px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.04);
+            font-size: 1.1rem;
+        }
+
+    /* warning (pending) */
+    .static-notification.warning {
+        background: linear-gradient(90deg, #fffbeb, #fef3c7); /* soft yellow */
+        border: 1px solid #f59e0b33;
+    }
+
+    /* success (no pending) */
+    .static-notification.success {
+        background: linear-gradient(90deg, #f0fdf4, #dcfce7); /* soft green */
+        border: 1px solid #10b98133;
+    }
+
+    /* smaller text for meta */
+    .static-notification .meta {
+        font-size: 0.9rem;
+        color: #374151;
+    }
+
+    /* keep View button compact */
+    .static-notification .btn-view {
+        min-width: 92px;
+    }
+
+/* responsive tweak */
+@media (max-width: 575px) {
+    .static-notification {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: left;
+    }
+
+        .static-notification .btn-view {
+            align-self: flex-end;
+        }
+}

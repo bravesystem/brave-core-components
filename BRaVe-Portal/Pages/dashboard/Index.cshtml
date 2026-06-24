@@ -1,0 +1,531 @@
+﻿@page
+
+@using BRaVe_Portal.Helpers
+
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+@model BRaVe_Portal.Pages.Dashboard.IndexModel
+
+<link rel="stylesheet" href="~/css/brave-dashboard.css" asp-append-version="true" />
+
+
+<div class="brave-dashboard">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="mb-0">Dashboard</h4>
+            <small class="text-muted">Overview  </small>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <small class="text-muted">Updated: <span id="lastUpdated">-</span></small>
+
+            <!-- same Bootstrap styling, uses tag helper to link to Razor Page /RawData -->
+            <a asp-page="RawData/rawdata" class="btn btn-primary btn-sm ms-2">
+                <i class="fa-solid fa-table-list me-1"></i> View Raw Data
+            </a>
+        </div>
+
+    </div>
+
+   @*  <div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+        <strong style="color:#2196F3;">ℹ Note:</strong>
+        This dashboard is a placeholder and does not reflect actual data. It is still under development.
+    </div> *@
+
+    <br />
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+
+
+    @{
+        var pendingList = Model.Programs
+        .Select(p => new
+        {
+            Program = p,
+            Assessment = Model.Ongoing_Assessments.FirstOrDefault(a => a.AssessmentId == p.AssessmentId)
+        ?? Model.Decided_Assessments.FirstOrDefault(a => a.AssessmentId == p.AssessmentId)
+        })
+        .Where(x =>
+        x.Assessment != null &&
+        UserRoles.UserHasPendingJob(User, x.Assessment.Status)
+        )
+        .ToList();
+    }
+
+    @if (pendingList.Any())
+    {
+        <div class="alert alert-warning d-flex justify-content-between align-items-center mb-3">
+
+            <div>
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                <strong> You have @pendingList.Count pending task(s)</strong>
+            </div>
+
+            <button class="btn btn-sm btn-warning"
+                    data-bs-toggle="modal"
+                    data-bs-target="#pendingTasksModal">
+                View Tasks
+            </button>
+        </div>
+    }
+
+    @if (pendingList.Any())
+    {
+        <div class="modal fade" id="pendingTasksModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            Pending Tasks (@pendingList.Count)
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <ul class="list-group">
+                            @foreach (var item in pendingList)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                                    <div>
+                                        Program Name:<strong> @item.Program.Title</strong><br />
+                                        <small class="text-muted">
+                                            Status: @item.Assessment.Status
+                                        </small>
+                                    </div>
+
+                                    <a asp-page="/Assessments/EditAssessment"
+                                       asp-route-assessmentId="@item.Assessment.AssessmentId"
+                                       asp-route-statusId="@item.Assessment.StatusId"
+                                       class="btn btn-sm btn-primary">
+                                        View Task
+                                    </a>
+
+                                </li>
+                            }
+                        </ul>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Filters -->
+    <div class="card mb-3 filter-card">
+        <div class="card-body">
+            <form id="filtersForm" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Mission</label>
+                    <select id="missionFilter" class="form-select">
+
+                      @if (User.IsInRole(EnumUserRoles.Admin.ToString()))
+                      {
+                        <option value="all">All Missions</option>
+                      }
+                        
+
+                        @foreach (var m in Model.Missions)
+                        {
+                            <option value="@m.MissionId">@m.Name</option>
+                        }
+                    </select>
+
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Program</label>
+                    <select id="filterProgram"
+                            name="SelectedProgramId"
+                            class="form-select modern-select">
+
+                        @if (User.IsInRole(EnumUserRoles.Admin.ToString())
+                                                || User.IsInRole(EnumUserRoles.PA.ToString())
+                                                || User.IsInRole(EnumUserRoles.PM.ToString()))
+                        {
+                            <option value="all" selected="@(Model.SelectedProgramId == null)">
+                                All programs
+                            </option>
+                        }
+
+                        @foreach (var program in Model.Programs)
+                        {
+                            <option value="@program.ProgramId" selected="@(program.ProgramId == Model.SelectedProgramId)">
+                                @program.Title
+                            </option>
+                        }
+                    </select>
+                </div>
+
+
+
+                <div class="col-md-2">
+                    <label class="form-label">From</label>
+                    <input id="filterDateFrom" type="date" class="form-control"
+                           value="@DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">To</label>
+                    <input id="filterDateTo" type="date" class="form-control"
+                           value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-md-2">
+                    <button id="applyBtn" type="button" class="btn btn-primary w-100">Apply filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Metrics -->
+@*     <div class="row g-3 mb-3">
+
+        <div class="col-md-3 col-sm-6">
+            <div class="metric-card p-3 d-flex align-items-center gap-3">
+                <div class="card-icon"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <div class="metric-value" id="metricBeneficiaries">0</div>
+                    <div class="metric-label">Registrations</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="metric-card p-3 d-flex align-items-center gap-3">
+                <div class="card-icon"><i class="fa-solid fa-file-lines"></i></div>
+                <div>
+                    <div class="metric-value" id="metricActiveSurveys">0</div>
+                    <div class="metric-label">Active Surveys</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="metric-card p-3 d-flex align-items-center gap-3">
+                <div class="card-icon"><i class="fa-solid fa-hands-holding-circle"></i></div>
+                <div>
+                    <div class="metric-value" id="metricAssistances">0</div>
+                    <div class="metric-label">No of Assistances</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="metric-card p-3 d-flex align-items-center gap-3">
+                <div class="card-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                <div>
+                    <div class="metric-value" id="metricAssessments">0</div>
+                    <div class="metric-label">Total Assessments</div>
+                </div>
+            </div>
+        </div>
+    </div> *@
+
+    <!-- Charts -->
+    <div class="row g-3">
+
+        <div class="col-lg-6">
+            <div class="chart-card p-3">
+                <h6 class="mb-2">Registrations by demographic</h6>
+                <canvas id="chartRegistrations"></canvas>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="chart-card p-3">
+                <h6 class="mb-2">Enrollment and Assistance</h6>
+                <canvas id="chartDistribution"></canvas>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="chart-card p-3">
+                <h6 class="mb-2">Assistances by demographic</h6>
+                <canvas id="chartAssistances"></canvas>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="chart-card p-3">
+                <h6 class="mb-2">Assessments by status</h6>
+                <canvas id="chartAssessmentsStatus"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+@* @section Scripts { *@
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+
+    <script>
+
+        let charts = {};
+
+        const COLORS = {
+            primary: '#3B82F6',
+            success: '#10B981',
+            warning: '#F59E0B',
+            danger: '#EF4444',
+            info: '#06B6D4',
+            purple: '#8B5CF6',
+            pink: '#EC4899',
+            dark: '#1F2937'
+        };
+
+        function destroyChart(id) {
+            if (charts[id]) {
+                charts[id].destroy();
+                charts[id] = null;
+            }
+        }
+
+        async function loadDashboardCharts() {
+
+            const programSelect = document.getElementById('filterProgram');
+            const missionSelect = document.getElementById('missionFilter');
+            const startDate = document.getElementById('filterDateFrom').value;
+            const endDate = document.getElementById('filterDateTo').value;
+
+            const params = new URLSearchParams();
+
+            if (missionSelect.value && missionSelect.value !== 'all') {
+                params.append('tenantId', missionSelect.value);
+            }
+
+            if (programSelect.value && programSelect.value !== 'all') {
+                params.append('programId', programSelect.value);
+            }
+
+            params.append('startDate', startDate);
+            params.append('endDate', endDate);
+
+            try {
+                    const res = await fetch(`/Dashboard?handler=GraphData&${params.toString()}`);
+
+                    if (!res.ok) {
+                        console.error("Bad response:", res.status);
+                        return;
+                    }
+
+                    let data;
+                    try {
+                        data = await res.json();
+                    } catch {
+                        console.error("Invalid JSON response");
+                        return;
+                    }
+
+                const demo = data.graphMaleFemaleChildren ?? {};
+                const heads = data.graphFemaleChildOtherAsHead ?? {};
+                const risk = data.graphRiskAssessment ?? {};
+                const dist = data.graphDistributionAssistance ?? {};
+
+                // Get canvas elements safely
+                const regCtx = document.getElementById('chartRegistrations');
+                const assistCtx = document.getElementById('chartAssistances');
+                const statusCtx = document.getElementById('chartAssessmentsStatus');
+                const distCtx = document.getElementById('chartDistribution');
+
+                // REGISTRATIONS (BAR)
+                destroyChart('reg');
+                charts.reg = new Chart(regCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Males', 'Females', 'Children'],
+                        datasets: [{
+                            data: [
+                                demo.males ?? 0,
+                                demo.females ?? 0,
+                                demo.children ?? 0
+                            ],
+                            backgroundColor: [
+                                COLORS.primary,
+                                COLORS.pink,
+                                COLORS.warning
+                            ],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                // HOUSEHOLD HEADS (DOUGHNUT)
+                destroyChart('assist');
+                charts.assist = new Chart(assistCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['FemaleHead', 'ChildHead', 'Other'],
+                        datasets: [{
+                            data: [
+                                heads.femaleHead ?? 0,
+                                heads.childHead ?? 0,
+                                heads.other ?? 0
+                            ],
+                            backgroundColor: [
+                                COLORS.danger,
+                                COLORS.purple,
+                                COLORS.info
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                // RISK STATUS (DOUGHNUT)
+                destroyChart('status');
+                charts.status = new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [
+                            'Created',
+                            'InProgress',
+                            'Approved',
+                            'Rejected',
+                            'PendingReview'
+                        ],
+                        datasets: [{
+                            data: [
+                                risk.created ?? 0,
+                                risk.inProgress ?? 0,
+                                risk.approved ?? 0,
+                                risk.rejected ?? 0,
+                                risk.pendingReview ?? 0
+                            ],
+                            backgroundColor: [
+                                COLORS.dark,
+                                COLORS.warning,
+                                COLORS.success,
+                                COLORS.danger,
+                                COLORS.info
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                // DISTRIBUTION (BAR)
+                destroyChart('dist');
+                charts.dist = new Chart(distCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Enrolled', 'Received'],
+                        datasets: [{
+                            data: [
+                                dist.totalHouseholdsEnrolled ?? 0,
+                                dist.totalHouseholdsReceived ?? 0
+                            ],
+                            backgroundColor: [
+                                COLORS.primary,
+                                COLORS.success
+                            ],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                // METRICS
+              
+                // document.getElementById('metricBeneficiaries').innerText =
+                //     (demo.males ?? 0) + (demo.females ?? 0);
+                //   debugger;
+
+                // document.getElementById('metricAssistances').innerText =
+                //     dist.totalHouseholdsReceived ?? 0;
+
+                // document.getElementById('metricAssessments').innerText =
+                //     (risk.created ?? 0) +
+                //     (risk.approved ?? 0) +
+                //     (risk.inProgress ?? 0) +
+                //     (risk.rejected ?? 0) +
+                //     (risk.pendingReview ?? 0);
+
+            } catch (err) {
+                console.error("Failed to load dashboard charts:", err);
+            }
+        }
+
+        async function loadProgramsByMission() {
+
+            const missionSelect = document.getElementById('missionFilter');
+            const programSelect = document.getElementById('filterProgram');
+
+            programSelect.innerHTML = `<option>Loading...</option>`;
+
+            const missionId = missionSelect.value !== 'all'
+                ? missionSelect.value
+                : null;
+
+            const url = missionId
+                ? `/Dashboard?handler=ProgramsByMission&missionId=${missionId}`
+                : `/Dashboard?handler=ProgramsByMission`;
+
+            const res = await fetch(url);
+            const programs = await res.json();
+
+            programSelect.innerHTML = `<option value="all">All programs</option>`;
+
+            programs.forEach(p => {
+                programSelect.innerHTML +=
+                    `<option value="${p.programId}">${p.title}</option>`;
+            });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            document
+                .getElementById('missionFilter')
+                .addEventListener('change', loadProgramsByMission);
+
+            document
+                .getElementById('applyBtn')
+                .addEventListener('click', loadDashboardCharts);
+
+            loadProgramsByMission();
+            loadDashboardCharts();
+        });
+
+        //loadProgramsByMission();
+        //loadDashboardCharts();
+
+
+    </script>
+
+@* } *@

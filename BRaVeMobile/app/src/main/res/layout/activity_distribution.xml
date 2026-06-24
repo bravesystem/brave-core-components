@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp">
+
+        <!-- Distribution Title -->
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tvDistributionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Distribution-1"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/brave_blue"
+            android:paddingBottom="4dp" />
+
+        <!-- Distribution ID -->
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tvDistributionId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ID: XXX"
+            android:textSize="13sp"
+            android:textColor="#6B7280"
+            android:paddingBottom="16dp" />
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:id="@+id/layoutItemActions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <!-- FP Scan (Primary) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnItemFpScan"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="FP Scan"
+                android:textColor="@android:color/white"
+                app:backgroundTint="@color/brave_blue"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_fingerprint_24"
+                app:iconTint="@android:color/white"
+                app:iconPadding="8dp" />
+
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="wrap_content" />
+
+            <!-- Search (Secondary) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnItemSearch"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:textColor="@color/brave_blue"
+                android:text="Search"
+                app:cornerRadius="12dp"
+                app:strokeColor="@color/brave_blue"
+                app:icon="@drawable/ic_search_24"
+                app:iconTint="@color/brave_blue"
+                app:iconPadding="8dp" />
+        </LinearLayout>
+
+        <!-- Info Alert -->
+        <LinearLayout
+            android:id="@+id/layoutInfoAlert"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:background="#E7F3FF"
+            android:gravity="center_vertical">
+
+            <!-- Left blue accent -->
+            <View
+                android:layout_width="4dp"
+                android:layout_height="match_parent"
+                android:background="@color/brave_blue"
+                android:layout_marginEnd="12dp" />
+
+            <!-- Info icon -->
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@android:drawable/ic_dialog_info"
+                app:tint="@color/brave_blue"
+                android:layout_marginEnd="12dp" />
+
+            <!-- Text -->
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tip: Start with FP Scan for faster verification. Use Search only if fingerprint scan fails."
+                android:textSize="13sp"
+                android:textColor="#0C4A6E" />
+
+        </LinearLayout>
+
+
+        <!-- Divider -->
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Kits List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvKits"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="16dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

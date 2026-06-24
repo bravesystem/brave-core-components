@@ -1,0 +1,531 @@
+﻿@page
+@model BRaVe_Portal.Pages.Datasets.IndexModel
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Helpers
+@using System.Text.Json
+@using BRaVe_Portal.Models.DTOs
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups ?? new CoreLookups();
+    var lookups = coreLookups.QuestionTypes ?? new List<LookupItemDto>();
+    var categoryLookups = coreLookups.PersonalDataCategories ?? new List<LookupItemDto>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">Datasets</h4>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between">
+        <span>Dataset List</span>
+        <button class="btn btn-success rounded-pill"
+                data-bs-toggle="modal"
+                data-bs-target="#addDatasetModal">
+            <i class="fa fa-plus me-1"></i> Add Dataset
+        </button>
+    </div>
+
+    <div class="table-responsive p-3">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Dataset Name</th>
+
+                    <th>Column Names</th>
+                    <th>Column Types</th>
+                    <th>Is Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.DataSets?.Any() == true)
+                {
+                    int i = 1;
+                    foreach (var dp in Model.DataSets)
+                    {
+                        // Parse the SchemaJson
+                        List<ColumnDto> columns = new List<ColumnDto>();
+                        if (!string.IsNullOrWhiteSpace(dp.SchemaJson))
+                        {
+                            try
+                            {
+                                using var doc = JsonDocument.Parse(dp.SchemaJson);
+                                var root = doc.RootElement;
+                                if (root.TryGetProperty("columns", out var cols))
+                                {
+                                    foreach (var col in cols.EnumerateArray())
+                                    {
+                                        columns.Add(new ColumnDto
+                                        {
+                                            Title = col.GetProperty("title").GetString() ?? "",
+                                            Type = col.GetProperty("type").GetString() ?? ""
+                                        });
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // ignore invalid JSON for display
+                            }
+                        }
+
+                        // Display one row per dataset
+                        <tr>
+                            <td>@dp.Id</td>
+                            <td>@dp.Title</td>
+                            <td>
+                                @string.Join(", ", columns.Select(c => c.Title))
+                            </td>
+                            <td>
+                                @string.Join(", ", columns.Select(c => c.Type))
+                            </td>
+
+                            <td class="text-center align-middle">
+                                @if (dp.IsActive)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editDatasetModal"
+                                            data-id="@dp.Id"
+                                            data-title="@dp.Title"
+                                            data-description="@dp.Description"
+                                            data-schema="@dp.SchemaJson">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+
+
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteDatasetModal"
+                                            data-id="@dp.Id"
+                                            data-title="@dp.Title">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+
+
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            No datasets found.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+</div>
+
+<!-- ===================== ADD DATASET MODAL ===================== -->
+<div class="modal fade" id="addDatasetModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <form id="datasetForm" method="post" asp-page-handler="CreateDataset">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="DatasetJson" id="datasetJson" />
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Create Dataset</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="mb-3">
+                                <label class="form-label">Dataset Title</label>
+                                <input asp-for="NewDataset.Title" class="form-control" id="title" required />
+
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea asp-for="NewDataset.Description" id="description" class="form-control"></textarea>
+
+                            </div>
+
+                            <hr />
+                            <div class="d-flex justify-content-between mb-2">
+                                <h6>Columns</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addColumn()">
+                                    + Add Column
+                                </button>
+                            </div>
+
+                            <div id="columnsContainer"></div>
+                        </div>
+
+                        <div class="col-md-5">
+                            <h6>Generated JSON</h6>
+                            <pre id="jsonOutput" class="bg-light p-3 rounded">{}</pre>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyJson()">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary"
+                            onclick="generateJsonPreview()">
+                        Generate JSON
+                    </button>
+                    <button class="btn btn-success" type="submit">
+                        <i class="fa fa-code me-1"></i> Save JSON
+                    </button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== EDIT DATASET MODAL ===================== -->
+<div class="modal fade" id="editDatasetModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <form id="editDatasetForm" method="post" asp-page-handler="UpdateDataset">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="NewDataset.Id" id="editDatasetId" />
+                <input type="hidden" name="DatasetJson" id="editDatasetJson" />
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Edit Dataset</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="mb-3">
+                                <label class="form-label">Dataset Title</label>
+                                <input asp-for="NewDataset.Title"
+                                       id="editTitle"
+                                       class="form-control"
+                                       required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea asp-for="NewDataset.Description"
+                                          id="editDescription"
+                                          class="form-control"></textarea>
+                            </div>
+
+                            <hr />
+                            <div class="d-flex justify-content-between mb-2">
+                                <h6>Columns</h6>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        onclick="addEditColumn()">
+                                    + Add Column
+                                </button>
+                            </div>
+
+                            <div id="editColumnsContainer"></div>
+                        </div>
+
+                        <div class="col-md-5">
+                            <h6>Generated JSON</h6>
+                            <pre id="editJsonOutput" class="bg-light p-3 rounded">{}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            onclick="generateEditJsonPreview()">
+                        Generate JSON
+                    </button>
+
+                    <button type="submit" class="btn btn-success" onclick="generateEditJsonPreview()">
+                        <i class="fa fa-save me-1"></i> Save Changes
+                    </button>
+
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ===================== DELETE DATASET MODAL ===================== -->
+<div class="modal fade" id="deleteDatasetModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="DeleteDataset">
+                @Html.AntiForgeryToken()
+
+                <!-- MUST MATCH BindProperty name -->
+                <input type="hidden" name="DatasetId" id="deleteDatasetId" />
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Deactivate Dataset</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p>
+                        Are you sure you want to deactivate
+                        <strong id="deleteDatasetTitle"></strong>?
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-danger" type="submit">
+                        Deactivate
+                    </button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ===================== COLUMN TEMPLATE ===================== -->
+<template id="columnTemplate">
+    <div class="border rounded p-3 mb-2 column-row">
+        <div class="row g-2">
+            <div class="col-md-6">
+                <input class="form-control form-control-sm col-title" placeholder="Column Title" required />
+            </div>
+            <div class="col-md-6">
+                <select class="form-select form-select-sm col-type" onchange="toggleOptions(this)">
+                    <option value="text">Text</option>
+                    <option value="int">Integer</option>
+                    <option value="numeric">Numeric</option>
+                    <option value="select">Select One</option>
+                    <option value="date">Date</option>
+                    <option value="boolean">Boolean</option>
+                </select>
+            </div>
+
+
+            <div class="col-12 options-container d-none">
+                <select class="form-select form-select-sm col-lookup">
+                    <option value="">-- Select Lookup --</option>
+                    @foreach (var lookup in Model.LookupNames)
+                    {
+                        <option value="@lookup.Id">@lookup.LookupName</option>
+                    }
+                </select>
+            </div>
+
+
+            <div class="col-12 d-flex justify-content-between">
+                <label>
+                    <input type="checkbox" class="form-check-input col-required" /> Required
+                </label>
+                <button type="button" class="btn btn-sm text-danger"
+                        onclick="this.closest('.column-row').remove()">
+                    Remove
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+
+<!-- ===================== JS ===================== -->
+<script>
+    // ===================== CREATE DATASET =====================
+    const container = document.getElementById("columnsContainer");
+    const template = document.getElementById("columnTemplate");
+    const output = document.getElementById("jsonOutput");
+    const datasetForm = document.getElementById("datasetForm");
+
+    function addColumn() {
+        container.appendChild(template.content.cloneNode(true));
+    }
+
+    function toggleOptions(select) {
+        const row = select.closest(".column-row");
+        const optionsContainer = row.querySelector(".options-container");
+        optionsContainer.classList.toggle("d-none", select.value !== "select");
+    }
+
+    function copyJson(outputElement = output) {
+        navigator.clipboard.writeText(outputElement.textContent);
+        alert("Copied!");
+    }
+
+
+
+    function generateJsonPreview() {
+
+        // Start IDs at 1 for every generation
+        let nextId = 1;
+
+        const dataset = {
+            title: document.getElementById("title").value,
+            description: document.getElementById("description").value,
+            columns: []
+        };
+
+        document.querySelectorAll("#columnsContainer .column-row").forEach(r => {
+
+            const type = r.querySelector(".col-type").value;
+
+            const col = {
+                id: nextId++,
+                title: r.querySelector(".col-title").value,
+                type,
+                required: r.querySelector(".col-required").checked
+            };
+
+            // Add lookupId only for select type
+            if (type === "select") {
+                const lookupSelect = r.querySelector(".col-lookup");
+                const lookupId = lookupSelect?.value;
+                if (lookupId) col.lookupId = parseInt(lookupId);
+            }
+
+            dataset.columns.push(col);
+        });
+
+        output.textContent = JSON.stringify(dataset, null, 4);
+        document.getElementById("datasetJson").value = JSON.stringify(dataset);
+    }
+
+    datasetForm.addEventListener("submit", e => {
+        if (!output.textContent || output.textContent === "{}") {
+            e.preventDefault();
+            alert("Please generate JSON first!");
+        }
+    });
+
+    addColumn();
+
+    // ===================== EDIT DATASET =====================
+    const editContainer = document.getElementById("editColumnsContainer");
+    const editTemplate = template;
+    const editJsonOutput = document.getElementById("editJsonOutput");
+
+    function addEditColumn() {
+        editContainer.appendChild(editTemplate.content.cloneNode(true));
+    }
+
+    function generateEditJsonPreview() {
+
+        // Start IDs at 1 for every generation
+        let nextId = 1;
+
+        debugger;
+
+        const dataset = {
+            title: document.getElementById("editTitle").value,
+            description: document.getElementById("editDescription").value,
+            columns: []
+        };
+
+        debugger;
+
+        document.querySelectorAll("#editColumnsContainer .column-row").forEach(r => {
+            const type = r.querySelector(".col-type").value;
+
+            const col = {
+                id: nextId++,
+                title: r.querySelector(".col-title").value,
+                type,
+                required: r.querySelector(".col-required").checked
+            };
+
+            if (type === "select") {
+                const lookupId = r.querySelector(".col-lookup").value;
+                if (lookupId) col.lookupId = parseInt(lookupId);
+            }
+
+            dataset.columns.push(col);
+        });
+
+        debugger;
+
+        editJsonOutput.textContent = JSON.stringify(dataset, null, 4);
+        document.getElementById("editDatasetJson").value = JSON.stringify(dataset);
+    }
+
+    document.getElementById("editDatasetModal")
+        .addEventListener("show.bs.modal", function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute("data-id");
+            const title = button.getAttribute("data-title");
+            const description = button.getAttribute("data-description");
+            const schema = button.getAttribute("data-schema");
+
+            document.getElementById("editDatasetId").value = id;
+            document.getElementById("editTitle").value = title;
+            document.getElementById("editDescription").value = description;
+
+            editContainer.replaceChildren();
+
+            debugger;
+
+            if (!schema) return;
+
+                let parsed = {};
+                    try {
+                        parsed = JSON.parse(schema);
+                    } catch {
+                        console.error("Invalid schema JSON");
+                        return;
+                    }
+
+            parsed.columns.forEach(c => {
+                const fragment = editTemplate.content.cloneNode(true);
+                const row = fragment.querySelector(".column-row");
+
+                row.querySelector(".col-title").value = c.title;
+                row.querySelector(".col-type").value = c.type;
+                row.querySelector(".col-required").checked = c.required;
+
+                if (c.type === "select") {
+                    row.querySelector(".options-container").classList.remove("d-none");
+                    row.querySelector(".col-lookup").value = c.lookupId ?? "";
+                }
+
+                editContainer.appendChild(fragment);
+            });
+
+            editJsonOutput.textContent = JSON.stringify(parsed, null, 4);
+        });
+
+    // ===================== DELETE DATASET =====================
+    document.getElementById("deleteDatasetModal")
+        .addEventListener("show.bs.modal", function (event) {
+            const button = event.relatedTarget;
+            document.getElementById("deleteDatasetId").value = button.getAttribute("data-id");
+            document.getElementById("deleteDatasetTitle").innerText = button.getAttribute("data-title");
+        });
+</script>
+

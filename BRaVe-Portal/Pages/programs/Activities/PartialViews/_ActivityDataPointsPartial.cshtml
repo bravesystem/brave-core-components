@@ -1,0 +1,109 @@
+﻿@model List<BRaVe_Portal.Models.ActivityDataPoint>
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@using BRaVe_Portal.Models.ViewModels
+@{
+    var activityId = ViewData["ActivityId"] as int? ?? 0;
+
+    var datapoints = ViewData["datapoints"] as List<DataPointViewModel> ?? new List<DataPointViewModel>(); 
+
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.PersonalDataCategories ?? new List<LookupItemDto>();
+
+    var dataTypelookUp = coreLookups?.SurveyTypes ?? new List<LookupItemDto>();
+
+}
+
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "Datapoint")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "DataPoint")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        @if (Model != null && Model.Any())
+        {
+            <table class="table table-striped table-bordered mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Field Name</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Required</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var dp in Model)
+                    {
+                           
+                        var tmp = datapoints.FirstOrDefault(d => d.Id == dp.DataPointId)
+                        ?? new DataPointViewModel
+                        {
+                            Id = dp.DataPointId,
+                            Text = "Unknown",
+                            CategoryId = 0
+                        };
+                        <tr>
+                            <td>
+                                @tmp.Id
+                            </td>
+                            <td>
+                              @tmp.Text                       
+                            </td>
+                            <td>
+                                @LookupHelper.GetTextById(lookups, @tmp.CategoryId)
+                               
+                            </td>
+
+                            <td>@LookupHelper.GetTextById(dataTypelookUp, @dp.DatapointType)</td>
+                            <td>
+                                @if (dp.Required)
+                                {
+                                    <span class="badge bg-success">Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">No</span>
+                                }
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-button"
+                                        data-id="@dp.DataPointId"
+                                        data-activityid="@activityId"
+                                        data-name="@tmp.Text"
+                                        data-entity="data point"
+                                        data-handler="RemoveActivityDataPoint"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#DeleteModal">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div>
+                No data points found for this activity yet.
+            </div>
+        }
+    </div>
+</div>
+

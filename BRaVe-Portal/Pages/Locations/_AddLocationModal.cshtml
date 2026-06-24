@@ -1,0 +1,77 @@
+﻿@model BRaVe_Portal.Pages.Locations.IndexModel
+
+<div class="modal fade" id="addAdminLevelLocationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="post" asp-page-handler="AddLocation">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Administrative Area</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label">Administrative Area</label>
+                        <input asp-for="addLocation.LocationName" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">P-Code</label>
+                        <input asp-for="addLocation.OfficialCode" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Admin Level</label>
+                        <select id="adminLevelAdd"
+                                asp-for="addLocation.LevelId"
+                                class="form-select"
+                                required>
+                            <option value="">-- Select Level --</option>
+                            @foreach (var e in Model.AdministrativeLevels)
+                            {
+                                <option value="@e.Id">@e.LevelName</option>
+                            }
+                        </select>
+                    </div>
+
+                 
+                    <div id="parentSectionAdd" class="mb-3 d-none">
+                        <label class="form-label fw-bold">Parent Administrative Area</label>
+                        <select id="parentLocationAdd"
+                                asp-for="addLocation.ParentLocationId"
+                                class="form-select">
+                            <option value="">-- Select Parent --</option>
+                        </select>
+                    </div>
+
+                    <!-- Is Active -->
+               @*      <div class="form-check mt-3">
+                        <input asp-for="addLocation.IsActive"
+                               class="form-check-input"
+                               type="checkbox"
+                               id="addIsActive" />
+                        <label class="form-check-label fw-semibold" for="addIsActive">
+                            Is Active
+                        </label>
+                    </div> *@
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-save me-1"></i> Save
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>

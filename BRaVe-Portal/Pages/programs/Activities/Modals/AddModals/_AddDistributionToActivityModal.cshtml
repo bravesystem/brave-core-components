@@ -1,0 +1,93 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@using BRaVe_Portal.Models.ViewModels
+@model BRaVe_Portal.Pages.programs.Activities.ViewEditActivityModel
+
+@{
+    var activityId = Model.SelectedActivity?.ActivityId ?? 0;
+    var consents = Model.AvailableConsents ?? new List<ConcentViewModel>();
+    Models.CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.SurveyTypes ?? new List<LookupItemDto>();
+    ;
+}
+
+<div class="modal fade" id="addDistributionToActivityModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Attach Distribution</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-page-handler="AddDistributersToActivity">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ActivityId" value="@Model.SelectedActivity?.ActivityId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Distribuion</label>
+                        <select name="Id" class="form-select" required>
+                            <option value="">-- Select Distribution --</option>
+                            @foreach (var dp in Model.AllDistributors)
+                            {
+                                <option value="@dp.Id">
+    @(string.IsNullOrWhiteSpace(dp.Description) 
+        ? dp.Title 
+        : $"{dp.Title} - ({dp.Description})")
+</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Select distribution Type</label>
+                        <select name="distributionType" class="form-select" required>
+                            <option value="">-- Select distribution type --</option>
+                            @foreach (var distributionType in lookups)
+                            {
+                                <option value="@distributionType.Id">@distributionType.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Enrollment Mode</label>
+                        <select name="EnrollmentMode" class="form-select" required>
+                            <option value=2>Offline</option>
+                            <option value=1>Online</option> 
+                            <option value=3>Hybrid</option>
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input type="checkbox" value="true" name="PhotoConfirmation" class="form-check-input" id="photoConfirmation" checked>
+                                <label class="form-check-label" for="photoConfirmation">
+                                    Photo Confirmation
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input type="checkbox" value="true" name="BiometricVerification" class="form-check-input" id="biometricVerification" checked>
+                                <label class="form-check-label" for="biometricVerification">
+                                    Biometric Verification
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                  @*   <div class="form-check mb-3">
+                        <input asp-for="Required" type="checkbox" class="form-check-input" />
+                        <label asp-for="Required" class="form-check-label">Is Required?</label>
+                    </div> *@
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

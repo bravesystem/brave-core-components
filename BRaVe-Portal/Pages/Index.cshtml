@@ -1,0 +1,160 @@
+﻿@page
+@using BRaVe_Portal.Helpers
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<h2>Welcome</h2>
+<p>You are signed in. Your navigation adapts to your roles.</p>
+
+<div class="alert alert-info">
+    <strong>Quick Tips:</strong>
+    <ul>
+        <li>Use the left menu or the cards below to navigate.</li>
+        <li>Items you don’t have access to won’t appear.</li>
+    </ul>
+</div>
+<div class="row g-3 justify-content-center">
+    <!-- Join a Mission -->
+    @if (User.IsInRole("NoAuth"))
+    {
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Join a Mission</h5>
+                    <p class="card-text">Join a mission</p>
+                    <a asp-page="/Missions" class="btn btn-primary">Go</a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+
+
+        <!-- Dashboard -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Dashboard</h5>
+                    <p class="card-text">View  insights.</p>
+                    <a asp-page="/Dashboard/Index" class="btn btn-primary">Go</a>
+                </div>
+            </div>
+        </div>
+        @if (User.IsInRole(EnumUserRoles.Admin.ToString()))
+        {
+
+            <!-- Region -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Region</h5>
+                        <p class="card-text">Manage regions.</p>
+                        <a asp-page="/Regions/Index" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Requests -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Pending Requests</h5>
+                        <p class="card-text">Review pending items.</p>
+                        <a asp-page="/requests/Index" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (User.IsInRole(EnumUserRoles.Admin.ToString()) || User.IsInRole(EnumUserRoles.PA.ToString()))
+        {
+            <!-- Users -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Users</h5>
+                        <p class="card-text">Manage users and roles.</p>
+                        <a asp-page="/Users/Index" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (User.IsInRole(EnumUserRoles.PA.ToString()) || User.IsInRole(EnumUserRoles.DE.ToString()) || User.IsInRole(EnumUserRoles.DA.ToString()) || User.IsInRole(EnumUserRoles.PM.ToString()) || User.IsInRole(EnumUserRoles.CoM.ToString()) || User.IsInRole(EnumUserRoles.LEG.ToString()) || User.IsInRole(EnumUserRoles.RO.ToString()) || User.IsInRole(EnumUserRoles.HQ.ToString()))
+        {
+            <!-- Programs -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Programs</h5>
+                        <p class="card-text">Manage programs.</p>
+                        <a asp-page="/Programs" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+        }
+@*         @if (User.IsInRole(EnumUserRoles.PM.ToString()) || User.IsInRole(EnumUserRoles.CoM.ToString()) || User.IsInRole(EnumUserRoles.LEG.ToString()) || User.IsInRole(EnumUserRoles.RO.ToString()) || User.IsInRole(EnumUserRoles.HQ.ToString()))
+        {
+            <!-- Assessments -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Assessments</h5>
+                        <p class="card-text">Review assessments.</p>
+                        <a asp-page="/Assessments/Assessments" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+        } *@
+        @if (User.IsInRole(EnumUserRoles.PM.ToString()) || User.IsInRole(EnumUserRoles.PA.ToString()) || User.IsInRole(EnumUserRoles.PO.ToString()) || User.IsInRole(EnumUserRoles.DE.ToString()) || User.IsInRole(EnumUserRoles.DA.ToString()))
+        {
+            <!-- Surveys -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Surveys</h5>
+                        <p class="card-text">Manage surveys.</p>
+                        <a asp-page="/Surveys" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Targeting Strategies -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Targeting Strategies</h5>
+                        <p class="card-text">Targeting strategies.</p>
+                        <a asp-page="/TargetingStrategies" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assistances -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Assistances</h5>
+                        <p class="card-text">Manage assistances.</p>
+                        <a asp-page="/Assistances" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (User.IsInRole(EnumUserRoles.PO.ToString()) || User.IsInRole(EnumUserRoles.PA.ToString()))
+        {
+            <!-- Setup -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Setup</h5>
+                        <p class="card-text">Configure system settings.</p>
+                        <a asp-page="/Setup" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+           
+        }
+    }
+</div>

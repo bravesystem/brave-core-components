@@ -1,0 +1,164 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'intl.iom.bravemobile'
+    compileSdk 33
+
+    defaultConfig {
+
+        vectorDrawables.useSupportLibrary = true
+
+        applicationId "intl.iom.bravemobile"
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+
+    signingConfigs {
+        release {
+            storeFile file(BRAVE_KEYSTORE_FILE)
+            storePassword BRAVE_KEYSTORE_PASSWORD
+            keyAlias BRAVE_KEY_ALIAS
+            keyPassword BRAVE_KEY_PASSWORD
+        }
+    }
+
+
+    buildTypes {
+
+
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+
+        /*release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }*/
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.flexbox:flexbox:3.0.0'
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+
+    // Play Integrity API
+    implementation "com.google.android.play:integrity:1.4.0"
+    // Tasks API (OnSuccessListener/OnFailureListener live here)
+    implementation "com.google.android.gms:play-services-tasks:18.2.0"
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    implementation(files("libs/neurotec/multibiometric-core-android-debug.aar"))
+    implementation(files('libs/neurotec/neurotec-licensing-gui-android.aar'))
+    implementation(files("libs/neurotec/neurotec-utils-debug.aar"))
+
+    implementation(files("libs/neurotec/neurotec-core-android.jar"))
+    implementation(files("libs/neurotec/neurotec-licensing-android.jar"))
+    implementation(files("libs/neurotec/neurotec-gui-android.jar"))
+    implementation(files("libs/neurotec/neurotec-media-android.jar"))
+    implementation(files("libs/neurotec/neurotec-media-processing-android.jar"))
+    implementation 'net.java.dev.jna:jna:5.5.0@aar'
+    implementation(files("libs/neurotec/neurotec-biometrics-gui-android.aar"))
+
+
+    implementation(files("libs/neurotec/neurotec-biometrics-client-android.jar"))
+    implementation(files("libs/neurotec/neurotec-biometrics-android.jar"))
+    implementation(files("libs/neurotec/neurotec-devices-android.jar"))
+
+    implementation(files("libs/neurotec/neurotec-devices-multimodal-credenceid-android.jar"))
+    implementation(files("libs/neurotec/neurotec-devices-media-android.jar"))
+
+   /* implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-nitgen-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-aratek-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-aratek-trustfinger-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-suprema-biomini-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-ekemp-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-bluefin-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-digitalpersona-uareu-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-secugen-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-futronic-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-integratedbiometrics-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-smufsbio-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-startek-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-nextbiometrics-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-greenbit-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-zkteco-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-morpho-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-bitel-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-identos-tactivo-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-hfsecurity-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-mantra-android.jar"))*/
+
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-nitgen-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-aratek-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-aratek-trustfinger-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-suprema-biomini-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-ekemp-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-bluefin-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-digitalpersona-uareu-android.jar"))
+    //Due to conflicting classes to use SecuGen Superma Bio Mini needs to be excluded
+    //api ":neurotec-devices-fscanners-secugen-android"
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-suprema-realscan-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-futronic-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-integratedbiometrics-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-smufsbio-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-startek-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-nextbiometrics-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-greenbit-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-zkteco-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-morpho-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-bitel-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-identos-tactivo-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-hfsecurity-android.jar"))
+    implementation(files("libs/neurotec/scanners/neurotec-devices-fscanners-mantra-android.jar"))
+    //implementation(files("libs/neurotec/scanners/neurotec-devices-irisscanners-iritech-irishield-android.jar"))
+    //implementation(files("libs/neurotec/scanners/neurotec-devices-irisscanners-mantra-android.jar"))
+    //implementation(files("libs/neurotec/media/neurotec-devices-media-android.jar"))
+    implementation(files("libs/neurotec/neurotec-biometrics-android.jar"))
+    implementation(files("libs/neurotec/neurotec-devices-android.jar"))
+
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation "androidx.exifinterface:exifinterface:1.3.7"
+    implementation "com.google.code.gson:gson:2.11.0"
+    implementation 'com.google.android.flexbox:flexbox:3.0.0'
+
+
+
+    // Retrofit core
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    // Converter for JSON (Gson)
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    // OkHttp for networking (optional but recommended)
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
+
+
+    implementation "androidx.security:security-crypto:1.1.0-alpha03"
+
+    implementation 'com.auth0:java-jwt:4.4.0'
+
+    //implementation 'com.google.android.material:material:1.12.0'
+
+}

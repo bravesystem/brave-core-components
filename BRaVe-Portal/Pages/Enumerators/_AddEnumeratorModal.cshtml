@@ -1,0 +1,68 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.Enumerators.IndexModel
+@* @model EnumeratorDto *@
+
+
+<div class="modal fade" id="addEnumeratorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Enumerator Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="AddEnumerator">
+                    @Html.AntiForgeryToken()
+
+            @*         <div class="mb-3">
+                        <label class="form-label">Enumerator id</label>
+                        <input asp-for="EnumeratorId" class="form-control" />
+                    </div> *@
+                    <div class="mb-3">
+                        <label class="form-label">Enumerator Code</label>
+                       
+                        <select asp-for="Enumerator.EnumeratorCode" class="form-select" required>
+                            @foreach (var e in Model.EnumeratorCodes)
+                            {
+                                <option value="@e.EnumeratorCode">@e.EnumeratorCode</option>
+                            }
+                        </select>
+              @*           <input asp-for="EnumeratorCode" class="form-control" /> *@
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Enumerator Name</label>
+                        <input asp-for="Enumerator.FullName" class="form-control" required>
+                    </div>
+             @*        <div class="mb-3">
+                        <label class="form-label">Enumerator Type</label>
+                        <input asp-for="EnumeratorType" class="form-control" />
+                    </div>
+                   *@
+
+                 @*    <div class="mb-3">
+                        <label class="form-label">Enumerator Pin</label>
+                        <input asp-for="EnumeratorPin" class="form-control" />
+                    </div> *@
+                    <div class="mb-3">
+                        <label class="form-label">Note</label>
+                        <input asp-for="Enumerator.Note" class="form-control" required>
+                    </div>
+                 
+                    <div class="form-check mb-3">
+                        <input asp-for="Enumerator.IsSupervisor" class="form-check-input" />
+                        <label asp-for="Enumerator.IsSupervisor" class="form-check-label">Is Supervisor</label>
+                    </div>
+
+                   @*  <div class="form-check mb-3">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label">Active</label>
+                    </div> *@
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

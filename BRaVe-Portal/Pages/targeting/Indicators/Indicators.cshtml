@@ -1,0 +1,296 @@
+﻿@page
+@model BRaVe_Portal.Pages.Targeting.IndicatorsModel
+@using System.Text.Json
+@using BRaVe_Portal.Models.DTOs
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">Targeting Indicators</h4>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<!-- ===================== INDICATOR LIST ===================== -->
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between">
+        <span>Indicator List</span>
+      @*   <button class="btn btn-success rounded-pill"
+                data-bs-toggle="modal"
+                data-bs-target="@Model.NewIndicator.IndicatorId"
+                onclick="/Targeting/Indicators/CompositeBuilder">
+            <i class="fa fa-plus me-1"></i> Add Indicator
+        </button> *@
+
+        <a asp-page="/Targeting/Indicators/CompositeBuilder"
+           asp-route-id="@Model.NewIndicator.IndicatorId"
+           class="btn btn-success btn-sm">
+            <i class="fa fa-code me-1"></i>
+            Add Custom Indicator
+        </a>
+    </div>
+
+    <div class="table-responsive p-3">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Program Id</th>
+                    <th>Code</th>
+                    <th>Level</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Data Type</th>
+                    <th>Expression</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Indicators?.Any() == true)
+                {
+
+                    var indicators = Model.Indicators
+                    .OrderByDescending(x => x.Order)       // 1) Order desc
+                    .ThenByDescending(x => x.UpdatedOn)    // 2) UpdatedOn desc
+                    .ThenBy(x => x.IndicatorId)            // 3) IndicatorId asc
+                    .ToList();
+
+
+                    foreach (var ind in indicators)
+                    {
+
+
+                        <tr>
+                            <td>@ind.IndicatorId</td>
+                            <td>
+                                @(ind.ProgramId == null ? "-" : ind.ProgramId)
+                            </td>
+                            <td>@ind.Code</td>
+                            <td>@ind.Level</td>
+                            <td>@ind.Name</td>
+                            <td>@ind.IndicatorType</td>
+                            <td>@ind.DataType</td>
+                            <td class="text-muted small" title="@ind.Expression">
+
+                                @Helpers.StringHelper.TruncateWithEllipsis(
+                                ind.Expression, 20
+                                                )
+
+
+                                @* @(string.IsNullOrWhiteSpace(ind.Expression)
+                                                        ? "-"
+                                                        : ind.Expression) *@
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                                    @if (ind.IndicatorType == IndicatorType.Custom)
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-page="/Targeting/Indicators/CompositeBuilder"
+                                           asp-route-id="@ind.IndicatorId">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                    }
+                                    <form method="post"
+                                          asp-page-handler="DeleteIndicator">
+                                          @Html.AntiForgeryToken()
+                                        <input type="hidden"
+                                               name="IndicatorId"
+                                               value="@ind.IndicatorId" />
+
+                                        @if (ind.IndicatorType == IndicatorType.Custom)  
+                                        {
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                <i class="fa fa-trash"></i>
+                                            </button>    
+                                        }
+                                        
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                                }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8"
+                            class="text-center text-muted">
+                            No Indicators found.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<!-- ===================== ADD / EDIT MODAL ===================== -->
+<div class="modal fade"
+     id="indicatorModal"
+     tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="post"
+                  asp-page-handler="@((Model.NewIndicator.IndicatorId == 0)
+                                      ? "CreateIndicator"
+                                      : "UpdateIndicator")">
+                  @Html.AntiForgeryToken()
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        @((Model.NewIndicator.IndicatorId == 0)
+                                                ? "Add Indicator"
+                                                : "Edit Indicator")
+                    </h5>
+                    <button class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           asp-for="NewIndicator.IndicatorId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Code</label>
+                        <input asp-for="NewIndicator.Code"
+                               class="form-control"
+                               required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input asp-for="NewIndicator.Name"
+                               class="form-control"
+                               required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Level</label>
+                        <select asp-for="NewIndicator.Level"
+                                class="form-select">
+                            <option value="Household">Household</option>
+                            <option value="Individual">Individual</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select asp-for="NewIndicator.IndicatorType"
+                                class="form-select">
+                            <option value="Raw">Raw</option>
+                            <option value="Composite">Composite</option>
+                            <option value="System">System</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Data Type</label>
+                        <select asp-for="NewIndicator.DataType"
+                                class="form-select">
+                            <option value="Number">Number</option>
+                            <option value="Boolean">Boolean</option>
+                            <option value="Category">Category</option>
+                            <option value="Date">Date</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea asp-for="NewIndicator.Description"
+                                  class="form-control"></textarea>
+                    </div>
+                    <div class="mt-3">
+                        <a asp-page="/Targeting/Indicators/CompositeBuilder"
+                           asp-route-id="@Model.NewIndicator.IndicatorId"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fa fa-code me-1"></i>
+                            Open Composite Builder
+                        </a>
+                        </di
+                        @if (Model.NewIndicator.IndicatorType == IndicatorType.Custom &&
+                                        Model.NewIndicator.IndicatorId > 0)
+                    {
+                        <div class="mt-3">
+                            <a asp-page="/Targeting/Indicators/CompositeBuilder"
+                               asp-route-id="@Model.NewIndicator.IndicatorId"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-code me-1"></i>
+                                Open Composite Builder
+                            </a>
+                        </div>
+                    }
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            class="btn btn-success">
+                        @((Model.NewIndicator.IndicatorId == 0)
+                                                ? "Create"
+                                                : "Update")
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== JS ===================== -->
+<script>
+
+    function resetModal() {
+        document.querySelector("#indicatorModal form").reset();
+        document.querySelector('[name="NewIndicator.IndicatorId"]').value = 0;
+    }
+
+    function editIndicator(id) {
+
+        const indicators =
+            @Html.Raw(JsonSerializer.Serialize(Model.Indicators));
+
+        const ind =
+            indicators.find(i => i.IndicatorId === id);
+
+        if (!ind) return;
+
+        document.querySelector('[name="NewIndicator.IndicatorId"]').value =
+            ind.IndicatorId;
+
+        document.querySelector('[name="NewIndicator.Code"]').value =
+            ind.Code;
+
+        document.querySelector('[name="NewIndicator.Name"]').value =
+            ind.Name;
+
+        document.querySelector('[name="NewIndicator.Description"]').value =
+            ind.Description;
+
+        document.querySelector('[name="NewIndicator.Level"]').value =
+            ind.Level;
+
+        document.querySelector('[name="NewIndicator.Type"]').value =
+            ind.Type;
+
+        document.querySelector('[name="NewIndicator.DataType"]').value =
+            ind.DataType;
+    }
+
+</script>

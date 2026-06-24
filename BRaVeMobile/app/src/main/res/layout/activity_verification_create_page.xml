@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Title (optional) -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Please select a gender before capturing biometric data."
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Gender Label -->
+    <TextView
+        android:id="@+id/tvGenderLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Gender"
+        android:textSize="14sp"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Gender Spinner -->
+    <Spinner
+        android:id="@+id/spinnerGender"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:spinnerMode="dropdown"/>
+
+    <!-- Proceed / Capture Button -->
+    <Button
+        android:id="@+id/btnCapture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Capture Fingerprint"
+        android:enabled="false"
+        android:layout_marginTop="20dp"
+        app:icon="@drawable/ic_fingerprint_24"
+        android:drawablePadding="8dp"
+        android:layout_gravity="center_horizontal" />
+
+    <!-- Spacing -->
+    <Space
+        android:layout_width="0dp"
+        android:layout_height="12dp" />
+
+    <!-- Status label -->
+    <TextView
+        android:id="@+id/tvBiometricStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Biometric captured: No"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:layout_gravity="center_horizontal"
+        android:textColor="@android:color/black"
+        android:paddingVertical="8dp" />
+
+    <!-- Spacing -->
+    <Space
+        android:layout_width="0dp"
+        android:layout_height="12dp" />
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal">
+
+        <Button
+            android:id="@+id/btnSubmit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Submit"
+            android:enabled="false"
+            android:layout_marginEnd="16dp" />
+
+        <Button
+            android:id="@+id/btnClear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear" />
+    </LinearLayout>
+
+
+
+
+</LinearLayout>

@@ -1,0 +1,65 @@
+﻿@* _CalculatedFieldModal.cshtml *@
+<div class="modal fade" id="calculatedFieldModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa fa-calculator me-1"></i> Calculated Field</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">        
+
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="mb-2">
+                            <label class="form-label">Question</label>
+                            <div id="calc-question-label" class="fw-bold"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Operation</label>
+                            <select id="calc-operation" class="form-select">
+                                <option value="sum">Sum (+)</option>
+                                <option value="subtract">Subtract (-)</option>
+                                <option value="multiply">Multiply (x)</option>
+                                <option value="divide">Divide (/)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Operands</label>
+                            <div id="calc-operands" class="d-flex flex-column"></div>
+                            <div class="mt-2">
+                                <button id="add-operand-btn" type="button" class="btn btn-sm btn-outline-secondary"><i class="fa fa-plus me-1"></i>Add Operand</button>
+                                <button id="remove-operand-btn" type="button" class="btn btn-sm btn-outline-danger ms-1"><i class="fa fa-minus me-1"></i>Remove Operand</button>
+                            </div>
+                            <div class="form-text">Operands can be constants or references to other numeric question answers.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Result (preview)</label>
+                            <input type="text" id="calc-result-preview" class="form-control" readonly />
+                        </div>
+
+                 
+
+                        <div id="calc-error" class="text-danger small" style="display:none;"></div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <div class="mb-2">
+                            <label class="form-label">JSON Output Preview</label>
+                            <div id="json-preview" class="json-preview" style="font-family:monospace; white-space:pre-wrap; background:#f5f5f5; padding:8px; border-radius:4px; max-height:260px; overflow:auto;"></div>
+                        </div>
+                     
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button id="calc-save-btn" type="button" class="btn btn-primary">Save Calculation</button>
+            </div>
+        </div>
+    </div>
+</div>

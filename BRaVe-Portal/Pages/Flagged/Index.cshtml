@@ -1,0 +1,226 @@
+﻿@page
+@model BRaVe_Portal.Pages.Flagged.IndexModel
+@{
+    ViewData["Title"] = "Flag Beneficiary";
+}
+
+
+<h2>Flagged Beneficiaries</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+
+
+
+<form method="post" asp-page-handler="GroupSelected">
+    @Html.AntiForgeryToken()
+    <div style="margin-bottom: 12px;">
+        <div class="d-flex gap-2 align-items-center mb-3">
+
+            <button type="button"
+                    id="openAutoPartitionModal"
+                    class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>Auto Partition</span>
+            </button>
+
+            <button type="submit"
+                    class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-users"></i>
+                <span>Group Selected</span>
+            </button>
+
+        </div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    <input type="checkbox" id="selectAll" />
+                </th>
+                <th>Id</th>
+                <th>Full Name</th>
+                <th>Household ID</th>
+                <th>Activity Code</th>
+                <th>Date Flagged</th>
+                <th>Group Code</th>
+                <th>Downloaded On</th>
+                <th>Enumerator</th>
+                <th>Is Resolved</th>
+                <th>Resolved On</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var beneficiary in Model.FlaggedBeneficiaries)
+            {
+                var canSelect = beneficiary.DownloadedOn is null;
+                <tr>
+                    <td>
+                        <input type="checkbox" name="selectedBeneficiaryIds" value="@beneficiary.BeneficiaryId" class="row-checkbox" disabled="@(!canSelect)" />
+                    </td>
+                    <td>@beneficiary.Id</td>
+                    <td>@beneficiary.FullName</td>
+                    <td>
+                        <a asp-page="/dashboard/RawData/HouseholdDetails"
+                           asp-route-householdId="@beneficiary.HouseholdId"
+                           class="btn btn-primary btn-sm">
+                            <i class="fa-solid fa-eye me-1"></i>
+                            @beneficiary.HouseholdId
+                        </a>
+                    </td>
+                    <td>@beneficiary.ActivityCode</td>
+                    <td>@beneficiary.DateFlagged.ToString("yyyy-MM-dd")</td>
+                    <td>@(string.IsNullOrWhiteSpace(beneficiary.ParticipationCode) ? "-" : beneficiary.ParticipationCode)</td>
+                    <td>@(beneficiary.DownloadedOn?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>@(string.IsNullOrWhiteSpace(beneficiary.DownloadedBy) ? "-" : beneficiary.DownloadedBy)</td>
+                    <td>
+                        
+                        @* @(beneficiary.IsResolved ? "Yes" : "No") *@
+
+                        @if (!beneficiary.IsResolved)
+                        {
+                            <span class="badge bg-danger">
+                                <i class="fa fa-times"></i>
+                            </span>
+
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">
+                                <i class="fa fa-check"></i>
+                            </span>
+                        }
+
+
+                    </td>
+                    <td>@(beneficiary.ResolvedOn?.ToString("yyyy-MM-dd") ?? "-")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</form>
+
+<div id="autoPartitionModal"
+     class="position-fixed top-0 start-0 w-100 h-100 d-none"
+     style="background-color: rgba(0,0,0,0.45); z-index: 1055;">
+
+    <div class="d-flex align-items-center justify-content-center h-100">
+
+        <div class="bg-white rounded-4 shadow-lg"
+             style="width: 450px; max-width: 95vw; overflow: hidden;">
+
+            <!-- Header -->
+            <div class="bg-primary text-white px-4 py-3 d-flex align-items-center justify-content-between">
+                <h5 class="mb-0 d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Auto Partition</span>
+                </h5>
+
+                <button type="button"
+                        id="cancelAutoPartitionModal"
+                        class="btn-close btn-close-white">
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-4">
+
+                <form method="post" asp-page-handler="AutoPartition">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="NumberOfDistinctGroups"
+                               class="form-label fw-semibold">
+                            Number of distinct groups
+                        </label>
+
+                        <input asp-for="NumberOfDistinctGroups"
+                               type="number"
+                               min="2"
+                               class="form-control"
+                               placeholder="Enter number of groups" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="SelectedPartitionCriteria"
+                               class="form-label fw-semibold">
+                            Partition criteria
+                        </label>
+
+                        <select asp-for="SelectedPartitionCriteria"
+                                class="form-select">
+
+                            @foreach (var option in Model.PartitionCriteriaOptions)
+                            {
+                                <option value="@option.Value">
+                                    @option.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="d-flex justify-content-end gap-2">
+
+                        <button type="button"
+                                id="closeAutoPartitionModal"
+                                class="btn btn-outline-secondary">
+                            Cancel
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-primary d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Run Auto Partition</span>
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const selectAll = document.getElementById("selectAll");
+    const selectableCheckboxes = document.querySelectorAll(".row-checkbox:not(:disabled)");
+    const autoPartitionModal = document.getElementById("autoPartitionModal");
+    const openAutoPartitionModal = document.getElementById("openAutoPartitionModal");
+    const cancelAutoPartitionModal = document.getElementById("cancelAutoPartitionModal");
+
+    selectAll?.addEventListener("change", function () {
+        selectableCheckboxes.forEach((checkbox) => {
+            checkbox.checked = selectAll.checked;
+        });
+    });
+
+    openAutoPartitionModal?.addEventListener("click", function () {
+        autoPartitionModal.classList.remove("d-none");
+    });
+
+    cancelAutoPartitionModal?.addEventListener("click", function () {
+        autoPartitionModal.classList.add("d-none");
+    });
+
+    document.getElementById("closeAutoPartitionModal")
+        ?.addEventListener("click", function () {
+            autoPartitionModal.classList.add("d-none");
+        });
+
+    autoPartitionModal?.addEventListener("click", function (event) {
+        if (event.target === autoPartitionModal) {
+            autoPartitionModal.classList.add("d-none");
+        }
+    });
+</script>
+

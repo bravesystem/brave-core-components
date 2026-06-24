@@ -1,0 +1,33 @@
+﻿@model BRaVe_Portal.Models.Region 
+
+
+<div class="modal fade" id="editRegionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Region</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditRegion">
+
+                    <input type="hidden" asp-for="RegionId" id="editRegionId" />
+
+
+                    <div class="mb-3">
+                        <label class="form-label">Region Name</label>
+                        <input asp-for="Name" class="form-control" id="editRegionName"  />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Note</label>
+                        <input asp-for="Note" class="form-control" id="editRegionNote">
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

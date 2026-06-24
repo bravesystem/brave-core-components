@@ -1,0 +1,12 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace BRaVe_Portal.Pages.programs.Activities.PartialViews
+{
+    public class _LocationCascadePartialModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- ===== Application Section ===== -->
+    <item
+        android:id="@+id/menu_section_application"
+        android:title="Application"
+        android:enabled="false"
+        android:textAllCaps="true"
+        android:icon="@null" />
+
+    <item
+        android:id="@+id/action_app_settings"
+        android:title="Application Settings"
+        android:icon="@drawable/ic_settings_24"
+        app:showAsAction="never" />
+
+    <!-- ===== Divider ===== -->
+    <item
+        android:id="@+id/divider1"
+        android:title="---------------------"
+        android:enabled="false" />
+
+    <!-- ===== Biometrics Section ===== -->
+    <item
+        android:id="@+id/menu_section_biometrics"
+        android:title="Biometrics"
+        android:enabled="false"
+        android:textAllCaps="true"
+        android:icon="@null" />
+
+    <item
+        android:id="@+id/action_bio_preference"
+        android:title="Preference"
+        android:icon="@drawable/ic_settings_24"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_bio_activation"
+        android:title="Activation"
+        android:icon="@drawable/ic_key_24"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_test_capture"
+        android:title="Test Capture"
+        android:icon="@drawable/ic_pan_tool_24"
+        app:showAsAction="never" />
+
+    <!-- ===== Divider ===== -->
+    <item
+        android:id="@+id/divider2"
+        android:title="---------------------"
+        android:enabled="false" />
+
+    <!-- ===== Account Section ===== -->
+    <item
+        android:id="@+id/menu_section_account"
+        android:title="Account"
+        android:enabled="false"
+        android:textAllCaps="true"
+        android:icon="@null" />
+
+    <item
+        android:id="@+id/action_logout"
+        android:title="Logout"
+        android:icon="@drawable/ic_lock_24"
+        app:showAsAction="never" />
+
+</menu>

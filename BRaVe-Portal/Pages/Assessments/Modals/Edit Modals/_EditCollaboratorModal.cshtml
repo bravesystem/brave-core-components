@@ -1,0 +1,69 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+@model BRaVe_Portal.Models.ViewModels.DataProcessingCollaborator
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.PartnerOganizations ?? new List<LookupItemDto>();
+}
+
+
+
+
+
+<div class="modal fade" id="editCollaboratorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Collaborator</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditCollaborator">
+                    <input type="hidden" asp-for="AssessmentId" id="editCollaboratorAssessmentId" />
+                    <input type="hidden" asp-for="PartnerId" id="editPartnerId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Partner</label>
+                        <select asp-for="PartnerId" class="form-select" id="editPartnerSelect" disabled>
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Organization Name</label>
+                        <input asp-for="PartnerOrganizationName" class="form-control" id="editPartnerName" maxlength="100" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contacts</label>
+                        <input asp-for="PartnerOrganizationContacts" class="form-control" id="editPartnerContacts" maxlength="250"  required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-control" id="editDescription" maxlength="500" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Update Attachment (MoU/Agreement)</label>
+                        <input type="file" class="form-control" name="CollaboratorFile" />
+                        <a id="editCollaboratorDownloadLink"
+                           class="d-none"
+                           data-no-loader
+                           asp-page-handler="DownloadAttachment"
+                           asp-route-assessmentId=""
+                           asp-route-blobPath="">
+                            <i class="fa fa-download me-1"></i> Download Attachment
+                        </a>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>

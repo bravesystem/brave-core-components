@@ -1,0 +1,340 @@
+﻿@page
+@using BRaVe_Portal.Models
+@model BRaVe_Portal.Pages.Targeting.Criterias.IndexModel
+@{
+
+
+ }
+
+<div class="mb-3 text-end">
+    <a asp-page="/Targeting/Criterias/CriteriaBuilder"
+       asp-route-TargetingId="@Model.ID"
+       asp-route-ProgramId="@Model.ProgramId"
+       asp-route-WeightBound="@Model.WeightBound"
+       asp-route-TotalWeight="@Model.TotalWeight"
+       asp-route-TotalCriteriaWeight="@Model.TotalCriteriaWeight"
+       asp-route-RuleName="@Model.RuleName"
+       class="btn btn-success btn-sm">
+        <i class="fa fa-plus"></i> Add Criteria
+    </a>
+
+</div>
+
+<!-- Search input -->
+<div class="mb-3 d-flex justify-content-center">
+    <div class="position-relative" style="max-width: 500px; width: 100%;">
+        <input id="searchInput" type="text"
+               class="form-control shadow-sm rounded-pill ps-5 pe-4"
+               placeholder="Search Creiteria..."
+               value="@Model.SearchTerm" />
+        <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+            <i class="bi bi-search" style="color:#004080;"></i>
+        </span>
+    </div>
+    <nav>
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   href="?CurrentPage=@(Model.CurrentPage - 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Previous</a>
+            </li>
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link"
+                       href="?CurrentPage=@i&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   href="?CurrentPage=@(Model.CurrentPage + 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+<!-- Page size + pagination + note + validate -->
+<div class="mb-3">
+
+    <!-- Top row: page size + pagination -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <!-- PAGE SIZE FORM -->
+        <form method="get" class="d-inline-flex align-items-center mb-0">
+            <span>Show</span>
+            <select asp-for="PageSize" class="form-select form-select-sm"
+                    style="width:auto; display:inline-block; margin:0 4px;"
+                    onchange="this.form.submit()">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+            <span>entries</span>
+
+            <input type="hidden" asp-for="SearchTerm" />
+            <input type="hidden" asp-for="CurrentPage" />
+            <input type="hidden" asp-for="TotalCriteriaWeight" value="@Model.TotalCriteriaWeight" />
+        </form>
+
+        <!-- PAGINATION -->
+        <nav>
+            <ul class="pagination mb-0">
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       href="?CurrentPage=@(Model.CurrentPage - 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Previous</a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link"
+                           href="?CurrentPage=@i&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link"
+                       href="?CurrentPage=@(Model.CurrentPage + 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Bottom row: note + validate button + message on same line -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+
+        <!-- NOTE BOX -->
+        @if (Model.WeightBound)
+        {
+            <div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:8px 12px; font-size:14px; color:#333; white-space:nowrap;">
+                <strong style="color:#2196F3;">ℹ Note:</strong>
+                This <b>@Model.RuleName</b> Target is weight bound,
+                total weight: <b>@Model.TotalWeight</b>.
+                All criteria weights should add to <b>@Model.TotalWeight</b>.<br />
+
+                @{
+                    var diff = Model.TotalWeight - Model.TotalCriteriaWeight;
+                }
+
+                Added: <b>@Model.TotalCriteriaWeight</b>
+
+                @if (diff > 0)
+                {
+                    <span class="text-warning">(Remaining: @diff)</span>
+                }
+                else if (diff < 0)
+                {
+                    <span class="text-danger">(Exceeded by: @(Math.Abs(diff)))</span>
+                }
+                else
+                {
+                    <span class="text-success">(Perfect Match ✔)</span>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="background-color:#f5f5f5; border-left:4px solid #9e9e9e; padding:8px 12px; font-size:14px; color:#333;">
+                <strong>ℹ Note:</strong>
+                This <b>@Model.RuleName</b> Target is <b>not weight bound</b>.
+                It is an open target and criteria weights are not restricted.
+            </div>
+        }
+
+
+        <!-- VALIDATE BUTTON -->
+        <form method="post" asp-page-handler="Validate" class="d-inline">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ID" />
+            <input type="hidden" asp-for="ProgramId" />
+            <input type="hidden" asp-for="TotalWeight" />
+            <input type="hidden" name="TotalCriteriaWeight" value="@Model.TotalCriteriaWeight" />
+            <input type="hidden" asp-for="WeightBound" />
+            <button type="submit" class="btn btn-warning btn-sm">
+                <i class="fa fa-check-circle"></i> Validate
+            </button>
+        </form>
+
+
+        <!-- VALIDATION MESSAGE -->
+        @if (TempData["CriteriaValidationMessage"] != null)
+        {
+            var status = TempData["CriteriaValidationStatus"]?.ToString();
+
+            var cssClass = status switch
+            {
+                "success" => "alert alert-success",
+                "error" => "alert alert-danger",
+                "warning" => "alert alert-warning",
+                _ => "alert alert-info"
+            };
+
+            <div class="@cssClass">
+                @TempData["CriteriaValidationMessage"]
+            </div>
+        }
+
+
+
+
+    </div>
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+@if ((Model.TargetingCriteria?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Defined Criterias for: @Model.Description
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0" id="usersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Expresion</th>
+                        <th>Score</th>
+                        <th>Weight</th>
+                        <th></th>
+ 
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var targetingCreteria in Model.TargetingCriteria)
+                    {
+
+                        <tr>
+                            <td>@targetingCreteria.Id</td>
+                            <td>@targetingCreteria.CriteriaName</td>
+                            <td>@targetingCreteria.Description</td>
+                            <td>@targetingCreteria.Expression</td>
+                            <td>@targetingCreteria.Score</td>
+                            <td>@targetingCreteria.Weight</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+
+                                    <a asp-page="/Targeting/Criterias/CriteriaBuilder"
+                                       asp-route-criteriaId="@targetingCreteria.Id"
+                                       asp-route-targetingId="@Model.ID"
+                                       asp-route-ProgramId="@Model.ProgramId"
+                                       asp-route-TargetingId="@Model.ID"
+                                       asp-route-WeightBound="@Model.WeightBound"
+                                       asp-route-TotalWeight="@Model.TotalWeight"
+                                       asp-route-TotalCriteriaWeight="@Model.TotalCriteriaWeight"
+                                       asp-route-RuleName="@Model.RuleName"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       style="background-color:#198754;color:ghostwhite">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+
+                                    <form method="post"
+                                          asp-page-handler="DeleteCriteria"
+                                          class="m-0">
+                                        <input type="hidden" name="CriteriaId" value="@targetingCreteria.Id" />
+                                        <input type="hidden" name="ID" value="@Model.ID" />
+                                        <input type="hidden" name="TotalWeight" value="@Model.TotalWeight" />
+                                        <input type="hidden" name="TotalCriteriaWeight" value="@Model.TotalCriteriaWeight" />
+                                        <input type="hidden" name="WeightBound" value="@Model.WeightBound" />
+                                        <input type="hidden" name="RuleName" value="@Model.RuleName" />
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                       
+                           
+
+                        </tr>
+
+
+                    }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Criteria defined for this targeting</h4>
+    </div>
+
+
+}
+<a class="btn btn-sm btn-outline-secondary" style="background-color:#198754;color:ghostwhite"  asp-page="/Targeting/Targeting">Back to Targeting</a>
+
+@section Scripts {
+
+    <script>
+        var editModal = document.getElementById('EditTargetingCriteria');
+        editModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget; // Button that triggered the modal
+
+
+            var Id = button.getAttribute('data-Id');
+              
+                             var Quantity = button.getAttribute('data-Quantity');
+                                  var Notes = button.getAttribute('data-Notes');
+                                       var TenantId = button.getAttribute('data-TenantId');
+                  var KitId = button.getAttribute('data-KitId');
+                         var ItemTagID = button.getAttribute('data-ItemTagID');
+              var IsActive = button.getAttribute('data-IsActive');
+                             var UpdatedOn = button.getAttribute('data-UpdatedOn');
+                                              var DistributionID = button.getAttribute('data-DistributionID');
+                             
+
+            // Fill form fields inside modal
+              document.getElementById('editId').value = Id;
+                document.getElementById('editTenantId').value = TenantId;
+                     document.getElementById('editQuantity').value = Quantity;
+                           document.getElementById('editNotes').value = Notes;
+            document.getElementById('editKitId').value = KitId;
+        document.getElementById('editItemTagID').value = ItemTagID;
+                         document.getElementById('editIsActive').value = IsActive;
+                          document.getElementById('editDistributionID').value = DistributionID;
+            document.getElementById('editUpdatedOn').value = UpdatedOn;
+        });
+    </script>
+    <script>
+
+
+        const searchInput = document.getElementById("searchInput");
+        let debounceTimer;
+
+        searchInput.addEventListener("input", function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const searchTerm = encodeURIComponent(searchInput.value);
+                const pageSize = @Model.PageSize;
+                const currentPage = 1; // reset to first page on new search
+                const url = `?SearchTerm=${searchTerm}&PageSize=${pageSize}&CurrentPage=${currentPage}`;
+
+                fetch(url)
+                    .then(resp => resp.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, "text/html");
+
+                        // Replace table
+                        const newTable = doc.querySelector("#usersTable").outerHTML;
+                        document.querySelector("#usersTable").outerHTML = newTable;
+
+                        // Replace pagination
+                        const newPagination = doc.querySelector(".pagination").outerHTML;
+                        document.querySelector(".pagination").outerHTML = newPagination;
+                    });
+            }, 400);
+        });
+    </script>
+}
+
+

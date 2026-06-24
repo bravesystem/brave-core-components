@@ -1,0 +1,41 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model AdministrativeLevelDto
+
+
+
+<div class="modal fade" id="addAdministrativeLevelModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Administrative Level</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="addAdministrativeLevel">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">ID </label>
+                        <input asp-for="Id" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Name </label>
+                        <input asp-for="LevelName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <input asp-for="OfficialCode" class="form-control">
+                    </div>
+
+ 
+                    
+                 
+              
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

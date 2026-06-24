@@ -1,0 +1,217 @@
+﻿@model Models.ViewModels.DataProcessingSourceOfData
+
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.SourceOfData ?? new List<LookupItemDto>();
+
+    bool IsReadOnly = ViewData["IsReadOnly"] != null && (bool)ViewData["IsReadOnly"];
+
+}
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "DataSource")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "DataSource")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<table class="table table-bordered table-hover align-middle">
+    @if (Model == null || Model.AssessmentId == 0)
+        {
+            <tr class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+                <td colspan="8">
+                    No sources of data available.
+                </td>
+            </tr>
+        }
+        else
+        {
+    <thead class="table-light">
+    
+        <tr>
+            <th>Primary Source</th>
+            <th>Other</th>
+            <th>Secondary Source</th>
+            <th>Other</th>
+            @if (IsReadOnly)
+            {
+                <th>Attachment</th>
+            }
+            <th style="width:120px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+      
+            <tr>
+                <td>@LookupHelper.GetTextById(lookups, Model.PrimarySourceId)</td>
+                <td>@Model.PrimarySourceOther</td>
+                <td>@LookupHelper.GetTextById(lookups, Model.SecondarySourceId ?? 0)</td>
+                <td>@Model.SecondarySourceOther</td>
+                @if (IsReadOnly)
+                {
+                    <th>
+                        @if (!string.IsNullOrEmpty(Model.AttachmentUrl))
+                        {
+                            <a href="?handler=DownloadAttachment&blobPath=@Model.AttachmentUrl">
+                                <i class="fa-solid fa-file-arrow-down"></i> Download Attachment
+                            </a>
+                        }
+                        else
+                        {
+                            <i class="fa-solid fa-file-circle-xmark"></i>
+                        }
+
+                    </th>
+                }
+                <td>
+                    
+
+
+                    @if (!IsReadOnly)
+                    {
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editSourceOfDataModal"
+                                data-SourceOfDataAssessment="@Model.AssessmentId"
+                                data-id="@Model.PrimarySourceId"
+                                data-primaryother="@Model.PrimarySourceOther"
+                                data-sec-id="@Model.SecondarySourceId"
+                                data-sec-other="@Model.SecondarySourceOther"
+                                data-attachment-url="@Model.AttachmentUrl">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-button"
+                                data-id="@Model.PrimarySourceId"
+                                data-assessment-id="@Model.AssessmentId"
+                                data-name="@LookupHelper.GetTextById(lookups, @Model.PrimarySourceId)"
+                                data-bs-toggle="modal" data-bs-target="#DeleteModal" data-handler="DeleteSourceOfData"
+                                data-entity="data">
+                            <i class="fa fa-trash"></i>
+                        </button>
+
+
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary-subtle text-secondary border">View-only</span>
+                        <i class="fa-solid fa-lock ms-2 text-muted" data-bs-toggle="tooltip" title="Read-only: no actions"></i>
+
+                    }
+
+
+                </td>
+            </tr>
+       
+    </tbody>
+    }
+</table>
+
+
+<!--Populate edit form-->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var editModal = document.getElementById("editSourceOfDataModal");
+
+        editModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+
+            // Get values from button attributes
+            var assessmentId = button.getAttribute("data-SourceOfDataAssessment");
+            var primaryId = button.getAttribute("data-id");
+            var primaryOther = button.getAttribute("data-primaryother");
+            var secId = button.getAttribute("data-sec-id");
+            var secOther = button.getAttribute("data-sec-other");
+
+            // Fill modal form
+            document.getElementById("editSourceOfDataAssessmentId").value = assessmentId;
+            document.getElementById("editprimaryId").value = primaryId;
+            document.getElementById("editprimaryOther").value = primaryOther;
+            document.getElementById("editsecId").value = secId;
+            document.getElementById("editsecOther").value = secOther;
+        });
+    });
+</script>
+
+
+<!--Show download url if a file exists-->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var editModal = document.getElementById("editSourceOfDataModal");
+        if (!editModal) return;
+
+        var link = document.getElementById("editSourceOfDataDownloadLink");
+
+        editModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+            if (!button) return;
+
+            var assessmentId = button.getAttribute("data-assessment-id");
+            var attachmentUrl = button.getAttribute("data-attachment-url");
+
+            if (attachmentUrl && attachmentUrl.trim() !== "") {
+                link.classList.remove("d-none");
+                link.href =
+                    `?handler=DownloadAttachment&blobPath=${encodeURIComponent(attachmentUrl)}`;
+            } else {
+                link.classList.add("d-none");
+                link.removeAttribute("href");
+            }
+        });
+    });
+</script>
+
+
+
+
+<!--Disable text field if other is not selected-->
+<script>
+    function toggleOtherInput(selectId, inputId) {
+        const select = document.getElementById(selectId);
+        const input = document.getElementById(inputId);
+
+        if (!select || !input) return;
+
+        if (select.value === "99") {
+            input.disabled = false;
+        } else {
+            input.disabled = true;
+            input.value = "";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const primarySelect = document.getElementById("primarySourceSelect");
+        const secondarySelect = document.getElementById("secondarySourceSelect");
+
+        if (primarySelect) {
+            primarySelect.addEventListener("change", () =>
+                toggleOtherInput("primarySourceSelect", "primarySourceOther")
+            );
+            toggleOtherInput("primarySourceSelect", "primarySourceOther");
+        }
+
+        if (secondarySelect) {
+            secondarySelect.addEventListener("change", () =>
+                toggleOtherInput("secondarySourceSelect", "secondarySourceOther")
+            );
+            toggleOtherInput("secondarySourceSelect", "secondarySourceOther");
+        }
+    });
+</script>
+
+

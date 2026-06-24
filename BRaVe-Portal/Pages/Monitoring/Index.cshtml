@@ -1,0 +1,53 @@
+﻿@page
+@{
+    ViewData["Title"] = "Monitoring";
+}
+
+
+
+<!-- Section Header -->
+<div class="card mb-4 border-0 shadow-sm rounded-3">
+    <div class="card-header bg-primary text-white fw-bold d-flex align-items-center">
+        <i class="fa-solid fa-binoculars me-2"></i> Monitoring
+    </div>
+
+    <div class="card-body bg-light">
+        <div class="row g-2">
+
+                <!-- Data sync -->
+                <div class="col-md-6 col-sm-6">
+                    <a asp-page="/Monitoring/DataSync"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                    <i class="fa-solid fa-rotate fa-lg text-primary me-2"></i>
+                        <span class="fw-semibold text-dark">Data Sync</span>
+                    </a>
+                </div>
+
+
+            <!-- Duplication checks -->
+            <div class="col-md-6 col-sm-6">
+                <a asp-page="/Monitoring/BiometricMatchComparison"
+                   onclick="showLoader()"
+                   class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                    <i class="fa-solid fa-people-arrows fa-lg text-primary me-2"></i>
+                    <span class="fw-semibold text-dark">Deduplication </span>
+                </a>
+            </div>
+
+            <!-- Duplication checks -->
+            <div class="col-md-6 col-sm-6">
+                <a asp-page="/Monitoring/Verifications"
+                   onclick="showLoader()"
+                   class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                    <i class="fa-solid fa-fingerprint fa-lg text-primary me-2"></i>
+                    <span class="fw-semibold text-dark">Biometic Verifications</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+

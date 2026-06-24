@@ -1,0 +1,192 @@
+﻿@model IEnumerable<Models.ViewModels.DataProcessingCollaborator>
+
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.PartnerOganizations ?? new List<LookupItemDto>();
+
+    bool IsReadOnly = ViewData["IsReadOnly"] != null && (bool)ViewData["IsReadOnly"];
+}
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "Collaborator")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "Collaborator")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Partner Organization</th>
+            <th>Partner Name</th>
+            <th>Contacts</th>
+            <th>Description</th>
+            @if (IsReadOnly)
+            {
+                <th>Attachment</th>
+            }
+            
+            <th style="width:120px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @if (Model.Count() == 0)
+        {
+            <tr  class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+                <td colspan="@(IsReadOnly ? 6 : 5)">
+                    No collaborators available.
+                </td>
+            </tr>
+        }
+        else
+            @foreach (var c in Model)  
+            {
+                <tr>
+                    <td> @LookupHelper.GetTextById(lookups, @c.PartnerId)</td>
+                    <td>@c.PartnerOrganizationName</td>
+                    <td>@c.PartnerOrganizationContacts</td>
+                    <td>@c.Description</td>
+                    @if (IsReadOnly)
+                    {
+                        <th>
+                            @if (!string.IsNullOrEmpty(c.FilePath))
+                            {
+                                <a href="?handler=DownloadAttachment&blobPath=@c.FilePath">
+                                    <i class="fa-solid fa-file-arrow-down"></i> Download Attachment
+                                </a>
+                                
+                            }
+                            else
+                            {
+                                <i class="fa-solid fa-file-circle-xmark"></i>
+                            }
+
+                        </th>
+                    }
+                    <td>
+
+                        @if (!IsReadOnly)
+                        {
+                            
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editCollaboratorModal"
+                                    data-CollaboratorAssessment="@c.AssessmentId"
+                                    data-partner-id="@c.PartnerId"
+                                    data-partner-name="@c.PartnerOrganizationName"
+                                    data-partner-contacts="@c.PartnerOrganizationContacts"
+                                    data-description="@c.Description"
+                                    data-attachment-url2="@c.FilePath">
+                                <i class="fa fa-edit"></i>
+                            </button>
+
+
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-button"
+                                    data-id="@c.PartnerId"
+                                    data-assessment-id="@c.AssessmentId"
+                                    data-name="@c.PartnerOrganizationName"
+                                    data-bs-toggle="modal" data-bs-target="#DeleteModal" data-handler="DeleteCollaborator"
+                                    data-entity="collaborator">
+                                <i class="fa fa-trash"></i>
+                            </button>
+
+
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-subtle text-secondary border">View-only</span>
+                            <i class="fa-solid fa-lock ms-2 text-muted" data-bs-toggle="tooltip" title="Read-only: no actions"></i>
+
+                        }
+
+
+
+                    </td>
+                </tr>
+            }
+
+    </tbody>
+</table>
+
+@*Fill collaborator edit button*@
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var editModal = document.getElementById("editCollaboratorModal");
+
+        editModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+
+            // Get values from button attributes
+            var assessmentId = button.getAttribute("data-CollaboratorAssessment");
+            var partnerId = button.getAttribute("data-partner-id");
+            var partnerName = button.getAttribute("data-partner-name");
+            var partnerContacts = button.getAttribute("data-partner-contacts");
+            var description = button.getAttribute("data-description");
+
+            // Fill modal form
+            document.getElementById("editCollaboratorAssessmentId").value = assessmentId;
+            document.getElementById("editPartnerId").value = partnerId;
+            document.getElementById("editPartnerSelect").value = partnerId;
+            document.getElementById("editPartnerName").value = partnerName;
+            document.getElementById("editPartnerContacts").value = partnerContacts;
+            document.getElementById("editDescription").value = description;
+        });
+    });
+</script>
+
+<!--Show download url if a file exists-->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var editModal = document.getElementById("editCollaboratorModal");
+        if (!editModal) return;
+
+        var link = document.getElementById("editCollaboratorDownloadLink");
+
+        editModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+            if (!button) return;
+
+            var attachmentUrl2 = button.getAttribute("data-attachment-url2");
+
+            if (attachmentUrl2 && attachmentUrl2.trim() !== "") {
+                link.classList.remove("d-none");
+                link.href =
+                    `?handler=DownloadAttachment&blobPath=${encodeURIComponent(attachmentUrl2)}`;
+            } else {
+                link.classList.add("d-none");
+                link.removeAttribute("href");
+            }
+        });
+    });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

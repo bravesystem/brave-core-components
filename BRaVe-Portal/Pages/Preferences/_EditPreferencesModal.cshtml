@@ -1,0 +1,47 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Models.MissionPreferences
+
+@{
+    CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.SurveyTypes ?? new List<LookupItemDto>();
+}
+
+<div class="modal fade" id="editSurveyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Preferences</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post" asp-page-handler="EditSurvey">
+                    @Html.AntiForgeryToken()
+                    <!-- Hidden ID -->
+                    <input type="hidden" asp-for="PreferenceId" id="editPreferenceId" />
+                    <input type="hidden" asp-for="ProgramId" id="editSurveyProgram" />
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label asp-for="PreferenceName" class="form-label">Title</label>
+                        <input asp-for="PreferenceName" class="form-control" id="editSurveyTitle" />
+                        <span asp-validation-for="PreferenceName" class="text-danger"></span>
+                    </div>
+
+                    <!-- Details -->
+                  
+
+                
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

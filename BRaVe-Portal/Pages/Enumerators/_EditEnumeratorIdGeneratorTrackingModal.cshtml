@@ -1,0 +1,40 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model EnumeratorIdGeneratorTracking
+
+
+
+<div class="modal fade" id="EditEnumeratorIdGeneratorTrackingModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Enumerator Generating Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditEnumeratorIdGeneratorTracking">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="LatestId" id="editLatestId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Prefix </label>
+                        <input asp-for="Prefix" class="form-control" required id="editSessionCodeHash" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">SuffixLength</label>
+                        <input asp-for="SuffixLength" class="form-control" required id="editSessionCodeHash">
+                    </div>
+
+
+                    <div class="mb-3">
+                        <label class="form-label">Total</label>
+                        <input asp-for="TotalCodeGenerated" class="form-control" required id="editTotalCodeGenerated" />
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

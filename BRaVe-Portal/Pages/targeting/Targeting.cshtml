@@ -1,0 +1,494 @@
+﻿@page
+@model BRaVe_Portal.Pages.Targeting.TargetingModel
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Helpers
+@using System.Text.Json
+@using BRaVe_Portal.Models.DTOs
+@using Microsoft.AspNetCore.Html
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups ?? new CoreLookups();
+    var lookups = coreLookups.QuestionTypes ?? new List<LookupItemDto>();
+    var categoryLookups = coreLookups.PersonalDataCategories ?? new List<LookupItemDto>();
+}
+
+<div class="mb-3 text-end">
+    <button type="button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#targetingRuleModal"
+            data-action="add">
+        <i class="fa fa-plus"></i> Add Targeting Rule
+    </button>
+</div>
+
+<!-- Search input -->
+<div class="mb-3 d-flex justify-content-center">
+    <div class="position-relative" style="max-width: 500px; width: 100%;">
+        <input id="searchInput" type="text"
+               class="form-control shadow-sm rounded-pill ps-5 pe-4"
+               placeholder="Search Targeting Rule..."
+               value="@Model.SearchTerm" />
+        <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+            <i class="bi bi-search" style="color:#004080;"></i>
+        </span>
+    </div>
+</div>
+
+<!-- Page size + pagination -->
+<div class="d-flex justify-content-between align-items-center mb-2 p-3 small">
+    <form method="get" class="d-inline-flex align-items-center mb-0">
+        <span>Show</span>
+        <select asp-for="PageSize" class="form-select form-select-sm"
+                style="width:auto;display:inline-block;margin:0 4px;"
+                onchange="this.form.submit()">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+        </select>
+        <span>entries</span>
+        <input type="hidden" asp-for="SearchTerm" />
+        <input type="hidden" asp-for="CurrentPage" />
+    </form>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   href="?CurrentPage=@(Model.CurrentPage - 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Previous</a>
+            </li>
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link"
+                       href="?CurrentPage=@i&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   href="?CurrentPage=@(Model.CurrentPage + 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success small py-2">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger small py-2">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+        @Html.Raw(TempData["ErrorMessage"])
+    </div>
+}
+
+@if ((Model.Rules?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Defined Targeting Rules
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0" id="usersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>RULE NAME</th>
+                        <th>DESCRIPTION</th>
+                        <th>DATE CREATED</th>
+                        <th>TOTAL WEIGHT</th>
+                        <th>IS VALID</th>
+                        <th>CRITERIA</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var targeting in Model.Rules.OrderByDescending(l => l.CreatedOn))
+                    {
+                        <tr>
+                            <td>@targeting.RuleName</td>
+                            <td>@targeting.Description</td>
+                            <td>@targeting.CreatedOn</td>
+                            <td>
+                                @if (targeting.IsCustom && @targeting.TotalWeight.HasValue)
+                                {
+                                    @targeting.TotalWeight
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+
+
+                            </td>
+                            <td>
+
+                                @if (@targeting.IsValid)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                }
+
+
+
+                            </td>
+
+                            <td>
+
+                                @if (targeting.IsCustom)
+
+                                {
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       style="background-color:#0056b3;color:ghostwhite"
+                                       asp-page="/Targeting/Criterias/Index"
+                                       asp-route-ID="@targeting.Id"
+                                       asp-route-TotalWeight="@targeting.TotalWeight"
+                                       asp-route-ProgramId="@targeting.ProgramId"
+                                       asp-route-WeightBound="@targeting.WeightBound"
+                                       asp-route-RuleName="@targeting.RuleName"
+                                       asp-route-Description="@targeting.Description"
+                                       title="Manage Criterias">
+                                        (@(Model.CriteriaCounts.ContainsKey(targeting.Id) ? Model.CriteriaCounts[targeting.Id] : 0))
+                                        - <i class="fa fa-tools"></i>
+                                    </a>
+                                }
+
+                                else
+                                {
+                                    <span>-</span>
+                                }
+
+
+                            </td>
+                            <td>
+
+                                @if (targeting.IsCustom)
+
+                                {
+                                    <button type="button"
+                                            style="background-color:#198754;color:ghostwhite"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#targetingRuleModal"
+                                            data-id="@targeting.Id"
+                                            data-tenantid="@targeting.TenantId"
+                                            data-programid="@targeting.ProgramId"
+                                            data-rulename="@targeting.RuleName"
+                                            data-code="@targeting.Code"
+                                            data-description="@targeting.Description"
+                                            data-weightbound="@targeting.WeightBound"
+                                            data-totalweight="@targeting.TotalWeight">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+
+                                }
+
+
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Targeting Item Found</h4>
+    </div>
+}
+
+
+<!-- SINGLE ADD / EDIT MODAL -->
+<div class="modal fade" id="targetingRuleModal" tabindex="-1" aria-labelledby="targetingRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="SaveTargetingRule" id="saveTargetingRuleForm">
+            @Html.AntiForgeryToken()
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="targetingRuleModalLabel">Add Targeting Rule</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- PROGRAM SELECTION (ADD MODE ONLY) -->
+                    <div class="row g-2 align-items-end" id="programSelectorContainer">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Select Program</label>
+                            <select id="programSelector" class="form-select shadow-sm rounded-pill border-0 px-3 py-2">
+                                <option value="">-- Select Program --</option>
+                                @foreach (var program in Model.Programs)
+                                {
+                                    <option value="@program.ProgramId" selected="@(program.ProgramId == Model.SelectedProgramId)">
+                                        @program.Title
+                                    </option>
+                                }
+                            </select>
+                            <input type="hidden" name="SelectedProgramId" id="selectedProgramIdHidden" value="@Model.SelectedProgramId" />
+                        </div>
+                    </div>
+
+                    <!-- CREATE FORM (hidden until program selected) -->
+                    <div id="ruleFormContainer" style="display:none; margin-top:1rem;">
+
+                        <input type="hidden" asp-for="TargetingRule.Id" id="ruleId" />
+                        <input type="hidden" asp-for="TargetingRule.TenantId" id="ruleTenantId" />
+                        <input type="hidden" asp-for="TargetingRule.ProgramId" id="ruleProgramId" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Rule Name</label>
+                            <input asp-for="TargetingRule.RuleName" class="form-control" required id="ruleName" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Code</label>
+                            <input asp-for="TargetingRule.Code" class="form-control" required id="ruleCode" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea asp-for="TargetingRule.Description" class="form-control" rows="3" id="ruleDescription"></textarea>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" asp-for="TargetingRule.WeightBound" id="ruleWeightBound" />
+                            <label class="form-check-label" for="ruleWeightBound">Weight Bound</label>
+                        </div>
+
+                        <div class="mb-3" id="customeWeightContainer" style="display:none;">
+                            <label class="form-label">Total Weight</label>
+                            <input asp-for="TargetingRule.TotalWeight" type="number" class="form-control" id="ruleTotalWeight" step="0.01" min="0" />
+                            <span class="text-danger small" id="totalWeightError" style="display:none;"></span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+
+        /* ===============================
+           Toggle Custom Weight
+           =============================== */
+        function toggleCustomeWeight() {
+            const checkbox = document.getElementById('ruleWeightBound');
+            const weightContainer = document.getElementById('customeWeightContainer');
+            const weightInput = document.getElementById('ruleTotalWeight');
+            const errorSpan = document.getElementById('totalWeightError');
+
+            if (!checkbox || !weightContainer || !weightInput) return;
+
+            if (checkbox.checked) {
+                weightContainer.style.display = 'block';
+                weightInput.removeAttribute('disabled');
+            } else {
+                weightContainer.style.display = 'none';
+                weightInput.value = '';
+                weightInput.setAttribute('disabled', 'disabled');
+            }
+
+            if (errorSpan) {
+                errorSpan.style.display = 'none';
+                errorSpan.textContent = '';
+            }
+
+            weightInput.classList.remove('is-invalid');
+        }
+
+        /* ===============================
+           Toggle Create Form By Program
+           =============================== */
+        function toggleCreateForm() {
+            const programSelector = document.getElementById("programSelector");
+            const ruleFormContainer = document.getElementById("ruleFormContainer");
+            const selectedProgramHidden = document.getElementById("selectedProgramIdHidden");
+
+            if (!programSelector) return;
+
+            if (!programSelector.value) {
+                ruleFormContainer.style.display = "none";
+                selectedProgramHidden.value = "";
+            } else {
+                ruleFormContainer.style.display = "block";
+                selectedProgramHidden.value = programSelector.value;
+            }
+        }
+
+        /* ===============================
+           Page Init
+           =============================== */
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // Custom weight toggle
+            toggleCustomeWeight();
+            const checkbox = document.getElementById('ruleWeightBound');
+            if (checkbox) checkbox.addEventListener('change', toggleCustomeWeight);
+
+            // Program selector toggle
+            const programSelector = document.getElementById("programSelector");
+            if (programSelector) {
+                programSelector.addEventListener("change", toggleCreateForm);
+            }
+
+            // Form submit validation for Total Weight
+            const form = document.getElementById("saveTargetingRuleForm");
+            if (form) {
+                form.addEventListener("submit", function (e) {
+                    const checkbox = document.getElementById('ruleWeightBound');
+                    const totalWeightInput = document.getElementById('ruleTotalWeight');
+                    const errorSpan = document.getElementById('totalWeightError');
+
+                    if (!checkbox || !totalWeightInput) return;
+
+                    const isWeightBound = checkbox.checked;
+                    const rawValue = totalWeightInput.value.trim();
+                    totalWeightInput.classList.remove('is-invalid');
+
+                    if (errorSpan) {
+                        errorSpan.style.display = 'none';
+                        errorSpan.textContent = '';
+                    }
+
+                    if (isWeightBound) {
+                        const parsed = parseFloat(rawValue.replace(',', '.'));
+                        if (!rawValue || isNaN(parsed) || parsed <= 0) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            totalWeightInput.classList.add('is-invalid');
+                            if (errorSpan) {
+                                errorSpan.style.display = 'block';
+                                errorSpan.textContent = 'Please enter a valid Total Weight greater than 0.';
+                            }
+                            totalWeightInput.focus();
+                            return false;
+                        }
+                    }
+                });
+            }
+
+            /* ===============================
+               Modal Add/Edit Handler
+               =============================== */
+            const targetingModal = document.getElementById('targetingRuleModal');
+
+            if (targetingModal) {
+                targetingModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const isAdd = !button || button.getAttribute('data-action') === 'add';
+
+                    document.getElementById('targetingRuleModalLabel').textContent =
+                        isAdd ? 'Add Targeting Rule' : 'Edit Targeting Rule';
+
+                    document.getElementById('ruleId').value =
+                        isAdd ? 0 : button.getAttribute('data-id');
+
+                    document.getElementById('ruleTenantId').value =
+                        isAdd ? '' : button.getAttribute('data-tenantid');
+
+                         document.getElementById('ruleProgramId').value =
+                        isAdd ? '' : button.getAttribute('data-programid');
+
+                    document.getElementById('ruleName').value =
+                        isAdd ? '' : button.getAttribute('data-rulename');
+
+                    document.getElementById('ruleCode').value =
+                        isAdd ? '' : button.getAttribute('data-code');
+
+                    document.getElementById('ruleDescription').value =
+                        isAdd ? '' : button.getAttribute('data-description');
+
+                    const isWeightBound =
+                        !isAdd && button.getAttribute('data-weightbound') === 'True';
+                    document.getElementById('ruleWeightBound').checked = isWeightBound;
+
+                    const totalWeight = !isAdd
+                        ? button.getAttribute('data-totalweight')
+                        : '';
+                    document.getElementById('ruleTotalWeight').value = totalWeight || '';
+
+                    toggleCustomeWeight();
+
+                    // Program handling
+                    const programSelectorContainer = document.getElementById("programSelectorContainer");
+                    const ruleFormContainer = document.getElementById("ruleFormContainer");
+                    const programSelector = document.getElementById("programSelector");
+                    const selectedProgramHidden = document.getElementById("selectedProgramIdHidden");
+
+                    if (isAdd) {
+                        programSelectorContainer.style.display = "block";
+                        programSelector.value = "";
+                        ruleFormContainer.style.display = "none";
+                    } else {
+                        programSelectorContainer.style.display = "none";
+                        ruleFormContainer.style.display = "block";
+                        selectedProgramHidden.value = "@Model.SelectedProgramId";
+                    }
+                });
+            }
+
+            /* ===============================
+               Search Debounce
+               =============================== */
+            const searchInput = document.getElementById("searchInput");
+            let debounceTimer;
+
+            if (searchInput) {
+                searchInput.addEventListener("input", function () {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        const searchTerm = encodeURIComponent(searchInput.value);
+                        const pageSize = @Model.PageSize;
+                        const currentPage = 1;
+                        const url = `?SearchTerm=${searchTerm}&PageSize=${pageSize}&CurrentPage=${currentPage}`;
+
+                        fetch(url)
+                            .then(resp => resp.text())
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, "text/html");
+
+                                const newTable = doc.querySelector("#usersTable");
+                                if (newTable) document.querySelector("#usersTable").outerHTML = newTable.outerHTML;
+
+                                const newPagination = doc.querySelector(".pagination");
+                                if (newPagination) document.querySelector(".pagination").outerHTML = newPagination.outerHTML;
+                            });
+                    }, 400);
+                });
+            }
+
+        });
+
+    </script>
+}
+
+

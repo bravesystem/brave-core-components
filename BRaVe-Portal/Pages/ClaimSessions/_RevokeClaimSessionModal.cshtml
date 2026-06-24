@@ -1,0 +1,30 @@
+﻿@model BRaVe_Portal.Models.ClaimSession
+
+<div class="modal fade" id="RevokeClaimSessionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+
+        <!-- Hidden ID -->
+       
+        
+
+        <div class="modal-content shadow-lg rounded-3 border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fa fa-exclamation-triangle me-2"></i> Confirm Revoke
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to Rovoke this Session:
+                <strong id="deleteLabel"></strong>?
+            </div>
+            <div class="modal-footer">
+                <form method="post" asp-page-handler="Delete">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="SessionId" id="deleteSessionId" />
+                     <button type="submit" class="btn btn-danger">Revoke</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

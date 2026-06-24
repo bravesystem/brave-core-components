@@ -1,0 +1,312 @@
+﻿@page
+@using BRaVe_Portal.Models
+@model BRaVe_Portal.Pages.Distributions.DistributionKitsModel
+
+@{
+    ViewData["Title"] = "Kit Type Management";
+    Layout = "_SectionMenu";
+}
+
+@section SubMenuBar {
+      <div class="page-tabs">
+        <a asp-page="/Distributions/DistributionsType" class="tab-item">Distribution Types</a>
+        <a asp-page="/Distributions/DistributionKits" class="tab-item active">Kit Types</a>
+        <a asp-page="/Distributions/Items/DistributionItems" class="tab-item">Item Types</a>
+    </div>
+}
+
+<div class="mb-3 text-end">
+    <button type="button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#KitTypeModal">
+        <i class="fa fa-plus"></i> Add Kit Type
+    </button>
+</div>
+
+<!-- Search -->
+<div class="mb-3 d-flex justify-content-center">
+    <div class="position-relative" style="max-width: 500px; width: 100%;">
+        <input id="searchInput"
+               type="text"
+               class="form-control shadow-sm rounded-pill ps-5 pe-4"
+               placeholder="Search Kit Type..."
+               value="@Model.SearchTerm" />
+
+        <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+            <i class="bi bi-search" style="color:#004080;"></i>
+        </span>
+    </div>
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+
+@if (TempData["DistributionMessage"] != null)
+{
+    var status = TempData["DistributionStatus"]?.ToString();
+
+    <div class="alert @(status == "success" ? "alert-success" : "alert-danger")">
+        @TempData["DistributionMessage"]
+    </div>
+}
+<div style="background: linear-gradient(90deg, #e3f2fd, #bbdefb); border-left:4px solid #1e88e5; padding:12px; margin-top:10px; font-size:14px; color:#0d47a1; border-radius:4px;">
+    <strong>ℹ Note:</strong>
+    SKU refers (Stock Keeping Unit) is a unique code used to identify and track each item in the distribution.
+</div>
+<div class="d-flex justify-content-between align-items-center mb-2 p-3 small">
+
+    <!-- Page Size -->
+    <form method="get" class="d-inline-flex align-items-center mb-0">
+        @Html.AntiForgeryToken()
+        <span>Show</span>
+
+        <select asp-for="PageSize"
+                class="form-select form-select-sm"
+                style="width:auto;display:inline-block;margin:0 4px;"
+                onchange="this.form.submit()">
+
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+        </select>
+
+        <span>entries</span>
+
+        <!-- Preserve state -->
+        <input type="hidden" asp-for="SearchTerm" />
+        <input type="hidden" asp-for="CurrentPage" />
+    </form>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination justify-content-center mb-0">
+
+            <!-- Previous -->
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   href="?CurrentPage=@(Model.CurrentPage - 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">
+                    Previous
+                </a>
+            </li>
+
+            <!-- Pages -->
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link"
+                       href="?CurrentPage=@i&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">
+                        @i
+                    </a>
+                </li>
+            }
+
+            <!-- Next -->
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   href="?CurrentPage=@(Model.CurrentPage + 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">
+                    Next
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+</div>
+@if ((Model.FilteredKitTypes?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-primary text-white fw-bold">
+            Manage Kit Types
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table table-bordered table-hover align-middle mb-0">
+
+                <thead class="table-light">
+
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>SKU</th>
+                         <th>Source</th>
+                        <th>External Id</th>
+                        <th>QR Code</th>
+                        <th>Activity Date</th>
+                        <th>Status</th>
+                        <th>Manage Items</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var kit in Model.FilteredKitTypes)
+                    {
+                        <tr>
+
+                            <td>@kit.Id</td>
+                            <td>@kit.Name</td>
+
+                            <td>@kit.SKU</td>
+                            <td>
+                                @(kit.Source == "I" ? "Internal" : "External")
+                            </td>
+
+                            <td>@kit.ExternalId</td>
+                             <td>@kit.QRCode</td>
+                              <td>
+                                @((kit.UpdatedOn ?? kit.CreatedOn).ToString("yyyy-MM-dd"))
+                                <br />
+                                <small class="text-muted">
+                                    @(kit.UpdatedOn == null ? "Created" : "Updated")
+                                </small>
+                            </td>
+                            <td>
+                                @if (kit.IsActive)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i> Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i> Inactive
+                                    </span>
+                                }
+                            </td>
+                                      <td>
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   style="background-color:#0056b3;color:ghostwhite; margin-top: 4px; display: inline-block"
+                                   asp-page="/Distributions/KitItems/Index"
+                                   asp-route-KitID="@kit.Id"
+                                   asp-route-KitName="@kit.Name"
+                                   asp-route-Description="@kit.Notes"
+                                   asp-route-KitSKU="@kit.ExternalId"
+                                    asp-route-source="kits"
+                                   class="text-primary d-inline-flex align-items-center"
+                                   title="Manage items">
+                                    (@kit.ItemCount) - <i class="fa fa-tools"></i>
+                                </a>
+                            </td>
+                            <input type="hidden" asp-for="@kit.Id" />
+                            <input type="hidden" asp-for="@kit.TenantId" />
+                            <input type="hidden" asp-for="@kit.ExternalId" />
+                            <td>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        style="background-color:#198754;color:white"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#KitTypeModal"
+                                        data-id="@kit.Id"
+                                        data-tenantid="@kit.TenantId"
+                                        data-name="@kit.Name"
+                                        data-source="@kit.Source"
+                                        data-sku="@kit.SKU"
+                                        data-externalid="@kit.ExternalId"
+                                       
+                                        data-qrcode="@kit.QRCode"
+                                        data-isactive="@kit.IsActive">
+
+                                    <i class="fa fa-edit"></i>
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Kit Types Found</h4>
+    </div>
+}
+@section Scripts {
+
+    <partial name="_AddKitTypeModal" model="@Model.Kit" />
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const modal = document.getElementById("KitTypeModal");
+            const deleteBtn = document.getElementById("deleteKitBtn");
+
+            modal.addEventListener("show.bs.modal", function (event) {
+
+                const button = event.relatedTarget;
+                if (!button) return;
+
+                const id = button.getAttribute("data-id");
+
+                if (!id) {
+                    // ADD MODE
+                    document.getElementById("kitModalTitle").innerText = "Add Kit Type";
+                    document.getElementById("kitSaveText").innerText = "Save";
+
+                    modal.querySelector("form").reset();
+                    document.getElementById("Kit_Id").value = 0;
+
+                    deleteBtn.classList.add("d-none");
+                    return;
+                }
+
+                // EDIT MODE
+                document.getElementById("kitModalTitle").innerText = "Edit Kit Type";
+                document.getElementById("kitSaveText").innerText = "Update";
+
+                document.getElementById("Kit_Id").value = id;
+                document.getElementById("Kit_TenantId").value = button.dataset.tenantid;
+                document.getElementById("Kit_Name").value = button.dataset.name;
+                document.getElementById("Kit_SKU").value = button.dataset.sku;
+                document.getElementById("Kit_Source").value = button.dataset.source;
+                document.getElementById("Kit_Notes").value = button.dataset.notes;
+                document.getElementById("Kit_IsActive").checked = button.dataset.isactive === "True";
+
+                deleteBtn.dataset.id = id;
+                deleteBtn.classList.remove("d-none");
+            });
+
+            deleteBtn.addEventListener("click", function () {
+                const id = this.dataset.id;
+
+                if (!confirm("Are you sure you want to delete this kit?")) return;
+
+                fetch(`/Distributions/DistributionKits?handler=DeleteKitType&id=${id}`, {
+                    method: "POST"
+                }).then(() => location.reload());
+            });
+
+            // =========================
+            // SEARCH (Debounce)
+            // =========================
+            const searchInput = document.getElementById("searchInput");
+            let debounceTimer;
+
+            searchInput.addEventListener("input", function () {
+                clearTimeout(debounceTimer);
+
+                debounceTimer = setTimeout(() => {
+                    const searchTerm = encodeURIComponent(searchInput.value);
+                    const pageSize = @Model.PageSize;
+
+                    // Reset page on search
+                    window.location.href = `?SearchTerm=${searchTerm}&PageSize=${pageSize}&CurrentPage=1`;
+                }, 400);
+            });
+
+        });
+    </script>
+}

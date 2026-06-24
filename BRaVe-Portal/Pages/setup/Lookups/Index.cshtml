@@ -1,0 +1,312 @@
+﻿@page
+@{
+    ViewData["Title"] = "Manage Lookups";
+}
+
+@model BRaVe_Portal.Pages.Setup.Lookups.IndexModel;
+
+<div class="card shadow-sm border-0 rounded-3">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center p-3">
+        <div class="d-flex align-items-center gap-2">
+            <!-- Back Button -->
+            <a href="/setup/" class="btn btn-light btn-sm rounded-pill shadow-sm px-3 d-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2 text-primary"></i> Back
+            </a>
+            <h5 class="mb-0 fw-bold">Manage Lookup Items</h5>
+        </div>
+
+        <div class="d-flex gap-2">
+            <!-- Add New LookUp (transparent outline style) -->
+            <button class="btn btn-sm rounded-pill d-flex align-items-center shadow-sm fw-semibold"
+                    style="background-color: transparent; color: #ffffff; border: 1px solid rgba(255,255,255,0.8);"
+                    data-bs-toggle="offcanvas" data-bs-target="#lookupOffcanvas" aria-controls="lookupOffcanvas">
+                <i class="fa-solid fa-screwdriver-wrench me-2"></i> Manage LookUp Names
+            </button>
+            
+
+            <!-- Add New Item (solid white for contrast) -->
+            <button class="btn btn-sm rounded-pill d-flex align-items-center shadow-sm fw-semibold"
+                    style="background-color: #ffffff; color: #0d6efd; border: 1px solid #ffffff;"
+                    data-bs-toggle="modal" data-bs-target="#addLookupItemModal">
+                <i class="fa-solid fa-plus me-2"></i> Add LookUp Item
+            </button>
+
+            <!-- Upload Excel (solid yellow) -->
+            <button class="btn btn-sm rounded-pill d-flex align-items-center shadow-sm fw-semibold upload-btn"
+                    style="background-color: #ffc107; color: #212529; border: 1px solid #ffc107;" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
+                <i class="fa-solid fa-file-upload me-2"></i> Upload Excel
+            </button>
+
+        </div>
+    </div><br />
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success small py-2">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger small py-2">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            @Html.Raw(TempData["ErrorMessage"])
+        </div>
+    }
+
+    <div class="card-body bg-light p-4">
+
+        <!-- Search -->
+        <form method="get"
+              class="mb-4 d-flex justify-content-center align-items-center"
+              id="searchForm">
+
+            <div class="position-relative" style="max-width: 450px; width: 100%;">
+                <input type="text"
+                       name="SearchTerm"
+                       value="@Model.DisplaySearchTerm"
+                       class="form-control rounded-pill ps-5 shadow-sm"
+                       placeholder="Search by lookup name or item..." />
+                <i class="fa-solid fa-magnifying-glass
+                  position-absolute top-50 start-0 translate-middle-y
+                  ps-3 text-primary"></i>
+            </div>
+
+            <div id="searchSpinner"
+                 class="spinner-border text-primary ms-2"
+                 role="status"
+                 style="display:none; width:1.2rem; height:1.2rem;">
+            </div>
+        </form>
+
+        
+
+
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle text-center bg-white border rounded">
+                <thead class="table-light fw-semibold border-bottom">
+                    <tr>
+                        <th>#</th>
+                       @*  <th>Lookup ID</th> *@
+                        <th>Lookup Name</th>
+                        @* <th>Item ID</th> *@
+                        <th>Item Name</th>
+                        <th>Is Active</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.LookupValues != null && Model.LookupValues.Any())
+                    {
+                        int index = 1;
+                        foreach (var value in Model.LookupValues)
+                        {
+                            <tr>
+                                <td>@index</td>
+                                @* <td>@value.LookupId</td> *@
+                                <td>@Model.LookupNames.FirstOrDefault(x => x.Id == value.LookupId)?.LookupName</td>
+                                @* <td>@value.Id</td> *@
+                                <td>@value.ItemName</td>
+                                <td>
+                                    @if (value.IsActive)
+                                    {
+                                        <i class="fa-solid fa-check text-success"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid fa-xmark text-danger"></i>
+                                    }
+                                </td>
+                                <td>@(value.UpdatedDate ?? value.CreatedDate)</td>
+
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary me-1 shadow-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editLookupItemModal"
+                                            data-valueid="@value.Id"
+                                            data-item="@value.ItemName"
+                                            data-lookupid="@value.LookupId"
+                                            data-order="@value.Order"
+                                            data-active="@value.IsActive"
+                                            data-custom="@value.IsCustom">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-3">
+                                <i class="fa-solid fa-circle-info me-1 text-primary"></i>No lookup values found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <!-- Page size + pagination -->
+        <div class="d-flex justify-content-between align-items-center mb-2 p-3 small">
+            <form method="get" class="d-inline-flex align-items-center mb-0">
+                <span>Show</span>
+                <select asp-for="PageSize" class="form-select form-select-sm"
+                        style="width:auto;display:inline-block;margin:0 4px;"
+                        onchange="this.form.submit()">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+                <span>entries</span>
+                <input type="hidden" asp-for="SearchTerm" />
+                <input type="hidden" asp-for="CurrentPage" />
+            </form>
+
+            <!-- Pagination -->
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?CurrentPage=@(Model.CurrentPage - 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Previous</a>
+                    </li>
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link"
+                               href="?CurrentPage=@i&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?CurrentPage=@(Model.CurrentPage + 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+
+        <!-- Footer Buttons -->
+        <div class="mt-4 text-center">
+            <form method="post" asp-page-handler="DownloadLookupExcel" class="d-inline" id="downloadForm">
+                @Html.AntiForgeryToken()
+                <button type="submit" id="downloadButton" class="btn btn-outline-success btn-sm rounded-pill me-2">
+                    <i class="fa-solid fa-file-excel me-1"></i> Download All Lookup Items
+                </button>
+            </form>
+
+            <a class="btn btn-outline-secondary btn-sm rounded-pill" href="~/Templates/LookupTemplate.xlsx" target="_blank">
+                <i class="fa-solid fa-file-circle-plus me-1"></i> Download Template for New Lookup Items
+            </a>
+        </div>
+
+
+ 
+    </div>
+</div>
+<partial name="UploadExcelModal" />
+@section Scripts {
+    <partial name="EditLookupItemModal"  />
+    <partial name="AddLookupItemModal" />
+    <partial name="ManageLookupCanvas" />
+
+ 
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        var reopen = '@TempData["KeepCanvasOpen"]';
+        if (reopen.toLowerCase() === "true") {
+                var myOffcanvas = new bootstrap.Offcanvas('#lookupOffcanvas');
+            myOffcanvas.show();
+        }
+    });
+
+        const editItemModal = document.getElementById('editLookupItemModal');
+        editItemModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+
+            document.getElementById('editLookupValueId').value = button.getAttribute('data-valueid');
+            document.getElementById('editLookupValueLookupId').value = button.getAttribute('data-lookupid');
+            document.getElementById('editLookupValueName').value = button.getAttribute('data-item');
+            document.getElementById('editLookupValueOrder').value = button.getAttribute('data-order');
+            const activeCheckbox = document.getElementById('editLookupValueActive');
+
+        activeCheckbox.checked = (button.getAttribute('data-active') === 'True');
+                if (button.getAttribute('data-custom') === 'False') {
+            activeCheckbox.style.pointerEvents = 'none';
+            activeCheckbox.classList.add('opacity-50');
+        } else {
+            activeCheckbox.style.pointerEvents = 'auto';
+            activeCheckbox.classList.remove('opacity-50');
+        }
+
+        });
+
+        // Autofill edit modal with lookup data
+        const editModal = document.getElementById('editLookupModal');
+        editModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-lkid');
+            const name = button.getAttribute('data-lkname');
+
+
+            document.getElementById('editLookupId').value = id;
+            document.getElementById('editLookupName').value = name;
+ 
+        });
+
+
+            //Show download Spinner on Click
+          document.getElementById("downloadForm").addEventListener("submit", function (e) {
+            const btn = document.getElementById("downloadButton");
+            const originalHtml = btn.innerHTML;
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Preparing file...`;
+
+            // Reset state after 3 seconds (enough time for download to start)
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-file-excel me-1"></i> Download All Lookup Items`;
+            }, 3000);
+        });
+
+    </script>
+    <script>
+        let searchTimer;
+        const searchInput = document.querySelector('input[name="SearchTerm"]');
+        const searchForm = document.getElementById('searchForm');
+        const searchSpinner = document.getElementById('searchSpinner');
+
+        if (searchInput && searchForm && searchSpinner) {
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimer);
+
+                searchTimer = setTimeout(() => {
+                    // show spinner
+                    searchSpinner.style.display = 'inline-block';
+
+                    // FORCE browser repaint (important)
+                    searchSpinner.getBoundingClientRect();
+
+                    // submit
+                    searchForm.submit();
+                }, 400);
+            });
+        }
+    </script>
+
+
+
+}
+

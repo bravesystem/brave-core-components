@@ -1,0 +1,56 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+@model BRaVe_Portal.Models.ViewModels.DataProcessingDataSubject
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.HouseholdTypes ?? new List<LookupItemDto>();
+}
+
+
+@if (coreLookups == null)
+{
+    <div class="text-danger">coreLookups is NULL</div>
+}
+else if (coreLookups.PartnerOganizations == null)
+{
+    <div class="text-danger">PartnerOganizations is NULL</div>
+}
+
+
+<div class="modal fade" id="editDataSubjectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Data Subject</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditDataSubject">
+                    <input type="hidden" asp-for="AssessmentId" id="editDataSubjectAssessmentId" />
+                    <input type="hidden" asp-for="SubjectTypeId" id="editSubjectTypeId" />
+                    <div class="mb-3">
+                        <label class="form-label">Subject Type</label>
+                        <select asp-for="SubjectTypeId" class="form-select" id="editSelectSubjectTypeId" disabled>
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input asp-for="IsVulnerableGroup" class="form-check-input" type="checkbox" id="editDataSubjectIsVulnerableGroup"  />
+                        <label class="form-check-label">Vulnerable Group?</label>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,75 @@
+﻿@page "{assessmentId:int}/{statusId}"
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.Assessments.ROHQUpdateAssessmentModel
+
+
+
+
+<div class="d-flex align-items-center mb-4">
+    <!-- Back Button on Top Left -->
+    <a href="javascript:history.back()" class="btn btn-outline-secondary me-auto">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+
+    <!-- Centered Title -->
+    <h5 class="fw-bold text-primary text-center flex-grow-1">
+        <i class="fa-solid fa-clipboard-check"></i> View Registration & Risk-Benefit Assessment, Status: RO/HQ - Review in Progress
+    </h5>
+
+    <!-- Spacer to balance the flexbox (keeps title centered) -->
+    <div style="width:70px;"></div>
+</div>
+
+<partial name="_RiskAssessmentPartialView" model="Model.Assessment" />
+
+
+@if (TempData["SaveRecommendation"] != null)
+{
+    <div asp-validation-summary="All" class="alert alert-danger"></div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+}
+
+@* <div class="mb-3">
+    <label class="form-label">Add Recommendation</label>
+    <textarea asp-for="Note" class="form-control"></textarea>
+</div>
+
+<div class="text-end mt-4">
+    <button type="submit" class="btn btn-success btn-lg">
+        <i class="fa fa-save"></i> Save Assessment
+    </button>
+</div> *@
+
+
+
+<form method="post" class="m-0">
+    <input asp-for="AssessmentId" type="hidden" />
+
+
+    <div class="mb-3">
+        <label class="form-label">Add Recommendation</label>
+        <textarea asp-for="Note" class="form-control"></textarea>
+    </div>
+
+    <div class="text-end mt-4">
+        <button type="submit" asp-page-handler="SaveRecommendation" class="btn btn-success btn-lg">
+            <i class="fa fa-save"></i> Save
+        </button>
+
+        @if (Model.IsValid)
+        {
+            <button type="submit" asp-page-handler="SubmitRecommendation" class="btn btn-info btn-lg">
+                <i class="fa fa-save"></i> Submit
+            </button>
+        }
+    </div>
+</form>

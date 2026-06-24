@@ -1,0 +1,381 @@
+﻿@page "{KitID:int}"
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.Distributions.KitItems.IndexModel
+@{
+    ViewData["Title"] = "Item Management";
+    var KitID1 = ViewData["KitID"];
+    var KitID = Convert.ToInt32(KitID1);
+
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.UOM ?? new List<LookupItemDto>();
+}
+
+ 
+
+@if (Model.Source != "mapping")
+{
+    <div class="mb-3 text-end">
+        <button type"button"
+        class="btn btn-success btn-sm"
+        data-bs-toggle="modal"
+        data-bs-target="#AddItemToKitModal">
+            <i class="fa fa-plus"></i> Add Items
+
+        </button>
+    </div>
+}
+<!-- Search input -->
+<div class="mb-3 d-flex justify-content-center">
+    <div class="position-relative" style="max-width: 500px; width: 100%;">
+        <input id="searchInput" type="text"
+               class="form-control shadow-sm rounded-pill ps-5 pe-4"
+               placeholder="Search Items..."
+               value="@Model.DisplaySearchTerm" />
+        <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+            <i class="bi bi-search" style="color:#004080;"></i>
+        </span>
+    </div>
+</div>
+
+<!-- Page size + pagination -->
+<div class="d-flex justify-content-between align-items-center mb-2 p-3 small">
+    <form method="get" class="d-inline-flex align-items-center mb-0">
+        <span>Show</span>
+        <select asp-for="PageSize" class="form-select form-select-sm"
+                style="width:auto;display:inline-block;margin:0 4px;"
+                onchange="this.form.submit()">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+        </select>
+        <span>entries</span>
+        <input type="hidden" asp-for="SearchTerm" />
+        <input type="hidden" asp-for="CurrentPage" />
+        <input type="hidden" asp-for="Source" />
+        <input type="hidden" asp-for="Description" />
+        <input type="hidden" asp-for="distributionId" />
+    </form>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   href="?CurrentPage=@(Model.CurrentPage - 1)&PageSize=@Model.PageSize&SearchTerm=@Model.DisplaySearchTerm&Source=@Model.Source&distributionId=@Model.distributionId">Previous</a>
+            </li>
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link"
+                       href="?CurrentPage=@i&PageSize=@Model.PageSize&SearchTerm=@Model.DisplaySearchTerm&Source=@Model.Source&distributionId=@Model.distributionId">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   href="?CurrentPage=@(Model.CurrentPage + 1)&PageSize=@Model.PageSize&SearchTerm=@Model.DisplaySearchTerm&Source=@Model.Source&distributionId=@Model.distributionId">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+@if (TempData["ItemSuccessMessage"] != null)
+{
+
+    <div class="alert alert-success">@TempData["ItemSuccessMessage"]</div>
+}
+
+@if (TempData["ItemErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ItemErrorMessage"]</div>
+}
+
+<div style="background: linear-gradient(90deg, #e3f2fd, #bbdefb); border-left:4px solid #1e88e5; padding:12px; margin-top:10px; font-size:14px; color:#0d47a1; border-radius:4px;">
+    <strong>ℹ Note:</strong>
+    UoM refers to Unit of Measure, and SKU (Stock Keeping Unit) is a unique code used to identify and track each item in the distribution.
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+
+
+@if ((Model.DistributionKitItems?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Manage Kit Items for- @Model.KitName
+        </div>
+        <form method="post">
+            @Html.AntiForgeryToken()
+        </form>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0" id="usersTable">
+                <thead class="table-light">
+                    <tr>
+
+                    
+                        <th>Item Name</th>
+                        <th>Description</th>
+                        <th>SKU</th>
+                        <th>MEASURE</th>
+                        <th>UOM</th>
+                        <th>QR Code</th>
+                        <th>External Id</th>
+
+                        @if (Model.Source != "mapping")
+                        {
+                            <th style="width:200px;">Edit</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var distributionKitItem in Model.DistributionKitItems.Where(f => f.KitID.Equals(KitID)))
+                    {
+                        <tr>
+                           
+                            <td>@distributionKitItem.ItemName</td>
+                            <td>@distributionKitItem.Notes</td>
+                            <td>@distributionKitItem.SKU</td>
+
+                            <td>
+                                <span class="display-value">@distributionKitItem.Measure</span>
+                                <input type="number"
+                                       class="form-control form-control-sm edit-quantity d-none"
+                                       value="@distributionKitItem.Measure" />
+                            </td>
+
+                            <td>
+                                <span class="display-value">
+                                    @lookups.FirstOrDefault(x => x.Id.ToString() == distributionKitItem.UoM)?.Text
+                                </span>
+                                <select class="form-select form-select-sm edit-uom d-none">
+                                    @foreach (var u in lookups)
+                                    {
+                                        <option value="@u.Id" selected="@(u.Text == distributionKitItem.UoM)">
+                                            @u.Text
+                                        </option>
+                                    }
+                                </select>
+                            </td>
+
+                            <td>@distributionKitItem.QRCode</td>
+                            <td>@distributionKitItem.UoMExternalCode</td>
+                            @if (Model.Source != "mapping")
+                            {
+                            <td>
+                                <button type="button" class="btn btn-sm btn-success edit-btn">
+                                    <i class="fa fa-edit"></i> Edit
+                                </button>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-primary save-btn d-none"
+                                            data-id="@distributionKitItem.ItemId">
+                                    <i class="fa fa-save"></i> Save
+                                </button>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-secondary cancel-btn d-none">
+                                    Cancel
+                                </button>
+                            </td>
+                            }
+                        </tr>
+
+
+                    }
+
+                </tbody>
+           
+
+            </table>
+        </div>
+    </div>
+}
+else
+{
+
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Item Found</h4>
+    </div>
+
+
+}
+@if (Model.Source == "mapping")
+{
+    <a class="btn btn-sm btn-outline-secondary"
+       style="background-color:#198754;color:ghostwhite"
+       asp-page="/Distributions/DistributionsMapping"
+       asp-route-distributionId="@Model.distributionId"
+       asp-route-description="@Model.Description">
+        Back to Distribution Mapping
+    </a>
+}
+else
+{
+    <a class="btn btn-sm btn-outline-secondary"
+       style="background-color:#198754;color:ghostwhite"
+       asp-page="/Distributions/DistributionKits">
+        Back to Kits
+    </a>
+}
+<partial name="~/Pages/Distributions/KitItems/_AddItemToKitModal.cshtml"
+         model="Model" />
+</div>
+
+@section Scripts {
+
+
+    <script>
+        document.addEventListener("click", function (e) {
+
+            // EDIT CLICK
+            if (e.target.closest(".edit-btn")) {
+                const row = e.target.closest("tr");
+
+                row.querySelectorAll(".display-value").forEach(el => el.classList.add("d-none"));
+                row.querySelector(".edit-quantity").classList.remove("d-none");
+                row.querySelector(".edit-uom").classList.remove("d-none");
+
+                row.querySelector(".edit-btn").classList.add("d-none");
+                row.querySelector(".save-btn").classList.remove("d-none");
+                row.querySelector(".cancel-btn").classList.remove("d-none");
+            }
+
+            // CANCEL CLICK
+            if (e.target.closest(".cancel-btn")) {
+                const row = e.target.closest("tr");
+
+                row.querySelectorAll(".display-value").forEach(el => el.classList.remove("d-none"));
+                row.querySelector(".edit-quantity").classList.add("d-none");
+                row.querySelector(".edit-uom").classList.add("d-none");
+
+                row.querySelector(".edit-btn").classList.remove("d-none");
+                row.querySelector(".save-btn").classList.add("d-none");
+                row.querySelector(".cancel-btn").classList.add("d-none");
+            }
+
+      
+           // SAVE CLICK
+        if (e.target.closest(".save-btn")) {
+            const btn = e.target.closest(".save-btn");
+            const row = btn.closest("tr");
+
+            const id = btn.dataset.id;
+            const quantity = row.querySelector(".edit-quantity").value;
+            const uom = row.querySelector(".edit-uom").value;
+
+            fetch("?handler=UpdateInline", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-BRaVe-Portal-CSRF":
+                        document.querySelector('input[name="_bravePortalCsrf"]').value
+                },
+                body: JSON.stringify({
+                    Id: id,
+                    Measure: quantity,
+                    UoM: uom
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    row.querySelectorAll(".display-value")[0].textContent = quantity;
+                    row.querySelectorAll(".display-value")[1].textContent =
+                        row.querySelector(".edit-uom option:checked").text;
+
+                    row.querySelectorAll(".display-value").forEach(el => el.classList.remove("d-none"));
+                    row.querySelector(".edit-quantity").classList.add("d-none");
+                    row.querySelector(".edit-uom").classList.add("d-none");
+
+                    row.querySelector(".edit-btn").classList.remove("d-none");
+                    row.querySelector(".save-btn").classList.add("d-none");
+                    row.querySelector(".cancel-btn").classList.add("d-none");
+                } else {
+                    alert("Update failed");
+                }
+            });
+        }
+
+        });
+    </script>
+
+    <script>
+        var editModal = document.getElementById('EditDistributionKitItemModal');
+        editModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget; // Button that triggered the modal
+
+
+            var Id = button.getAttribute('data-Id');
+                   var TenantId = button.getAttribute('data-TenantId');
+                  var Quantity = button.getAttribute('data-Quantity');
+                  
+                   
+          
+                var Notes = button.getAttribute('data-Notes');
+
+                    var ItemId = button.getAttribute('data-ItemId');
+                                        var ItemTagID = button.getAttribute('data-ItemTagID');
+                      var UOM = button.getAttribute('data-UOM');
+                    
+
+
+            // Fill form fields inside modal
+              document.getElementById('editId').value = Id;
+                document.getElementById('editTenantId').value = TenantId;
+
+           
+                 document.getElementById('editQuantity').value = Quantity;
+                    document.getElementById('editNotes').value = Notes;
+
+                  document.getElementById('editItemId').value = ItemId;
+                         document.getElementById('editItemTagID').value = ItemTagID;
+                    document.getElementById('editUOM').value = UOM;
+                    document.getElementById('editIsActive').checked = IsActive;
+
+        });
+    </script>
+
+    <script>
+
+
+        const searchInput = document.getElementById("searchInput");
+        let debounceTimer;
+
+        searchInput.addEventListener("input", function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const searchTerm = encodeURIComponent(searchInput.value);
+                const pageSize = @Model.PageSize;
+                const currentPage = 1; // reset to first page on new search
+                       const url = `?SearchTerm=${searchTerm}
+                    &PageSize=${pageSize}
+                     &CurrentPage=${currentPage}
+                     &Source=@Model.Source`;
+
+                fetch(url)
+                    .then(resp => resp.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, "text/html");
+
+                        // Replace table
+                        const newTable = doc.querySelector("#usersTable").outerHTML;
+                        document.querySelector("#usersTable").outerHTML = newTable;
+
+                        // Replace pagination
+                        const newPagination = doc.querySelector(".pagination").outerHTML;
+                        document.querySelector(".pagination").outerHTML = newPagination;
+                    });
+            }, 400);
+        });
+    </script>
+@*     <partial name="_EditDistributionKitItemModal" model="@Model.UpdatedDistributionItemKit" />
+ *@
+}
+
+

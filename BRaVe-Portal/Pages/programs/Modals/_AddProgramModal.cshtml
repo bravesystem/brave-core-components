@@ -1,0 +1,235 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Models.DTOs.ProgramDto
+
+<!-- Modal -->
+<div class="modal fade" id="addProgramModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-sm border-0 rounded-3">
+            <div class="modal-header border-0 bg-light py-3">
+                <h5 class="modal-title fw-bold">Create New Program</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post" asp-page-handler="CreateProgram" id="createProgramForm">
+                    @Html.AntiForgeryToken()
+                    <!-- Hidden ID -->
+                    <input type="hidden" asp-for="AssessmentId" id="addAssessmentId" />
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">Title</label>
+                        <input asp-for="Title" class="form-control form-control-lg" id="editProgramTitle" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-control" id="editProgramDescription" rows="3"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    @* ---------- Role assignment toggle + hidden aggregated values ---------- *@
+                    <!-- Aggregated hidden input: JS will populate CSV of selected role ids -->
+                    <input type="hidden" name="SelectedRoleIdsHidden" id="SelectedRoleIdsHidden" />
+
+                    <div class="mb-3">
+                        <button type="button"
+                                class="btn d-flex align-items-center gap-2"
+                                style="background-color:#0d47a1; color:white;"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#roleAssignmentCollapse"
+                                aria-expanded="false"
+                                aria-controls="roleAssignmentCollapse"
+                                id="toggleRoleAssignBtn">
+                            <i class="fa fa-user-plus"></i>
+                            <span>Assign users to program</span>
+                            <span class="badge bg-light text-dark ms-2" id="totalRolesBadge">0</span>
+                            <i class="fa fa-chevron-down ms-auto rotate-icon text-light" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
+                    <div class="collapse" id="roleAssignmentCollapse">
+                        <div class="card card-body border-0 shadow-sm rounded-3">
+                            <div class="row gy-3">
+                                <!-- Single combined users select -->
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
+                                       
+                                        <small class="text-muted"><span id="usersCount">0</span> selected</small>
+                                    </label>
+
+                                    
+                                    <select id="rolesUsers" class="form-select role-select" multiple size="10" data-group="users">
+
+                                        @foreach (var u in (ViewData["SystemUsers"] as List<SystemUserDto> ?? new List<SystemUserDto>()))
+                                        {
+                                            <option value="@u.UserId">
+                                                @u.ProfileName
+                                                @if (u.Roles != null && u.Roles.Any())
+                                                {
+                                                    <text> (</text>
+                                                    <span class="text-primary">@string.Join(", ", u.Roles)</span>
+                                                    <text>)</text>
+                                                }
+                                            </option>
+                                        }
+
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-outline-secondary" id="clearRoleSelections">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save me-1"></i> Save
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+      /* ========== Utilities ========== */
+      function createChoicesInstance(selectEl) {
+        if (!selectEl) return null;
+        if (selectEl.__choicesInstance) {
+          try { selectEl.__choicesInstance.destroy(); } catch (e) { /* ignore */ }
+          selectEl.__choicesInstance = null;
+        }
+        selectEl.multiple = true;
+        const instance = new Choices(selectEl, {
+          removeItemButton: true,
+          searchEnabled: true,
+          placeholderValue: 'Select users...',
+          shouldSort: false,
+          itemSelectText: '',
+          position: 'bottom'
+        });
+        selectEl.__choicesInstance = instance;
+        return instance;
+      }
+
+      /* ========== Set choices by CSV or names (keeps backward compatibility) ========== */
+      function setChoicesFromCsv(selectEl, idCsv, namesCsv) {
+        if (!selectEl) return;
+        const inst = selectEl.__choicesInstance;
+        if (inst) inst.removeActiveItems();
+        Array.from(selectEl.options).forEach(o => o.selected = false);
+
+        if (idCsv && idCsv.trim()) {
+          const ids = idCsv.split(',').map(s => s.trim()).filter(Boolean);
+          ids.forEach(id => {
+            const opt = Array.from(selectEl.options).find(o => String(o.value) === String(id));
+            if (opt) {
+              opt.selected = true;
+              if (inst) inst.setChoiceByValue(opt.value);
+            } else {
+              console.debug('setChoicesFromCsv: option value not found for id', id);
+            }
+          });
+          return;
+        }
+
+        if (namesCsv && namesCsv.trim()) {
+          const names = namesCsv.split(',').map(s => s.trim()).filter(Boolean);
+          names.forEach(name => {
+            const opt = Array.from(selectEl.options).find(o => o.text.trim().toLowerCase() === name.toLowerCase());
+            if (opt) {
+              opt.selected = true;
+              if (inst) inst.setChoiceByValue(opt.value);
+            } else {
+              console.debug('setChoicesFromCsv: option text not found for name', name);
+            }
+          });
+        }
+      }
+
+      /* ========== Aggregation & counts ========== */
+      const selectId = 'rolesUsers';
+      const selectEl = document.getElementById(selectId);
+      const counts = {
+        users: document.getElementById('usersCount'),
+        total: document.getElementById('totalRolesBadge')
+      };
+      const hiddenCsvInput = document.getElementById('SelectedRoleIdsHidden');
+
+      function updateCounts() {
+        if (!selectEl) return;
+        const selected = Array.from(selectEl.selectedOptions).map(o => o.value);
+        const total = selected.length;
+        if (counts.users) counts.users.textContent = total;
+        if (counts.total) counts.total.textContent = total;
+      }
+
+      function aggregateToHidden() {
+        if (!hiddenCsvInput || !selectEl) return '';
+        const all = Array.from(selectEl.selectedOptions).map(o => o.value);
+        const uniq = Array.from(new Set(all));
+        hiddenCsvInput.value = uniq.join(',');
+        return hiddenCsvInput.value;
+      }
+
+      /* ========== Clear button ========== */
+      const clearBtn = document.getElementById('clearRoleSelections');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+          if (!selectEl) return;
+          if (selectEl.__choicesInstance) {
+            try { selectEl.__choicesInstance.removeActiveItems(); } catch (e) { /* ignore */ }
+          }
+          for (let i = 0; i < selectEl.options.length; i++) {
+            selectEl.options[i].selected = false;
+          }
+          updateCounts();
+          if (hiddenCsvInput) hiddenCsvInput.value = '';
+        });
+      }
+
+      /* ========== Modal hooks: initialize Choices when modal opens, destroy when hidden ========== */
+      const addProgramModal = document.getElementById('addProgramModal');
+      if (addProgramModal) {
+        addProgramModal.addEventListener('show.bs.modal', function () {
+          // initialize the single combined select
+          if (selectEl) createChoicesInstance(selectEl);
+        });
+
+        addProgramModal.addEventListener('hidden.bs.modal', function () {
+          if (selectEl && selectEl.__choicesInstance) {
+            try { selectEl.__choicesInstance.destroy(); } catch (e) {}
+            selectEl.__choicesInstance = null;
+          }
+          updateCounts();
+        });
+      }
+
+      /* ========== Wire change event and ensure aggregation on submit ========== */
+      if (selectEl) {
+        selectEl.addEventListener('change', updateCounts);
+      }
+
+      const createForm = document.getElementById('createProgramForm');
+      if (createForm) {
+        createForm.addEventListener('submit', function () {
+          aggregateToHidden();
+          // normal form submit continues
+        });
+      }
+
+      // initial sync (in case the modal is re-used and options pre-selected)
+      updateCounts();
+
+    }); // DOMContentLoaded
+</script>

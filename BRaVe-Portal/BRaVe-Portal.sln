@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36401.2
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BRaVe-Portal", "BRaVe-Portal.csproj", "{DB52F358-7860-44D8-8936-D1D8989A0B63}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DB52F358-7860-44D8-8936-D1D8989A0B63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB52F358-7860-44D8-8936-D1D8989A0B63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB52F358-7860-44D8-8936-D1D8989A0B63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB52F358-7860-44D8-8936-D1D8989A0B63}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {95125060-04A4-4517-86DB-AB19FEF195D2}
+	EndGlobalSection
+EndGlobal

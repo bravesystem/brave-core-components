@@ -1,0 +1,51 @@
+﻿@model BRaVe_Portal.Pages.Setup.Lookups.IndexModel;
+<!-- Edit Lookup Item Modal -->
+<div class="modal fade" id="editLookupItemModal" tabindex="-1" aria-labelledby="editLookupItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i>Edit Lookup Item</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- FORM posts to OnPostEditLookupValueAsync -->
+            <form method="post" asp-page-handler="EditLookupValue">
+                @Html.AntiForgeryToken()
+                <div class="modal-body bg-light">
+                    <input type="hidden" asp-for="UpdatedLookupValue.Id" id="editLookupValueId" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Lookup ID</label>
+                            <input asp-for="UpdatedLookupValue.LookupId" id="editLookupValueLookupId" class="form-control shadow-sm bg-light" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Order</label>
+                            <input asp-for="UpdatedLookupValue.Order" id="editLookupValueOrder" type="number" class="form-control shadow-sm" />
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label fw-semibold">Item Name</label>
+                        <input asp-for="UpdatedLookupValue.ItemName" id="editLookupValueName" class="form-control shadow-sm" required />
+                    </div>
+
+                    <div class="mt-3 form-check">
+                        <input asp-for="UpdatedLookupValue.IsActive" id="editLookupValueActive" class="form-check-input shadow-sm"  />
+                        <label class="form-check-label fw-semibold" >Is Active</label>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-white">
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-semibold">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> Update
+                    </button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

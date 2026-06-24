@@ -1,0 +1,119 @@
+﻿@page
+@inject string appEnvironment
+
+@{
+    ViewData["Title"] = "Partner Login";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - BRaVe Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #004080;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            background: #fff;
+            color: #333;
+            padding: 3rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+            position: relative;
+        }
+
+        .env-box-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 8px;
+            letter-spacing: 0.4px;
+            background-color: #6f42c1;
+            color: #fff;
+        }
+
+        .login-container h1 {
+            margin-bottom: 1rem;
+            font-size: 2rem;
+            color: #004b87;
+        }
+
+        .login-container p {
+            margin-bottom: 2rem;
+            color: #555;
+        }
+
+        .login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.3s ease;
+            background: #2F8F8B;
+            color: #fff;
+            text-decoration: none;
+        }
+
+            .login-btn i {
+                margin-right: 0.5rem;
+            }
+
+            .login-btn:hover {
+                background: #4FA9A5;
+                transform: scale(1.05);
+            }
+
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+
+        <!-- Static Partner Badge -->
+        <span class="env-box-badge">
+            PARTNER
+        </span>
+
+        <img src="Images/iombrave_logo.png" alt="BRaVe Logo" style="max-width:300px; margin-bottom:1rem;" />
+
+        <h1>Welcome to the BRaVe Partner Portal</h1>
+
+        <p>Secure access for IOM partners</p>
+
+        <form method="post" action="/auth-login">
+            <button type="submit" class="login-btn">
+                <i class="fa-solid fa-right-to-bracket"></i> Login
+            </button>
+        </form>
+
+    </div>
+
+</body>
+</html>

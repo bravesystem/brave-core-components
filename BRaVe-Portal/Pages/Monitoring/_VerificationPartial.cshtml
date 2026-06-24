@@ -1,0 +1,72 @@
+﻿@model BRaVe_Portal.Models.DTOs.BiometricVerificationResultDto
+
+<div class="p-4 d-flex justify-content-center">
+    <div class="col-lg-8 col-md-10 col-sm-12">
+
+        <div class="profile-card p-4 text-center">
+
+            <div class="profile-header mb-4"></div>
+
+            <!-- Avatar -->
+            <img loading="lazy"
+                 src="@(string.IsNullOrEmpty(Model.Photo)
+                                         ? "/img/avatar.png"
+                                         : $"data:image/jpeg;base64,{Model.Photo}")"
+                 class="rounded-circle border mb-3"
+                 onclick='openImagePreview(@Html.Raw(Json.Serialize(Model.FullName)), this.src)'
+                 style="width:130px;height:130px;object-fit:cover;" />
+
+            <!-- Name -->
+            <h5 class="fw-bold mb-1">
+                @(Model.FullName ?? "Unknown")
+            </h5>
+
+            <!-- Core Info -->
+            <div class="row g-3 py-3 border-top border-bottom text-start">
+                <div class="col-6">
+                    <div class="label-text">Age</div>
+                    <div class="fw-medium">
+                        @(Model.Age?.ToString() ?? "-")
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="label-text">Gender</div>
+                    <div class="fw-medium">
+                        @(Model.Gender ?? "-")
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meta -->
+            <div class="row mt-4 text-start">
+                <div class="col-md-6 mb-3">
+                    <div class="label-text mb-1">Registration Date</div>
+                    <div class="fw-medium">
+                        @(Model.RegistrationDate?.ToString("dd/MM/yyyy HH:mm") ?? "-")
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <div class="label-text mb-1">Household</div>
+
+                    @if (!string.IsNullOrEmpty(Model.HouseholdId))
+                    {
+                        <a asp-page="/dashboard/RawData/HouseholdDetails"
+                           asp-route-householdId="@Model.HouseholdId"
+                           class="d-inline-flex align-items-center gap-2 text-decoration-none text-primary fw-medium">
+                            <i class="fa-solid fa-eye"></i>
+                            <span>View Household</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="fw-medium">-</span>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>

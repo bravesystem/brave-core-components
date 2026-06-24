@@ -1,0 +1,154 @@
+﻿@page
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.Consents.IndexModel
+@{
+    ViewData["Title"] = "Consent Management";
+}
+
+
+<form method="get" class="mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label for="programSelect" class="form-label fw-semibold">Select Program</label>
+            <select id="programSelect"
+                    name="SelectedProgramId"
+                    class="form-select shadow-sm rounded-pill border-0 px-3 py-2 modern-select"
+                    onchange="this.form.submit()">
+                <option value="">-- Select Program --</option>
+                @foreach (var program in Model.Programs)
+                {
+                    <option value="@program.ProgramId" selected="@(program.ProgramId == Model.SelectedProgramId)">
+                        @program.Title
+                    </option>
+                }
+            </select>
+        </div>
+    </div>
+</form>
+
+@if (Model.SelectedProgramId.HasValue)
+{
+    <div class="mb-3 text-end">
+        <button type="button"
+                class="btn btn-success btn-sm"
+                data-bs-toggle="modal"
+                data-bs-target="#addConsentModal">
+            <i class="fa fa-plus"></i> Add New Consent
+
+        </button>
+    </div>
+}
+
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+@if ((Model.Consents?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            Manage Consents
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+
+                        <th>Consent ID</th>
+                        <th>Title</th>
+                        <th>Consent Text</th>
+                        <th>Last Updated</th>
+                        <th>Translate</th>
+                        <th style="width:200px;">Actions</th>
+
+                 </tr>
+                </thead>
+                <tbody>
+                    @foreach (var consent in Model.Consents)
+                    {
+
+                        <tr>
+                            <td>@consent.Id</td>
+                            <td>@consent.Title</td>
+                            <td title="@consent.Description">
+
+                                @Helpers.StringHelper.TruncateWithEllipsis(
+                                @consent.Description, 250
+                                                )
+
+                            </td>
+                            <td>@consent.LastUpdated</td>
+
+                    <td>
+                        <a asp-page="/Consents/ManageConsentTranslations"
+                           asp-route-ConsentId="@consent.Id"
+                           asp-route-ProgramId="@consent.ProgramId"
+                           class="text-primary d-inline-flex align-items-center"
+                           title="Manage Translations">
+                            <i class="fa fa-language fa-2x me-2"></i>
+                        </a>
+                    </td>
+
+                            <td>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#EditConsentModal"
+                                        data-id="@consent.Id"
+                                        data-ProgramId="@consent.ProgramId"
+                                        data-Title="@consent.Title"               
+                                        data-Description="@consent.Description"
+                                        data-IsActive="@consent.IsActive">
+
+                                    <i class="fa fa-edit"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                     }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Consent Found</h4>
+    </div>
+
+
+}
+
+
+@section Scripts {
+
+    <partial name="_EditConsentModal" model = "new Consent{ }" />
+
+    <partial name="_AddConsentModal" model="new ConsentDto { ProgramId = Model.SelectedProgramId ?? 0 }" />
+
+
+    <script>
+        var editModal = document.getElementById('EditConsentModal');
+        editModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget; // Button that triggered the modal
+
+
+            var Id = button.getAttribute('data-Id');
+            var ProgramId = button.getAttribute('data-ProgramId');
+            var Title = button.getAttribute('data-Title');
+            var Description = button.getAttribute('data-Description');
+
+            // Fill form fields inside modal
+            document.getElementById('editId').value = Id;
+            document.getElementById('editProgramId').value = ProgramId;
+            document.getElementById('editTitle').value = Title;
+            document.getElementById('editDescription').value = Description;
+            document.getElementById('editIsActive').checked = button.getAttribute('data-IsActive') === "True"
+        });
+    </script>
+
+}
+
+

@@ -1,0 +1,91 @@
+﻿@model IEnumerable<BRaVe_Portal.Models.ActivityEnumerator>
+@{
+    var activityId = ViewData["ActivityId"] as int? ?? 0;
+}
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "Enumerator")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "Enumerator")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            
+                            <th scope="col">Enumerator Code</th>
+                            <th scope="col">Full Name</th>
+                            <th scope="col">Is Active</th>
+                           @*  <th scope="col">Required</th> *@
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var enumerator in Model)
+                        {
+                            <tr>
+                                
+                                <td>@enumerator.EnumeratorCode</td>
+                                <td>@enumerator.FullName</td>
+                              
+                                @* <td>
+                                    @if (enumerator.Required)
+                                    {
+                                        <span class="badge bg-success">Required</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Required</span>
+                                    }
+                                </td> *@
+                                <td>
+                                    @if (enumerator.IsActive)
+                                    {
+                                        <span class="badge bg-success">Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">No</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-button"
+                                            data-id="@enumerator.EnumeratorCode"
+                                            data-activityid="@activityId"
+                                            data-name="@enumerator.FullName"
+                                            data-entity="enumerator"
+                                            data-handler="RemoveEnumerator"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#DeleteModal">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div>
+                <p class="text-muted mb-0">No Enumerator has been attached to this activity yet.</p>
+            </div>
+        }
+    </div>
+</div>

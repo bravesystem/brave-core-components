@@ -1,0 +1,182 @@
+﻿@model IEnumerable<Models.ViewModels.DataProcessingDataSharingRecipient>
+
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.DataSharingRecipients ?? new List<LookupItemDto>();
+    var lookups1 = coreLookups?.TypeOfAgreements ?? new List<LookupItemDto>();
+    var lookups2 = coreLookups?.StatusOfAgreements ?? new List<LookupItemDto>();
+
+    bool IsReadOnly = ViewData["IsReadOnly"] != null && (bool)ViewData["IsReadOnly"];
+}
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "SharingRecipient")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "SharingRecipient")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Category</th>
+            <th>Category Name</th>
+            <th>Agreement Type</th>
+            <th>Agreement Name</th>
+            <th>Status</th>
+            <th>Purpose of access</th>
+            
+            <th style="width:120px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Count() == 0)
+        {
+            <tr class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+                <td colspan="8">
+                    No data sharing recipients available.
+                </td>
+            </tr>
+        }
+        else
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td> @LookupHelper.GetTextById(lookups, @c.RecipientId)</td>
+                    <td> @c.RecipientOther</td>
+                    <td> @LookupHelper.GetTextById(lookups1, @c.TypeOfAgreementId)</td>
+                    <td> @c.TypeOfAgreementOther</td>
+                    <td>
+                        @LookupHelper.GetTextById(lookups2, @c.StatusOfAgreementId)
+                    </td>
+                    <td>
+                        @c.PurposeOfDataSharing
+                    </td>
+                    <td>
+                                               @if (!IsReadOnly)
+                       {
+
+                           <button type="button"
+                                   class="btn btn-sm btn-outline-primary"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#editSharingRecipientModal"
+                                   data-SharingAssessment="@c.AssessmentId"
+                                   data-SharingRecipientId="@c.RecipientId"
+                                   data-SharingRecipientOther="@c.RecipientOther"
+                                   data-TypeOfAgreementId="@c.TypeOfAgreementId"
+                                   data-TypeOfAgreementOther="@c.TypeOfAgreementOther"
+                                   data-StatusOfAgreementId="@c.StatusOfAgreementId"
+                                   data-PurposeOfDataSharing="@c.PurposeOfDataSharing">
+                               <i class="fa fa-edit"></i>
+                           </button>
+                           <button type="button" class="btn btn-sm btn-outline-danger delete-button"
+                                   data-id="@c.RecipientId"
+                                   data-assessment-id="@c.AssessmentId"
+                                   data-name="@LookupHelper.GetTextById(lookups, @c.RecipientId)"
+                                   data-bs-toggle="modal" data-bs-target="#DeleteModal" data-handler="DeleteSharingRecipient"
+                                   data-entity="sharing recipient">
+                               <i class="fa fa-trash"></i>
+                           </button>
+
+
+                       }
+                       else
+                       {
+                           <span class="badge bg-secondary-subtle text-secondary border">View-only</span>
+                           <i class="fa-solid fa-lock ms-2 text-muted" data-bs-toggle="tooltip" title="Read-only: no actions"></i>
+
+                       }
+                    </td>
+                </tr>
+            }
+    </tbody>
+</table>
+
+<!--Populate edit form-->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var editModal = document.getElementById("editSharingRecipientModal");
+
+        editModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+
+            // Get values from button attributes
+            var assessmentId = button.getAttribute("data-SharingAssessment");
+            var RecipientId = button.getAttribute("data-RecipientId");
+            var RecipientOther = button.getAttribute("data-RecipientOther");
+            var TypeOfAgreementId = button.getAttribute("data-TypeOfAgreementId");
+            var TypeOfAgreementOther = button.getAttribute("data-TypeOfAgreementOther");
+            var StatusOfAgreementId = button.getAttribute("data-StatusOfAgreementId");
+            var PurposeOfDataSharing = button.getAttribute("data-PurposeOfDataSharing");
+            
+
+            // Fill modal form
+            document.getElementById("editAssessmentId").value = assessmentId;
+            document.getElementById("editRecipientId").value = RecipientId;
+            document.getElementById("editSharingRecipientOther").value = RecipientOther;
+            document.getElementById("editTypeOfAgreementId").value = TypeOfAgreementId;
+            document.getElementById("editTypeOfAgreementOther").value = TypeOfAgreementOther;
+            document.getElementById("editStatusOfAgreementId").value = StatusOfAgreementId;
+            document.getElementById("editPurposeOfDataSharing").value = PurposeOfDataSharing;
+
+            debugger;
+        });
+    });
+</script>
+
+<script>
+    function toggleOtherInput(selectId, inputId) {
+
+     const select = document.getElementById(selectId)
+     const input = document.getElementById(inputId);
+
+        if (!select || !input) return;
+
+        if (select.value === "99") {
+
+            input.disabled = false;
+
+        } else {
+
+            input.disabled = true;
+
+            input.value = "";
+
+        }
+
+    }
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const primarySelect = document.getElementById("sharingRecipientSelect");
+        const secondarySelect = document.getElementById("agreementTypeSelect");
+
+        if (primarySelect) {
+            primarySelect.addEventListener("change", () =>
+                toggleOtherInput("sharingRecipientSelect", "sharingRecipientOther")
+            );
+            toggleOtherInput("sharingRecipientSelect", "sharingRecipientOther");
+        }
+
+        if (secondarySelect) {
+            secondarySelect.addEventListener("change", () =>
+                toggleOtherInput("agreementTypeSelect", "agreementOtherSelect")
+            );
+            toggleOtherInput("agreementTypeSelect", "agreementOtherSelect");
+        }
+    });
+</script>
+ 

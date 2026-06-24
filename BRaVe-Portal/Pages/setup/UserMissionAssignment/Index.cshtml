@@ -1,0 +1,274 @@
+﻿@page
+@model BRaVe_Portal.Pages.setup.UserMissionAssignment.IndexModel
+@{
+    ViewData["Title"] = "User Mission Assignment";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success mt-3">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger mt-3">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="container-fluid">
+    <form method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-3">
+
+            <!-- Mission -->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="text-primary mb-0">
+                            <i class="fa-solid fa-home me-2"></i> Mission
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <select asp-for="SelectedMissionId"
+                                asp-items="Model.Missions"
+                                class="form-select modern-select">
+                            <option value="" selected disabled hidden>-- Select Mission --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assign Users -->
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="text-primary mb-0">
+                            <i class="fa-solid fa-users me-2"></i> Assign Users
+                        </h5>
+                    </div>
+
+                    <div class="card-body">
+
+                        <!-- Email input -->
+                        <input type="text"
+                               id="emailInput"
+                               class="form-control modern-select mb-2"
+                               placeholder="Type or paste a valid email address and press Enter" />
+
+                        <!-- Bootstrap error -->
+                        <div id="emailError"
+                             class="alert alert-danger d-none mt-2"
+                             role="alert"></div>
+
+                        <!-- Assigned users -->
+                        <div id="assignedUsers"></div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 text-end mt-3">
+                <button class="btn btn-primary" type="submit">
+                    <i class="fa-solid fa-save me-1"></i> Submit
+                </button>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="text-primary mb-0">
+                                <i class="fa-solid fa-clock me-2"></i> Pending User Access
+                            </h5>
+                        </div>
+
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light small text-muted">
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Mission</th>
+                                            <th>Role</th>
+                                            <th>Created By</th>
+                                            <th>Created On</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (!Model.PendingUsers.Any())
+                                        {
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted small py-3">
+                                                    No pending user access records found.
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var item in Model.PendingUsers)
+                                            {
+                                                <tr>
+                                                    <td class="fw-semibold">@item.UserDetails</td>
+                                                    <td>@item.MissionName</td>
+                                                    <td>@item.RoleName</td>
+                                                    <td class="text-muted small">
+                                                        @(string.IsNullOrWhiteSpace(item.CreatedBy)
+                                                        ? "-"
+                                                        : item.CreatedBy)
+                                                    </td>
+
+                                                    <td class="text-muted small">
+                                                        @(item.CreatedOn.HasValue
+                                                        ? item.CreatedOn.Value.ToString("dd MMM yyyy HH:mm")
+                                                        : "-")
+                                                    </td>
+
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </form>
+</div>
+
+<!-- ROLE OPTIONS TEMPLATE -->
+<template id="roleOptionsTemplate">
+    @foreach (var r in Model.Roles)
+    {
+        <option value="@r.Value">@r.Text</option>
+    }
+</template>
+
+@section Scripts {
+    <script>
+
+                function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function (m) {
+                return ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                })[m];
+            });
+        }
+        const input = document.getElementById("emailInput");
+        const container = document.getElementById("assignedUsers");
+        const errorBox = document.getElementById("emailError");
+        const roleOptionsHtml =
+            document.getElementById("roleOptionsTemplate").innerHTML;
+
+        // Store users with role state
+        // { email: string, roleId: string | null }
+        const users = [];
+
+        // Add email on Enter or comma
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === ",") {
+                e.preventDefault();
+                addEmail(input.value);
+            }
+        });
+
+        function showError(message) {
+            errorBox.textContent = message;
+            errorBox.classList.remove("d-none");
+        }
+
+        function clearError() {
+            errorBox.textContent = "";
+            errorBox.classList.add("d-none");
+        }
+
+        function addEmail(raw) {
+            const email = raw.replace(",", "").trim().toLowerCase();
+
+            if (!email) return;
+
+        // ❗ EMAIL FORMAT VALIDATION
+
+                const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+
+                if (!emailRegex.test(email)) {
+                    showError("Please enter a valid email address.");
+                    return;
+                }
+
+
+            // ❗ DUPLICATE CHECK
+            if (users.some(u => u.email === email)) {
+                showError("This email has already been added.");
+                return;
+            }
+
+            // ✅ SUCCESS
+            clearError();
+
+            users.push({
+                email: email,
+                roleId: null
+            });
+
+            input.value = "";
+            render();
+        }
+
+        function render() {
+            container.innerHTML = "";
+
+            users.forEach((u, i) => {
+                // Preserve selected role
+                const options = roleOptionsHtml.replace(
+                    /value="([^"]+)"/g,
+                    (match, value) =>
+                        u.roleId === value
+                            ? `value="${value}" selected`
+                            : `value="${value}"`
+                );
+
+                container.insertAdjacentHTML("beforeend", `
+                    <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">
+
+                        <input type="hidden"
+                               name="Assignments[${i}].UserDetails"
+                               value="${escapeHtml(u.email)}" />
+
+                        <div class="fw-semibold small">
+                            ${escapeHtml(u.email)}
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="small fw-bold mb-0 text-muted">
+                                Role:
+                            </label>
+
+                            <select name="Assignments[${i}].RoleId"
+                                    class="form-select form-select-sm"
+                                    style="width:160px"
+                                    onchange="users[${i}].roleId = this.value">
+                                ${options}
+                            </select>
+                        </div>
+                    </div>
+                `);
+            });
+        }
+    </script>
+}
+
+

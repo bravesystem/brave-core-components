@@ -1,0 +1,274 @@
+﻿@page
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Pages.assistances.IndexModel
+
+@{
+    ViewData["Title"] = "Beneficiary Enrollment";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success small py-2">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger small py-2">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- DISTRIBUTION FILTER -->
+<form method="get" class="mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <div>
+                <strong style="color:#2196F3;">ℹ Note:</strong>
+                Only Active distributions are displayed in this list.
+            </div>
+
+            <label class="form-label fw-semibold">Select Distribution</label>
+
+            <select id="distSelect"
+                    name="SelectedDistributionId"
+                    class="form-select"
+                    onchange="this.form.submit()">
+
+                <option value="0">All Distributions</option>
+
+                @foreach (var distribution in Model.Distributions)
+                {
+                    <option value="@distribution.Id"
+                            selected="@(Model.SelectedDistributionId == distribution.Id)">
+                        @distribution.Description
+                    </option>
+                }
+            </select>
+
+        </div>
+
+        <!-- SEARCH BOX -->
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Search</label>
+            <input type="text"
+                   id="searchInput"
+                   class="form-control"
+                   placeholder="Search household, name, distribution..." />
+        </div>
+
+    </div>
+</form>
+
+<!-- EXPORT -->
+<div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-success" onclick="exportToExcel(event)">
+        <i class="fa-solid fa-download me-2"></i>Export to Excel
+    </button>
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+@if ((Model.DistributionEnrollment?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white fw-bold">
+            Assistances
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table table-striped table-bordered mb-0" id="dataTable">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Household</th>
+                        <th>Head of household</th>
+                        <th>Gender</th>
+                        <th>Age</th>
+                        <th>Distributed</th>
+                        <th>Received On</th>
+                        <th>Distribution</th>
+                        <th>Enrolled On</th>
+                        <th>Targeting Used</th>
+                        <th>View Details</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var distribution in Model.DistributionEnrollment.OrderByDescending(d => d.EnrolledOn))
+                    {
+                        <tr>
+                            <td>
+                                <a asp-page="/dashboard/RawData/HouseholdDetails"
+                                   asp-route-householdId=" @distribution.HouseholdId">
+                                    @distribution.HouseholdId
+                                </a>
+                                
+                               </td>
+                            <td>@distribution.FullName</td>
+                            <td>@distribution.Gender</td>
+                            <td>@distribution.Age</td>
+
+                            <td>
+                                @if (distribution.Distributed && distribution.ReceivedAll)
+                                {
+                                    <span class="badge bg-success">Issued</span>
+                                }
+                                else if (distribution.Distributed)
+                                {
+                                    <span class="badge bg-warning">Partially Issued</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Not issued</span>
+                                }
+                            </td>
+
+                            <td>@distribution.ReceivedOn</td>
+                            <td>@distribution.Distribution</td>
+                            <td>@distribution.EnrolledOn.ToString("yyyy-MM-dd")</td>
+                            <td>@distribution.TargetingUsed</td>
+
+                            <td>
+                                @if (distribution.Distributed)
+                                {
+                                    <a asp-page="/Dashboard/RawData/DistributionDetails"
+                                       asp-route-individualId="@distribution.IndividualId"
+                                       asp-route-distributionId="@distribution.DistributionId"
+                                       asp-route-householdId="@distribution.HouseholdId">
+                                        <i class="fa-solid fa-eye"></i> View
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+
+        <button class="btn btn-outline-primary btn-sm" onclick="prevPage()">
+            Previous
+        </button>
+
+        <div>
+            Page <span id="pageNumber">1</span> of <span id="totalPages">1</span>
+        </div>
+
+        <button class="btn btn-outline-primary btn-sm" onclick="nextPage()">
+            Next
+        </button>
+
+    </div>
+}
+else
+{
+    <div class="alert alert-warning text-center mt-5 p-4">
+        <h4>No Beneficiary Enrolled</h4>
+    </div>
+}
+
+@section Scripts {
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+    <script>
+        // =========================
+        // SEARCH + PAGINATION (CLIENT SIDE)
+        // =========================
+
+        const rowsPerPage = 10;
+        let currentPage = 1;
+
+        const table = document.getElementById("dataTable");
+        const tbody = table ? table.querySelector("tbody") : null;
+        const searchInput = document.getElementById("searchInput");
+
+        function getRows() {
+            return Array.from(tbody.querySelectorAll("tr"));
+        }
+
+        function filterRows() {
+            const term = searchInput.value.toLowerCase();
+
+            return getRows().filter(row => {
+                return row.innerText.toLowerCase().includes(term);
+            });
+        }
+
+        function renderTable() {
+            const filtered = filterRows();
+
+            const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            // hide all
+            getRows().forEach(r => r.style.display = "none");
+
+            // show page rows
+            filtered.slice(start, end).forEach(r => r.style.display = "");
+
+            // update UI
+            document.getElementById("pageNumber").innerText = currentPage;
+            document.getElementById("totalPages").innerText = totalPages;
+        }
+
+        function nextPage() {
+            const filtered = filterRows();
+            const totalPages = Math.ceil(filtered.length / rowsPerPage);
+
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        }
+
+        searchInput.addEventListener("keyup", function () {
+            currentPage = 1;
+            renderTable();
+        });
+
+        renderTable();
+
+        // =========================
+        // EXPORT
+        // =========================
+        function exportToExcel() {
+            const table = document.querySelector("table");
+
+            if (!table) {
+                alert("No data to export");
+                return;
+            }
+
+            const clone = table.cloneNode(true);
+
+            const sheet = XLSX.utils.table_to_sheet(clone);
+            const wb = XLSX.utils.book_new();
+
+            XLSX.utils.book_append_sheet(wb, sheet, "Assistances");
+            XLSX.writeFile(wb, "Assistances.xlsx");
+        }
+    </script>
+
+}

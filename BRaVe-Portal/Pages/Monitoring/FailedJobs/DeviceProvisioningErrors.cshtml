@@ -1,0 +1,184 @@
+﻿@page
+@model BRaVe_Portal.Pages.Monitoring.FailedJobs.DeviceProvisioningErrorsModel
+@using BRaVe_Management_Backend.DTOs
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">
+        <strong style="color:#2196F3;">ℹ Note:</strong>
+        A device is intended to remain with one tenant for its entire lifespan. The devices listed below failed during the tenant switch process. If a force majeure situation requires it, select a device to detach it from the current tenant.
+    </h4>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-danger text-white d-flex justify-content-end align-items-center">
+        <button type="button"
+                class="btn btn-light btn-sm d-inline-flex align-items-center gap-2"
+                onclick="refreshPage(this)">
+            <i class="fa-solid fa-rotate"></i>
+            <span>Refresh</span>
+        </button>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>DeviceId</th>
+                <th>Current Tenant</th>
+                <th>New Tenant</th>
+                <th>First Attempt On</th>
+                <th>Last Attempt On</th>
+                <th>Count</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var d in Model.Devices)
+            {
+                <tr>
+                    <td>@d.DeviceId</td>
+                    <td>@d.OldTenantName</td>
+                    <td>@d.CurrentTenantName</td>
+                  
+                    <td>@d.FirstAttempt</td>
+        
+                    <td>
+                        @if (d.LastAttempt.HasValue)
+                        {
+                            @d.LastAttempt.Value.ToString("yyyy-MM-dd HH:mm")
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Not Attempted</span>
+                        }
+                    </td>
+                    <td>@d.AttemptCount</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#detachDevice"
+                                data-id="@d.DeviceId"
+                                data-oldtenantid="@d.OldTenantId"
+                                data-currenttenantid="@d.CurrentTenantId"
+                                data-oldtenantname="@d.OldTenantName">
+                            <i class="fa fa-unlink"></i> Detach
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="detachDevice" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Detach">
+                <input type="hidden" asp-for="DetachDeviceId" />
+                <input type="hidden" asp-for="OldTenantId" />
+                <input type="hidden" asp-for="CurrentTenantId" />
+             
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Detach device from Old Tenant
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="fw-bold">Old Tenant Name</label>
+                        <input class="form-control" asp-for="OldTenantName" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Reason</label>
+                        <textarea class="form-control" asp-for="DetachReason" id="DetachReason" required="true"></textarea>
+                        <span class="text-danger d-none" id="reasonValidation">
+                            Reason must be provided.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-danger" type="submit">
+                        <i class="fa fa-save me-1"></i> Detach
+                    </button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+<script>
+    function refreshPage(button) {
+        const icon = button.querySelector("i");
+
+        button.disabled = true;
+        icon.classList.add("fa-spin");
+
+        setTimeout(() => {
+            location.reload();
+        }, 500);
+    }
+</script>
+<script>
+    var modal = document.getElementById('detachDevice');
+    var form = modal.querySelector('form');
+    var reasonTextarea = document.getElementById('DetachReason');
+    var validationMessage = document.getElementById('reasonValidation');
+    var submitButton = form.querySelector('button[type="submit"]');
+
+    var originalButtonHtml = submitButton.innerHTML;
+
+    modal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+
+        var deviceId = button.getAttribute('data-id');
+        var oldTenantId = button.getAttribute('data-oldtenantid');
+        var currentTenantId = button.getAttribute('data-currenttenantid');
+        var oldTenantName = button.getAttribute('data-oldtenantname');
+
+        modal.querySelector('input[name="DetachDeviceId"]').value = deviceId;
+        modal.querySelector('input[name="OldTenantId"]').value = oldTenantId;
+        modal.querySelector('input[name="CurrentTenantId"]').value = currentTenantId;
+        modal.querySelector('input[name="OldTenantName"]').value = oldTenantName;
+
+        // Reset state every time modal opens
+        reasonTextarea.value = '';
+        validationMessage.classList.add('d-none');
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonHtml;
+    });
+
+    form.addEventListener('submit', function (e) {
+
+        // ALWAYS reset first
+        validationMessage.classList.add('d-none');
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonHtml;
+
+        // Validate BEFORE spinner
+        if (!reasonTextarea.value.trim()) {
+            e.preventDefault();
+            validationMessage.classList.remove('d-none');
+            reasonTextarea.focus();
+            return;
+        }
+
+        // Only here spinner is applied
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i> Detaching...';
+    });
+</script>

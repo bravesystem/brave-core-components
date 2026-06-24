@@ -1,0 +1,19 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/llWrapper">
+    <TextView
+        android:id="@+id/tvOrder"
+        android:textStyle="bold"
+        android:layout_marginBottom="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <CheckBox android:id="@+id/cbValue" android:text="Label"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    <TextView android:id="@+id/tvRequired" android:text="Required"
+        android:textStyle="bold" android:textColor="@android:color/holo_red_dark"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:visibility="gone" />
+</LinearLayout>

@@ -1,0 +1,95 @@
+﻿@page "{assessmentId:int}/{statusId}"
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@using BRaVe_Portal.Models.Enums
+@model BRaVe_Portal.Pages.Assessments.CoMUpdateAssessmentModel
+@{
+    ViewData["Title"] = "Risk-Benefit Assessment";
+
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.ApprovalStatuses ?? new List<LookupItemDto>();
+}
+
+
+
+<div class="d-flex align-items-center mb-4">
+    <!-- Back Button on Top Left -->
+    <a href="javascript:history.back()" data-no-loader class="btn btn-outline-secondary me-auto">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+
+    <!-- Centered Title -->
+    <h5 class="fw-bold text-primary text-center flex-grow-1">
+        <i class="fa-solid fa-clipboard-check"></i> View Registration & Risk-Benefit Assessment, Status: CoM - Review in Progress
+    </h5>
+
+    <!-- Spacer to balance the flexbox (keeps title centered) -->
+    <div style="width:70px;"></div>
+</div>
+
+<partial name="_RiskAssessmentPartialView" model="Model.Assessment" />
+
+@if (TempData["SaveDecision"] != null)
+{
+    <div asp-validation-summary="All" class="alert alert-danger"></div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+}
+
+
+
+<form method="post" class="m-0">
+
+    @Html.AntiForgeryToken()
+
+    <input asp-for="AssessmentId" type="hidden" />
+
+    <div class="mb-3">
+        <label class="form-label">Decision</label>
+        @* <select asp-for="Decision" class="form-select">
+            <option value="">Please select a decision</option>
+            <option value="1">Approve</option>
+            <option value="2">Reject</option>
+            <option value="3">Send for Review</option>
+        </select> *@
+        <select asp-for="Decision" class="form-select">
+            <option value="">Please select a decision</option>
+            @foreach (var c in lookups )
+            {
+                @if ( c.Id!= (int)CoMDecisionStatus.RequestReview || Model.Status != AssessmentStatus.ReviewByPM && Model.Status != AssessmentStatus.CoM_FinalReviewInProgress)
+                {
+
+                    <option value="@c.Id">@c.Text</option>
+                }
+                
+
+            }
+        </select>
+
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Add Note</label>
+        <textarea asp-for="Note" class="form-control"></textarea>
+    </div>
+
+    <div class="text-end mt-4">
+        <button type="submit" asp-page-handler="SaveDecision" class="btn btn-success btn-lg">
+            <i class="fa fa-save"></i> Save
+        </button>
+
+        @if (Model.IsValid)
+        {
+            <button type="submit" asp-page-handler="SubmitDecision" class="btn btn-info btn-lg">
+                <i class="fa fa-save"></i> Submit
+            </button>
+        }
+    </div>
+</form>

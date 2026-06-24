@@ -1,0 +1,49 @@
+﻿
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Models.ViewModels.DataProcessingSecurityMeasure
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.SecurityMeasures ?? new List<LookupItemDto>();
+    }
+
+
+<div class="modal fade" id="addSecurityMeasureModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Security Measure</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" required></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-page-handler="AddSecurityMeasure">
+                    <div class="mb-3">
+                        <input asp-for="AssessmentId" type="hidden" />
+                        <label class="form-label">Measure</label>
+                        <select asp-for="SecurityMeasureId" class="form-select">
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Technical Measures</label>
+                        <textarea asp-for="TechnicalMeasures" class="form-control" maxlength="500" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Organizational Measures</label>
+                        <textarea asp-for="OrganizationalMeasures" class="form-control" maxlength="500" required></textarea>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

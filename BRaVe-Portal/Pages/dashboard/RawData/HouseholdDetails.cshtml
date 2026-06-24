@@ -1,0 +1,209 @@
+﻿@page "{householdId}"
+
+@using BRaVe_Portal.Helpers
+@* @model BRaVe_Portal.Pages.Dashboard.IndexModel *@
+@model BRaVe_Portal.Pages.Dashboard.HouseholdModel
+
+
+@{
+    ViewData["Title"] = "Household Profile";
+}
+
+
+
+<div class="container-fluid py-4">
+
+    <!-- Top Navigation -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm mb-3"
+                    data-no-loader
+                    onclick="history.back();">
+                <i class="fa fa-arrow-left me-2"></i> Back
+            </button>
+
+            <h2 class="fw-bold mb-0">Household Profile</h2>
+        </div>
+
+        <button id="exportCsv" class="btn btn-export">
+            <i class="fa fa-file-csv me-2"></i> Export CSV
+        </button>
+    </div>
+
+    <!-- Household Profile -->
+    <div class="card profile-card">
+        <div class="card-header-custom d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="p-3 rounded-3 me-3 d-flex align-items-center justify-content-center"
+                     style="background-color:#e7f1ff;">
+                    <i class="fas fa-home" style="font-size:24px;color:#004080;"></i>
+                </div>
+
+                <div>
+                    <h5 class="mb-0 fw-bold">Household Information</h5>
+                    <small class="text-muted">House hold details and member information</small>
+                </div>
+            </div>
+
+            <span class="badge bg-primary px-3 py-2 rounded-pill">
+                HOUSEHOLD ID: @Model.HouseholdId
+            </span>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-4 col-lg-2">
+                    <div class="detail-label">Activity Code</div>
+                    <div class="detail-value">@Model.Household.ActivityCode</div>
+                </div>
+
+                <div class="col-md-4 col-lg-2">
+                    <div class="detail-label">Household Size</div>
+                    <div class="detail-value">@Model.Household.HouseholdSize</div>
+                </div>
+
+                <div class="col-md-4 col-lg-2">
+                    <div class="detail-label">Household Type</div>
+                    <div class="detail-value">@Model.Household.HouseholdType</div>
+                </div>
+
+                <div class="col-md-4 col-lg-3">
+                    <div class="detail-label">Mission</div>
+                    <div class="detail-value">@Model.Household.MissionName</div>
+                </div>
+
+                <div class="col-md-4 col-lg-3">
+                    <div class="detail-label mb-2">Created On</div>
+
+                    <div class="detail-value mb-2">
+                        @Model.Household.CreatedOn
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+
+                
+
+                      
+                            <a asp-page="/Dashboard/RawData/SurveyDetails"
+                               asp-route-type="household"
+                               asp-route-HouseholdId="@Model.HouseholdId"
+                            
+                               class="btn btn-sm btn-primary rounded-pill px-3">
+
+                         
+                                <i class="fa-solid fa-eye" style="font-size:0.9em;"></i> View Household Surveys
+                            </a>
+
+                           
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Household Members -->
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="fw-bold mb-0">Household Members</h4>
+    </div>
+
+    <div class="card profile-card overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th class="text-center">Photo</th>
+                        <th>Name</th>
+                        <th class="text-center">Age</th>
+                        <th>Relationship</th>
+                        <th class="text-center">Gender</th>
+                        <th class="text-center">Fingerprint</th>
+                        <th>Individual Surveys</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var r in Model.Members)
+                    {
+                       
+                            <tr>
+                                <td class="text-center">
+                                    @if (!string.IsNullOrEmpty(r.Photo))
+                                    {
+                                        <img src="data:image/jpeg;base64,@r.Photo"
+                                             class="avatar-img"
+                                         onclick='openImagePreview(@Html.Raw(Json.Serialize(r.FullName)), this.src)' />
+
+                                    }
+                                    else
+                                    {
+                                        <div class="avatar-placeholder">
+                                            <i class="fa fa-user fa-lg"></i>
+                                        </div>
+                                    }
+                                </td>
+
+                                <td class="fw-bold text-dark">@r.FullName</td>
+
+                                <td class="text-center">@r.AgeYears</td>
+
+                                <td>@r.Relationship</td>
+
+                                <td class="text-center">@r.Gender</td>
+
+                                <td class="text-center">
+                                    @if (r.Fingerprint?.ToLower() == "true")
+                                    {
+                                        <div class="badge-fingerprint badge-success-light"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             title="Fingerprint collected">
+                                            <i class="fa fa-fingerprint"></i>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="badge-fingerprint badge-gray-light"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             title="No fingerprint collected">
+                                            <i class="fa fa-fingerprint"></i>
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    <span class="fw-bold">
+                                        @r.IndividualSurveys
+                                        @if (r.IndividualSurveys > 0)
+                                        {
+                                            <a asp-page="/Dashboard/RawData/SurveyDetails"
+                                               asp-route-type="individual"
+                                           asp-route-IndividualId="@r.IndividualId"
+                                            asp-route-HouseholdId="@Model.HouseholdId"
+                                               asp-route-name="@r.FullName"
+                                               class="ms-2 text-primary text-decoration-none">
+                                                <i class="fa fa-eye"></i> View
+                                            </a>
+                                        }
+                                    </span>
+                                </td>
+                            </tr>
+                        
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+
+
+<script>
+    document.getElementById("exportCsv")?.addEventListener("click", function () {
+        alert("CSV export triggered (placeholder)");
+    });
+
+</script>

@@ -1,0 +1,354 @@
+﻿@page
+@using BRaVe_Portal.Models
+@model BRaVe_Portal.Pages.Enumerators.IndexModel
+@{
+    ViewData["Title"] = "Enumerator Management";
+}
+
+
+<div class="card-header bg-primary text-white fw-bold">
+    Manage Enumerators
+</div>
+
+<br />
+ 
+<div class="mb-3 text-end">
+    <button type"button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#addEnumeratorIdGeneratorTrackingModal">
+        <i class="fa fa-plus"></i> Add / Generate Codes
+
+    </button>
+</div>
+
+
+<div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+    <strong style="color:#2196F3;">ℹ Note:</strong>
+    The Enumerator Code Pool is a collection of codes available for assignment to enumerators.
+    For example, if the prefix is <em>EN</em>, the suffix length is <em>3</em>, and the total count is <em>20</em>,
+    the system will generate codes ranging from <code>EN000</code> to <code>EN019</code>.
+</div>
+
+<br />
+
+
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+@if ((Model.EnumeratorIdGeneratorTrackings?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+           Code Generating setting
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+
+                        <th>Prefix</th>
+                        <th>Suffix Padding Length</th>
+                        <th>Total Code Generated</th>
+                        <th>Last Code Generated</th>
+                        <th>Last Update Time</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var enumeratorIdGeneratorTracking in Model.EnumeratorIdGeneratorTrackings)
+                    {
+
+                        <tr>
+                            <td>@enumeratorIdGeneratorTracking.Prefix</td>
+                            <td>@enumeratorIdGeneratorTracking.SuffixLength</td>
+                            <td>@enumeratorIdGeneratorTracking.TotalCodeGenerated</td>
+                            <td>@enumeratorIdGeneratorTracking.LastCodeGenerated</td>
+                            <td>@enumeratorIdGeneratorTracking.CreatedOn</td>
+
+
+
+                        </tr>
+
+
+                    }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No available Enumerator Code Pool found.</h4>
+    </div>
+
+
+}
+ 
+ 
+
+<div class="mb-3 text-end">
+    <button type"button"
+            class="btn btn-success btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#addEnumeratorModal">
+        <i class="fa fa-plus"></i> Assign New Enumerator
+
+    </button>
+</div>
+
+
+@* <div asp-validation-summary="All" class="alert alert-danger"></div> *@
+
+<!-- Countries Management Section -->
+@if ((Model.Enumerators?.Count ?? 0) > 0)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+            <span>Enumerators</span>
+            <button type="button"
+                    class="btn btn-outline-light btn-sm d-inline-flex align-items-center gap-2"
+                    onclick="refreshPage(this)">
+                <i class="fa-solid fa-rotate"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+
+                        <th>Enumerator Code</th>
+                         <th>Full Name</th>
+                         <th>Note</th>
+                        <th>Supervisor</th>
+                        <th>Pin Updated</th>
+                        <th>Active</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                        <th>Password</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var enumerator in Model.Enumerators.OrderByDescending(x=>x.UpdatedOn))
+                    {
+
+                        <tr>
+                            <td>@enumerator.EnumeratorCode</td>
+                            <td>@enumerator.FullName</td>
+                            <td>@enumerator.Note</td>
+                            <td>
+                                @if (@enumerator.IsSupervisor)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (@enumerator.IsPinUpdated)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                }
+                            
+                            </td>
+                            <td>
+                                @if (@enumerator.IsActive)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                }
+                            </td>
+                            <td>@enumerator.UpdatedOn</td>
+                    <td>
+                               
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editEnumeratorModal"
+                                        data-EnumeratorId="@enumerator.EnumeratorId"
+                                        data-code="@enumerator.EnumeratorCode"
+                                        data-Ename="@enumerator.FullName"
+                                        data-Enote="@enumerator.Note"
+                                        data-supervisor="@enumerator.IsSupervisor"
+                                        data-UpdatedOn="@enumerator.UpdatedOn"
+                                        data-IsPinUpdated="@enumerator.IsPinUpdated"
+                                        data-active="@enumerator.IsActive">
+
+
+                                    <i class="fa fa-edit"></i> Edit
+                                </button>
+                            </td>
+                            <td>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#ResetPasswordModal"
+                                        data-EnumeratorId="@enumerator.EnumeratorId"
+                                        data-Ename="@enumerator.FullName"
+                                        data-UpdatedOn="@enumerator.UpdatedOn"
+                                        data-IsPinUpdated="@enumerator.IsPinUpdated"
+                                        data-active="@enumerator.IsActive">
+
+
+                                    <i class="fa fa-key"></i> Reset
+                                </button>
+                            </td>
+                        </tr>
+
+
+                                }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+
+    <div class="alert alert-warning text-center mt-5 p-4 rounded shadow-sm">
+        <h4 class="alert-heading">No Enumerator Found</h4>
+    </div>
+
+
+}
+
+
+@section Scripts {
+
+    <partial name="_EditEnumeratorModal" model="@Model.UpdatedEnumerator" />
+
+    <partial name="_AddEnumeratorModal" model="@Model" />
+    <partial name="_EditEnumeratorIdGeneratorTrackingModal" model="@Model.UpdatedEnumeratorIdGeneratorTracking" />
+
+    <partial name="_AddEnumeratorIdGeneratorTrackingModal" model="@Model.EnumeratorIdGeneratorTracking" />
+    <partial name="_ResetPasswordModal" model="Model.UpdatedEnumerator" />
+
+    <script>
+        function refreshPage(button) {
+            const icon = button.querySelector("i");
+
+            button.disabled = true;
+            icon.classList.add("fa-spin");
+
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        }
+    </script>
+
+    <script>
+        var editModal = document.getElementById('editEnumeratorModal');
+        editModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget; // Button that triggered the modal
+
+
+            var EnumeratorId = button.getAttribute('data-EnumeratorId');
+                  var code = button.getAttribute('data-code');
+            var name = button.getAttribute('data-Ename');
+            var note = button.getAttribute('data-Enote');
+             var supervisor = button.getAttribute('data-supervisor') === 'True';
+               //var type = button.getAttribute('data-type');
+                 var IsPinUpdated = button.getAttribute('data-IsPinUpdated') === 'True';
+                //var active = button.getAttribute('data-active');
+                var active = button.getAttribute('data-active') === 'True';
+                        var UpdatedOn = button.getAttribute('data-UpdatedOn');
+
+            // Fill form fields inside modal
+              document.getElementById('editEnumeratorId').value = EnumeratorId;
+            document.getElementById('hiddenEnumeratorCode').value = code;
+            document.getElementById('editEnumeratorCode').value = code;
+            document.getElementById('editEnumeratorName').value = name;
+            document.getElementById('editEnumeratorNote').value = note;
+            //document.getElementById('editEnumeratorsupervisor').value = supervisor;
+            //document.getElementById('editEnumeratorpin').value = pin;
+            //document.getElementById('editEnumeratortype').value = type;
+             // document.getElementById('editIsPinUpdatede').value = IsPinUpdated;
+           // document.getElementById('editEnumeratoractive').value = active;
+
+           document.getElementById('editactive').checked = active;
+           document.getElementById('editIsPinUpdated').checked = IsPinUpdated;
+           document.getElementById('editEnumeratorSupervisor').checked = supervisor;
+
+           debugger;
+
+           /*
+             var active = button.getAttribute('data-active') === 'True';
+
+            // Fill form fields inside modal
+              document.getElementById('editId').value = Id;
+            document.getElementById('editLevelName').value = LevelName;
+            document.getElementById('editOfficialCode').value = OfficialCode;
+            */
+                        
+        });
+
+
+    </script>
+        
+
+        <script>
+            var editModal = document.getElementById('EditEnumeratorIdGeneratorTrackingModal');
+            editModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget; // Button that triggered the modal
+
+
+                var LatestId = button.getAttribute('data-LatestId');
+                      var Prefix = button.getAttribute('data-Prefix');
+                var TotalCodeGenerated = button.getAttribute('data-TotalCodeGenerated');
+                var SuffixLength = button.getAttribute('data-SuffixLength');
+                 var supervisor = button.getAttribute('data-supervisor');
+                  var pin = button.getAttribute('data-pin');
+                   var type = button.getAttribute('data-type');
+                     var IsPinUpdated = button.getAttribute('data-IsPinUpdated');
+                    var active = button.getAttribute('data-active');
+
+                // Fill form fields inside modal
+                  document.getElementById('editLatestId').value = LatestId;
+                document.getElementById('editPrefix').value = Prefix;
+                document.getElementById('editTotalCodeGenerated').value = TotalCodeGenerated;
+
+                document.getElementById('editSuffixLength').value = SuffixLength;
+            });
+    </script>
+    <script>
+        const resetPasswordModal = document.getElementById('ResetPasswordModal');
+
+        resetPasswordModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+
+            const enumeratorId = button.getAttribute('data-EnumeratorId');
+            const fullName = button.getAttribute('data-Ename');
+
+            document.getElementById('resetEnumeratorId').value = enumeratorId;
+            document.getElementById('FullName').textContent = fullName;
+        });
+    </script>
+}
+
+

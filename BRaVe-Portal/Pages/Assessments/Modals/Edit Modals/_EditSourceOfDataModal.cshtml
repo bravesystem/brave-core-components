@@ -1,0 +1,69 @@
+﻿@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@model BRaVe_Portal.Models.ViewModels.DataProcessingSourceOfData
+
+
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.SourceOfData ?? new List<LookupItemDto>();
+}
+
+<div class="modal fade" id="editSourceOfDataModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Source of Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditSourceOfData">
+                    <input type="hidden" asp-for="AssessmentId" id="editSourceOfDataAssessmentId" />
+                    <div class="mb-3">
+                        <label class="form-label">Primary Source</label>
+                        <select asp-for="PrimarySourceId" class="form-select" id="editprimaryId">
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                        <input asp-for="PrimarySourceOther" class="form-control mt-2" placeholder="If Other, specify..." id="editprimaryOther" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Secondary Source</label>
+                        <select asp-for="SecondarySourceId" class="form-select" id="editsecId">
+                            @foreach (var c in lookups)
+                            {
+                                <option value="@c.Id">@c.Text</option>
+
+                            }
+                        </select>
+                        <input asp-for="SecondarySourceOther" class="form-control mt-2" placeholder="If Other, specify..." id="editsecOther" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Update Attachment</label>
+                        <input type="file" class="form-control" name="SourceFile" />
+
+                        <a id="editSourceOfDataDownloadLink"
+                           class="d-none"
+                           data-no-loader
+                           asp-page-handler="DownloadAttachment"
+                           asp-route-assessmentId=""
+                           asp-route-blobPath="">
+                            <i class="fa fa-download me-1"></i> Download Attachment
+                        </a>
+
+
+
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

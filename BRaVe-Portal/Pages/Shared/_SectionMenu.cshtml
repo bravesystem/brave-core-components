@@ -1,0 +1,17 @@
+﻿@{
+    Layout = "_Layout";
+}
+
+@if (IsSectionDefined("SubMenuBar"))
+{
+    <div class="submenu-bar">
+        @RenderSection("SubMenuBar", required: false)
+    </div>
+}
+
+<div class="content-area">
+    @RenderBody()
+</div>
+
+@RenderSection("Scripts", required: false)
+@RenderSection("Styles", required: false)

@@ -1,0 +1,80 @@
+﻿@model BRaVe_Portal.Pages.Locations.IndexModel
+
+<div class="modal fade" id="EditLocationModal2" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="post" asp-page-handler="EditLocation">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Administrative Area</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- Hidden Id -->
+                    <input asp-for="UpdatedLocation.Id" type="hidden" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Administrative Area</label>
+                        <input asp-for="UpdatedLocation.LocationName" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">P-Code</label>
+                        <input asp-for="UpdatedLocation.OfficialCode" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Admin Level</label>
+                        <select id="adminLevelEdit"
+                                asp-for="UpdatedLocation.LevelId"
+                                class="form-select"
+                                required>
+                            <option value="">-- Select Level --</option>
+                            @foreach (var e in Model.AdministrativeLevels)
+                            {
+                                <option value="@e.Id">@e.LevelName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Parent (controlled by existing JS) -->
+                    <div id="parentSectionEdit" class="mb-3 d-none">
+                        <label class="form-label fw-bold">Parent Administrative Area</label>
+                        <select id="parentLocationEdit"
+                                asp-for="UpdatedLocation.ParentLocationId"
+                                class="form-select">
+                            <option value="">-- Select Parent --</option>
+                        </select>
+                    </div>
+
+                    <!-- Is Active -->
+                    <div class="form-check mt-3">
+                        <input asp-for="UpdatedLocation.IsActive"
+                               class="form-check-input"
+                               type="checkbox"
+                               id="editIsActive" />
+                        <label class="form-check-label fw-semibold" for="editIsActive">
+                            Is Active
+                        </label>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-success" type="submit">
+                        <i class="fa fa-save me-1"></i> Save
+                    </button>
+                    <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>

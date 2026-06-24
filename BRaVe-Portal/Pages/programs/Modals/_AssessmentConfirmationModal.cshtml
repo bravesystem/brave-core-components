@@ -1,0 +1,42 @@
+﻿<form id="approvalForm" method="post" asp-page-handler="HandleApproval">
+    <input type="hidden" name="requiresApproval" id="requiresApproval" />
+    <input type="hidden" name="programId" id="programId" />
+</form>
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assessment Approval</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="fs-5">Does the assessment require approval?</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-success" id="btnApprovalYes">Yes</button>
+                <button type="button" class="btn btn-secondary" id="btnApprovalNo">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const approvalModal = document.getElementById('approvalModal');
+
+    approvalModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const programId = button.getAttribute('data-program-id');
+        document.getElementById('programId').value = programId;
+    });
+
+    document.getElementById("btnApprovalYes").addEventListener("click", function () {
+        document.getElementById("requiresApproval").value = "true";
+        document.getElementById("approvalForm").submit();
+    });
+
+    document.getElementById("btnApprovalNo").addEventListener("click", function () {
+        document.getElementById("requiresApproval").value = "false";
+        document.getElementById("approvalForm").submit();
+    });
+</script>
+
+

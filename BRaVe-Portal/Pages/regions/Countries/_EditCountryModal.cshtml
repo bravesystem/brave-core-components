@@ -1,0 +1,58 @@
+﻿@model BRaVe_Portal.Models.DTOs.CountryDto
+
+<div class="modal fade" id="editCountryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Country</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="EditCountry">
+
+                    <!-- Hidden inputs to pass region info -->
+                    <input type="hidden" name="RegionId" value="@Model.RegionId" />
+
+                    <!-- Country ISO2 (read-only) -->
+                    <div class="mb-3">
+                        <label class="form-label">ISO2 Code</label>
+                        <input asp-for="CountryIso2" id="EditCountry_CountryIso2" class="form-control" readonly />
+                    </div>
+
+                    <!-- Phone code -->
+                    <div class="mb-3">
+                        <label class="form-label">Phone Code</label>
+                        <input asp-for="PhoneCode" id="EditCountry_PhoneCode" class="form-control" required />
+                    </div>
+
+                    <!-- Country name -->
+                    <div class="mb-3">
+                        <label class="form-label">Country Name</label>
+                        <input asp-for="Name" id="EditCountry_Name" class="form-control" required />
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-save"></i> Update
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+      // --- Populate Edit Modal with selected row values ---
+    var editCModal = document.getElementById('editCountryModal');
+    editCModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+
+        var iso2 = button.getAttribute('data-iso2');
+        var name = button.getAttribute('data-name');
+        var phoneCode = button.getAttribute('data-phonecode');
+
+        document.getElementById('EditCountry_CountryIso2').value = iso2;
+        document.getElementById('EditCountry_Name').value = name;
+        document.getElementById('EditCountry_PhoneCode').value = phoneCode;
+    });
+</script>

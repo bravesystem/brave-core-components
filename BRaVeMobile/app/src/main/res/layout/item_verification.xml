@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    card_view:cardElevation="2dp"
+    card_view:cardUseCompatPadding="true"
+    card_view:cardBackgroundColor="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- Top row: UUID + Badge -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvUuid"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="UUID"
+                android:textStyle="bold"
+                android:textColor="@color/primary_text"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tvBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_rounded"
+                android:text="Status"
+                android:textColor="@color/badge_text_color"
+                android:textStyle="bold"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:minHeight="24dp" />
+        </LinearLayout>
+
+        <!-- Secondary info: gender + inserted_on -->
+        <TextView
+            android:id="@+id/tvInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Male • Jan 1, 2025 12:00"
+            android:textColor="@color/secondary_text"
+            android:textSize="14sp"
+            android:layout_marginTop="6dp" />
+
+        <!-- Optional data text -->
+        <TextView
+            android:id="@+id/tvData"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="@color/secondary_text"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp" />
+
+        <!-- Action for match found -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnViewMatch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                card_view:icon="@drawable/ic_search_24"
+                card_view:iconGravity="textEnd"/>
+            <!-- Send to server -->
+            <Button
+                android:id="@+id/btnSyncIndVerif"
+                android:layout_width="55dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                card_view:icon="@drawable/ic_sync_24"
+                card_view:iconGravity="textEnd"
+                />
+
+            <Button
+                android:id="@+id/btnDelivery"
+                android:layout_width="55dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+
+                android:backgroundTint="@color/md_blue_A200"
+
+                android:visibility="gone"
+                card_view:icon="@drawable/ic_distr_package_closed"
+                card_view:iconGravity="textEnd"
+                android:layout_marginLeft="10dp"
+                />
+
+            <Button
+                android:id="@+id/btnClear"
+                android:layout_width="55dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+
+                android:text=""
+                android:backgroundTint="@color/error_red"
+
+                android:visibility="gone"
+                card_view:icon="@drawable/ic_delete_24"
+                card_view:iconGravity="textEnd"
+
+                android:layout_marginLeft="10dp"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -1,0 +1,47 @@
+﻿@page
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models
+@model BRaVe_Portal.Pages.Enumerators.IndexModel
+@{
+    ViewData["Title"] = "Provisioning Page";
+}
+
+
+
+<!-- Section Header -->
+<div class="card mb-4 border-0 shadow-sm rounded-3">
+    <div class="card-header bg-primary text-white fw-bold d-flex align-items-center">
+        <i class="fa-solid fa-key me-2"></i> Provisioning
+    </div>
+
+    <div class="card-body bg-light">
+        <div class="row g-3">
+
+
+                <!-- Provision Mobile Devices -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/ClaimSessions/MobileClaims"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-mobile-screen fa-lg text-primary me-2"></i>
+                    <span class="fw-semibold text-dark">Provision Mobile Devices</span>
+                    </a>
+                </div>
+                <!-- Provision Card Printing devices -->
+                <div class="col-md-4 col-sm-6">
+                    <a asp-page="/ClaimSessions/CardPrintingClaims/CardPrintingClaims"
+                       class="setup-link d-flex align-items-center justify-content-center text-decoration-none shadow-sm rounded-3 p-3 bg-white">
+                        <i class="fa-solid fa-id-card fa-lg text-primary me-2"></i>
+                    <span class="fw-semibold text-dark">Provision Card Printing Devices</span>
+                    </a>
+                </div>
+
+
+
+        </div>
+    </div>
+</div>
+
+
+
+
+

@@ -1,0 +1,187 @@
+﻿@page
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@using BRaVe_Portal.Helpers
+@model BRaVe_Portal.Pages.Setup.TempAccess.IndexModel
+@{
+    ViewData["Title"] = "Temporary Mission Access";
+    CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.Roles ?? new List<LookupItemDto>();
+}
+
+
+<div class="card shadow-sm border-0 rounded-3">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center p-3">
+        <div class="d-flex align-items-center gap-2">
+            <!-- Back Button -->
+            <a href="/setup/" class="btn btn-light btn-sm rounded-pill shadow-sm px-3 d-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2 text-primary"></i> Back
+            </a>
+            <h5 class="mb-0 fw-bold">Temporary Mission Access History</h5>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm rounded-pill d-flex align-items-center shadow-sm fw-semibold"
+                    
+                    data-bs-toggle="modal" data-bs-target="#requestTempAccess">
+                <i class="fa-solid fa-plus me-2"></i> Request Temporary Access
+            </button>
+
+        </div>
+    </div><br />
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success small py-2">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger small py-2">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            @Html.Raw(TempData["ErrorMessage"])
+        </div>
+    }
+
+    <div class="card-body bg-light p-4">
+
+        <!-- Search -->
+        <form method="get" class="mb-4 d-flex justify-content-center">
+            <div class="position-relative" style="max-width: 450px; width: 100%;">
+                <input type="text" name="SearchTerm" value="@Model.SearchTerm"
+                       class="form-control rounded-pill ps-5 shadow-sm"
+                       placeholder="Search by user id..." />
+                <i class="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ps-3 text-primary"></i>
+            </div>
+            <button type="submit" class="btn btn-primary ms-2 rounded-pill shadow-sm">Search</button>
+            <a asp-page="./Index" class="btn btn-outline-secondary ms-2 rounded-pill shadow-sm">
+                Clear
+            </a>
+        </form>
+        
+
+
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle text-center bg-white border rounded">
+                <thead class="table-light fw-semibold border-bottom">
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Requested On</th>
+                        <th>Login Time</th>
+                        <th>LogOut Time</th>                  
+                        <th>Mission</th>
+                        <th>Role</th>  
+                        <th>Reason</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        if (Model.Items != null && Model.Items.Any())
+                        {
+                            var startIndex = (Model.CurrentPage - 1) * Model.PageSize;
+                            var rowNum = 0;
+                            foreach (var it in Model.Items)
+                            {
+                                <tr>
+                                    <td>@(startIndex + (++rowNum))</td>
+                                    <td>@it.UserId</td>
+                                    <td>@(it.RequestedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    <td>@(it.AccessedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    <td>@(it.LogoutTime?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    
+                                    <td>
+                                        @{
+                                            var missionName = Model.Missions
+                                            .FirstOrDefault(x => x.Value == it.MissionId.ToString())
+                                            ?.Text ?? it.MissionId.ToString();
+                                        }
+                                        @missionName
+                                    </td>
+
+                                    <td>@LookupHelper.GetTextById(lookups, @it.RoleId)</td> 
+                            
+                                    <td>@(string.IsNullOrWhiteSpace(it.Reason) ? "-" : it.Reason)</td>
+                                    <td>
+                                        @if (!it.IsConsumed)
+                                        {
+                                            <span class="badge bg-success">ACTIVE</span>
+                                        }
+                                        else if(it.IsConsumed && it.AccessedAt is null)
+                                        {
+                                            <span class="badge bg-warning">EXPIRED</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">USED</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-3">
+                                    <i class="fa-solid fa-circle-info me-1 text-primary"></i>No temporary access requests.
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+
+
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <!-- Page size + pagination -->
+        <div class="d-flex justify-content-between align-items-center mb-2 p-3 small">
+            <form method="get" class="d-inline-flex align-items-center mb-0">
+                <span>Show</span>
+                <select asp-for="PageSize" class="form-select form-select-sm"
+                        style="width:auto;display:inline-block;margin:0 4px;"
+                        onchange="this.form.submit()">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+                <span>entries</span>
+                <input type="hidden" asp-for="SearchTerm" />
+                <input type="hidden" asp-for="CurrentPage" />
+            </form>
+
+            <!-- Pagination -->
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?CurrentPage=@(Model.CurrentPage - 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Previous</a>
+                    </li>
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link"
+                               href="?CurrentPage=@i&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?CurrentPage=@(Model.CurrentPage + 1)&PageSize=@Model.PageSize&SearchTerm=@Model.SearchTerm">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+ 
+    </div>
+</div>
+<partial name="RequestTempAccessModal" model="Model">
+
+

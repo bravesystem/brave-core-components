@@ -1,0 +1,358 @@
+﻿@page "{SurveyId:int}/{QuestionId:int}/{surveyCode}"
+
+@model BRaVe_Portal.Pages.surveys.Questionnaire.QuestionBuilderModel
+@using BRaVe_Portal.Models
+@using BRaVe_Management_Backend.DTOs
+@using BRaVe_Portal.Helpers
+
+
+@{
+    ViewData["Title"] = "Skip Logic";
+}
+
+@* Expression Builder page for composing logic. IDs retained so existing skiplogic.js can find DOM nodes. *@
+
+
+<a asp-page="/surveys/Questionnaire/QuestionBuilder" asp-route-SurveyId="@Model.SurveyId" class="btn btn-outline-primary d-inline-flex align-items-center mb-3">
+    <i class="fa fa-arrow-left me-2"></i> Back
+</a>
+
+<div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+    <strong style="color:#2196F3;">Note:</strong>
+    This question will be displayed to the users only when the conditions below are true.
+</div>
+
+<br />
+
+<main id="sharedModal" class="expression-page container-fluid p-4">
+    @Html.AntiForgeryToken()
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">@Model.CurrentSurvey?.Title - Expression Builder</h5>
+           
+            @if (!string.IsNullOrWhiteSpace(Model.TargetQuestionText))
+            {
+                <div class="small fw-light mt-1">
+                    <i class="bi bi-question-circle"></i> Question:
+                    @Model.TargetQuestionText
+                </div>
+            }
+            <div>
+                <button id="closePageBtn" class="btn btn-sm btn-outline-light">Close</button>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="d-flex h-100">
+
+                <!-- LEFT PANEL: Questions + Operators -->
+                <aside class="bg-white border-end" style="width:320px; min-height:60vh;">
+                    <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="text-uppercase text-muted mb-0 fw-bold small">Questions</h6>
+                        <span class="badge bg-secondary" id="modal-question-count">0</span>
+                    </div>
+
+                    <div class="p-2 border-bottom">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                            <input id="modal-search-questions" type="text" class="form-control border-start-0 ps-0" placeholder="Search fields..." />
+                        </div>
+                    </div>
+
+                    <div id="modal-questions-list" class="overflow-auto p-2" style="height:45vh;"></div>
+
+                    <div class="p-3 bg-light border-top">
+                        <h6 class="text-uppercase text-muted mb-2 fw-bold small">Operators</h6>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="card card-body p-2 text-center draggable-item operator-item shadow-sm"
+                                     draggable="true" data-type="operator" data-op-type="group" data-id="AND">
+                                    <i class="bi bi-intersect"></i> <strong>AND</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card card-body p-2 text-center draggable-item operator-item shadow-sm"
+                                     draggable="true" data-type="operator" data-op-type="group" data-id="OR">
+                                    <i class="bi bi-union"></i> <strong>OR</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="modal-operators-list" class="d-flex flex-wrap gap-1 justify-content-center">
+                            @* comparison operator badges will be injected by script *@
+                        </div>
+                    </div>
+                </aside>
+
+                
+                <!-- CENTER PANEL: Builder Canvas + JSON Output -->
+                <section class="flex-grow-1 bg-light p-4 overflow-auto">
+
+                    <!-- Canvas Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-light text-secondary mb-0">Builder Canvas</h4>
+                        <div class="d-flex gap-2">
+                            <button id="btn-clear" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash"></i> Clear All
+                            </button>
+                         
+                        </div>
+                    </div>
+
+                    <!-- Canvas -->
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body p-4" id="builder-root" style="min-height:320px;">
+                            <!-- Expression tree rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- JSON OUTPUT -->
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <span class="small font-monospace text-muted fw-bold">OUTPUT.json</span>
+                            <button id="btn-copy" class="btn btn-xs btn-light border btn-sm py-0">Copy JSON</button>
+                        </div>
+
+                        <div class="card-body p-3">
+                            <pre id="json-output" class="mb-0 font-monospace small text-dark" style="max-height:300px; overflow:auto;">{}</pre>
+                        </div>
+                    </div>
+
+                </section>
+
+            </div>
+        </div>
+
+        <div class="card-footer d-flex justify-content-end gap-2">
+            <button id="modal-cancel" class="btn btn-secondary btn-sm">Cancel</button>
+            <button id="modal-confirm-save" class="btn btn-primary btn-sm">Apply</button>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <script>
+        // expose server-populated questions for the client; keeps route-based logic intact
+        window.BRAVE_INITIAL_QUESTIONS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Questions ?? new List<BRaVe_Portal.Pages.surveys.Questionnaire.QuestionBuilderModel.QuestionModel>()));
+        // expose survey id so JS discovery is robust
+        (function(){
+            try {
+                if (!window.BRAVE_SURVEY_ID) window.BRAVE_SURVEY_ID = "@Model.SurveyId";
+            } catch(e) {}
+        })();
+    </script>
+
+    <script>
+        // Expose route QuestionId to client as string or null
+        window.BRAVE_TARGET_QUESTION_ID = "@(ViewContext.RouteData.Values["QuestionId"] ?? "")";
+
+        if (!window.BRAVE_TARGET_QUESTION_ID || window.BRAVE_TARGET_QUESTION_ID === "0") {
+            window.BRAVE_TARGET_QUESTION_ID = null;
+        }
+    </script>
+    <script>
+        // inject raw JSON or null — NOTE: Html.Raw to avoid double-quoting
+        window.BRAVE_INITIAL_BUILDER_STATE = @(string.IsNullOrWhiteSpace(Model.ExistingQuestion?.SkipLogic)
+                    ? "null"
+                    : Html.Raw(Model.ExistingQuestion!.SkipLogic));
+    console.debug('BRAVE_INITIAL_BUILDER_STATE', window.BRAVE_INITIAL_BUILDER_STATE);
+</script>
+
+
+
+
+
+
+    @* Expression builder script. Ensure this file exposes the builder API used below (exportBuilderState, renderQuestions, renderOperators, renderTree). *@
+    <script src="~/js/skiplogic.js"></script>
+
+    <script>
+        (function () {
+            const copyBtn = document.getElementById('btn-copy');
+            const clearBtn = document.getElementById('btn-clear');
+            const jsonPre = document.getElementById('json-output');
+            const confirmBtn = document.getElementById('modal-confirm-save');
+            const cancelBtn = document.getElementById('modal-cancel');
+            const closeBtn = document.getElementById('closePageBtn');
+
+            function refreshJsonOutput() {
+                try {
+                    let obj = null;
+                    if (typeof window.exportBuilderStateNormalized === 'function') {
+                        obj = window.exportBuilderStateNormalized();
+                    } else if (typeof window.exportBuilderState === 'function') {
+                        obj = JSON.parse(JSON.stringify(window.exportBuilderState()));
+                        (function stripIds(o) {
+                            if (o && typeof o === 'object') {
+                                if (Array.isArray(o)) {
+                                    o.forEach(stripIds);
+                                } else {
+                                    delete o.id;
+                                    Object.keys(o).forEach((k) => stripIds(o[k]));
+                                }
+                            }
+                        })(obj);
+                    } else if (typeof window.getBuilderJson === 'function') {
+                        obj = window.getBuilderJson();
+                    }
+                    jsonPre.textContent = obj ? JSON.stringify(obj, null, 2) : '{}';
+                } catch (err) {
+                    console.error('refreshJsonOutput', err);
+                }
+            }
+
+            refreshJsonOutput();
+
+            if (copyBtn) {
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        refreshJsonOutput();
+                        await navigator.clipboard.writeText(jsonPre.textContent);
+                        copyBtn.textContent = 'Copied';
+                        setTimeout(() => copyBtn.textContent = 'Copy JSON', 1400);
+                    } catch (err) {
+                        console.error('copy error', err);
+                    }
+                });
+            }
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    try {
+                        if (typeof window.clearBuilder === 'function') {
+                            window.clearBuilder();
+                        } else if (typeof window.loadBuilderState === 'function') {
+                            window.loadBuilderState({ op: 'AND', expressions: [] });
+                        } else {
+                            if (typeof window.renderTree === 'function') window.renderTree();
+                        }
+                        refreshJsonOutput();
+                    } catch (err) { console.error('clear error', err); }
+                });
+            }
+
+            // NEW: Updated confirm handler - save skiplogic via AJAX then close
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', async () => {
+                    try {
+
+                         showLoader(); // show spinner
+                        let built = null;
+                        if (typeof window.exportBuilderState === 'function') {
+                            built = window.exportBuilderState();
+                        } else {
+                            // fallback to reading output pre
+                            try { built = JSON.parse(jsonPre.textContent || '{}'); } catch { built = null; }
+                        }
+
+                        // Persist to localStorage as before (non-breaking)
+                        try { localStorage.setItem('expression_builder_result', JSON.stringify(built)); } catch (e) {}
+
+                        // Only attempt server save when we have a target question id
+                        const qid = window.BRAVE_TARGET_QUESTION_ID || null;
+                        if (qid && built) {
+                            try {
+                                // get antiforgery token injected by @Html.AntiForgeryToken()
+                                const tokenEl = document.querySelector('input[name="_bravePortalCsrf"]');
+                                const token = tokenEl ? tokenEl.value : '';
+
+                                const resp = await fetch(`?handler=SaveSkipLogic&questionId=${encodeURIComponent(qid)}&surveyId=${encodeURIComponent(window.BRAVE_SURVEY_ID || '')}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                         'X-BRaVe-Portal-CSRF': token
+                                    },
+                                    body: JSON.stringify(built)
+                                });
+
+                                if (!resp.ok) {
+
+                                            showErrorToast("Failed to save skip logic");
+
+                                        } else {
+
+                                            const json = await resp.json().catch(() => null);
+
+                                            if (json && json.success) {
+
+                                               showSuccessToast(json.message);
+
+                                            } else {
+
+                                                showErrorToast("Failed to save skip logic");
+
+                                            }
+
+                                        }
+                            } catch (ex) {
+                                console.error('Error saving skiplogic to server', ex);
+                            }
+                        }
+                    } catch (err) {
+                        console.error('confirm error', err);
+                    }
+
+                     finally {
+
+            hideLoader(); // hide spinner
+
+        }
+
+               
+                });
+            }
+
+            if (cancelBtn) cancelBtn.addEventListener('click', () => history.back());
+            if (closeBtn) closeBtn.addEventListener('click', () => history.back());
+
+            try { if (typeof window.renderQuestions === 'function') window.renderQuestions(); } catch (e) {}
+            try { if (typeof window.renderOperators === 'function') window.renderOperators(); } catch (e) {}
+            try { if (typeof window.renderTree === 'function') window.renderTree(); } catch (e) {}
+
+            refreshJsonOutput();
+            document.addEventListener('click', refreshJsonOutput);
+        })();
+
+
+                function showSuccessToast(message) {
+
+            const toast = document.createElement("div");
+
+            toast.className = "position-fixed top-0 end-0 m-3 alert alert-success shadow";
+
+            toast.style.zIndex = "9999";
+            toast.style.minWidth = "300px";
+
+            toast.innerText = message || "Restriction Saved successfully";
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
+
+        function showErrorToast(message) {
+
+            const toast = document.createElement("div");
+
+            toast.className = "position-fixed top-0 end-0 m-3 alert alert-danger shadow";
+
+            toast.style.zIndex = "9999";
+            toast.style.minWidth = "300px";
+
+            toast.innerText = message || "Restriction not saved. Something went wrong";
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
+    </script>
+
+}

@@ -1,0 +1,95 @@
+﻿@page
+@model BRaVe_Portal.Pages.Monitoring.FailedJobs.FailedAsyncJobsModel
+@using System.Text.Json
+@using BRaVe_Portal.Models.DTOs
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">
+        <strong style="color:#2196F3;">ℹ Note:</strong>
+        The following is a list of failed mobile sync jobs. Select Retry to initiate manual reprocessing.
+    </h4>
+
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<!-- ===================== INDICATOR LIST ===================== -->
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <span>Failed Jobs</span>
+        <span class="badge bg-light text-dark">
+            Total: @Model.FailedJobs?.Count()
+        </span>
+        <button type="button"
+                class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2"
+                onclick="refreshPage(this)">
+            <i class="fa-solid fa-rotate"></i>
+            <span>Refresh</span>
+        </button>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>JobId</th>
+                <th>Sync Attempt On</th>
+                <th>DeviceId</th>
+                <th>Mission</th>
+                <th>Retry</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.FailedJobs != null && Model.FailedJobs.Any())
+            {
+                foreach (var job in Model.FailedJobs)
+                {
+                    <tr>
+                        <td>@job.BatchId</td>
+                        <td>@job.SyncAttemptOn</td>
+                        <td>@job.DeviceId</td>
+                        <td>@job.Mission</td>
+                        <td>
+                            <form method="post" asp-page-handler="Retry">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="jobId" value="@job.BatchId" />
+
+                                <button type="submit"
+                                        class="btn btn-sm btn-success">
+                                    <i class="fa fa-refresh"></i> Retry
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        No data to display.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function refreshPage(button) {
+        const icon = button.querySelector("i");
+
+        button.disabled = true;
+        icon.classList.add("fa-spin");
+
+        setTimeout(() => {
+            location.reload();
+        }, 500);
+    }
+</script>

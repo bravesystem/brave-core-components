@@ -1,0 +1,165 @@
+﻿@model BRaVe_Portal.Pages.Setup.Lookups.IndexModel;
+
+
+
+<!-- Offcanvas Panel to manage lookups -->
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="lookupOffcanvas" aria-labelledby="lookupOffcanvasLabel">
+    <div class="offcanvas-header bg-primary text-white">
+        <h5 class="offcanvas-title fw-bold" id="lookupOffcanvasLabel">
+            <i class="fa-solid fa-database me-2"></i> Manage Lookup Names
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+
+    <div class="offcanvas-body bg-light">
+
+        <!-- Add Lookup Button -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-secondary mb-0">Existing Lookups</h6>
+            <button class="btn btn-sm rounded-pill fw-semibold d-flex align-items-center shadow-sm"
+                    style="background-color: #0d6efd; color: #fff;"
+                    data-bs-toggle="modal" data-bs-target="#addLookupModal">
+                <i class="fa-solid fa-plus me-2"></i> Add Lookup Name
+            </button>
+        </div><br />
+
+        <!-- Success & Error Alerts -->
+        @if (TempData["LookupSuccessMessage"] != null)
+        {
+            <div class="alert alert-success small py-2 shadow-sm rounded mb-3">
+                <i class="fa-solid fa-circle-check me-2"></i>@TempData["LookupSuccessMessage"]
+            </div>
+        }
+        @if (TempData["LookupErrorMessage"] != null)
+        {
+            <div class="alert alert-danger small py-2 shadow-sm rounded mb-3">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["LookupErrorMessage"]
+            </div>
+        }
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle bg-white border rounded shadow-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Lookup Name</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.LookupNames != null && Model.LookupNames.Any())
+                    {
+                        int index = 1;
+                        foreach (var item in Model.LookupNames)
+                        {
+                            <tr>
+                                <td>@index</td>
+                                <td>@item.LookupName</td>
+                                <td class="text-center">
+                                    <!-- Edit button -->
+
+                                    @if (!item.IsCustom.HasValue || item.IsCustom.Value)
+                                    {
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary me-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editLookupModal"
+                                                data-lkid="@item.Id"
+                                                data-lkname="@item.LookupName">
+                                            <i class="fa-solid fa-pen"></i> Edit
+                                        </button>
+                                        
+                                    }
+                                    
+
+
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">
+                                <i class="fa-solid fa-circle-info me-1 text-primary"></i>No lookup names found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add New Lookup Modal -->
+<div class="modal fade" id="addLookupModal" tabindex="-1" aria-labelledby="addLookupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle me-2"></i>Add New Lookup</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="post" asp-page-handler="AddLookup" id="addLookupForm">
+                <div class="modal-body bg-light">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Lookup Name</label>
+                        <input type="text" asp-for="NewLookup.LookupName" class="form-control shadow-sm" placeholder="Enter lookup name..." required />
+                    </div>
+
+  
+                </div>
+
+                <div class="modal-footer bg-white">
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-semibold">
+                        <i class="fa-solid fa-floppy-disk me-2"></i>Save
+                    </button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Lookup Modal -->
+<div class="modal fade" id="editLookupModal" tabindex="-1" aria-labelledby="editLookupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen me-2"></i>Edit Lookup</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="post" asp-page-handler="EditLookup" id="editLookupForm">
+                <div class="modal-body bg-light">
+                    <input type="hidden" asp-for="UpdatedLookup.Id" id="editLookupId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Lookup Name</label>
+                        <input type="text" asp-for="UpdatedLookup.LookupName" id="editLookupName" class="form-control shadow-sm" required />
+                </div>
+
+                <div class="modal-footer bg-white">
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-semibold">
+                        <i class="fa-solid fa-floppy-disk me-2"></i>Update
+                    </button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+

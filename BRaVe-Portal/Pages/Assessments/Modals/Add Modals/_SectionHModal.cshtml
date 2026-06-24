@@ -1,0 +1,84 @@
+﻿
+@model BRaVe_Portal.Models.ViewModels.DataProcessingRetention
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.ArchivingMethodTypes ?? new List<LookupItemDto>();
+    var lookups1 = coreLookups?.DisposalMethodTypes ?? new List<LookupItemDto>();
+
+}
+
+
+<div class="modal fade" id="saveSectionHModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Complete Section</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+
+                <form method="post" asp-page-handler="SaveSectionH">
+
+
+                    <input asp-for="AssessmentId" type="hidden" />
+<h6 class="fw-bold text-primary">Beneficiary Data Retention After Project Closure:</h6>
+<div class="row mb-3">
+    <div class="col-md-3"><input asp-for="BeneficiaryDataYearsAfterProjectClosure" class="form-control" placeholder="Years" /></div>
+    <div class="col-md-3"><input asp-for="BeneficiaryDataMonthsAfterProjectClosure" class="form-control" placeholder="Months" /></div>
+                        <div class="col-md-6"><textarea asp-for="BeneficiaryDataRetentionJustification" class="form-control" placeholder="Justification" maxlength="500"></textarea></div>
+</div>
+
+<h6 class="fw-bold text-primary">Financial Data Retention After Project Closure:</h6>
+<div class="row mb-3">
+    <div class="col-md-3"><input asp-for="FinancialDataYearsAfterProjectClosure" class="form-control" placeholder="Years" /></div>
+    <div class="col-md-3"><input asp-for="FinancialDataMonthsAfterProjectClosure" class="form-control" placeholder="Months" /></div>
+                        <div class="col-md-6"><textarea asp-for="FinancialDataRetentionJustification" class="form-control" placeholder="Justification" maxlength="500"></textarea></div>
+</div>
+
+<h6 class="fw-bold text-primary">Consent Forms Data Retention After Project Closure:</h6>
+<div class="row mb-3">
+    <div class="col-md-3"><input asp-for="ConsentFormsYearsAfterProjectClosure" class="form-control" placeholder="Years" /></div>
+    <div class="col-md-3"><input asp-for="ConsentFormsMonthsAfterProjectClosure" class="form-control" placeholder="Months" /></div>
+                        <div class="col-md-6"><textarea asp-for="ConsentFormsRetentionJustification" class="form-control" placeholder="Justification" maxlength="500"></textarea></div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label class="form-label">Method of Archiving</label>
+
+        <select asp-for="MethodOfArchivingAfterProjectClosure" class="form-select">
+            @foreach (var c in lookups)
+            {
+                <option value="@c.Id">@c.Text</option>
+
+            }
+        </select>
+                            <input asp-for="MethodOfArchivingAfterProjectClosureOther" class="form-control mt-2" placeholder="If Other, specify..." maxlength="500" />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Method of Disposal</label>
+
+        <select asp-for="MethodOfDisposalAfterRetentionPeriod" class="form-select">
+            @foreach (var c in lookups1)
+            {
+                <option value="@c.Id">@c.Text</option>
+
+            }
+        </select>
+                            <input asp-for="MethodOfDisposalAfterRetentionPeriodOther" class="form-control mt-2" placeholder="If Other, specify..." maxlength="500" />
+    </div>
+</div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                    </div>
+
+                </form>
+
+
+            </div>
+        </div>
+    </div>
+</div>

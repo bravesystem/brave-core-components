@@ -1,0 +1,138 @@
+﻿@model Models.ViewModels.DataProcessingLawfulBasis
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Models.DTOs
+@{
+    var coreLookups = ViewData["CoreLookups"] as CoreLookups;
+    var lookups = coreLookups?.LawfulBases ?? new List<LookupItemDto>();
+
+
+    bool IsReadOnly = ViewData["IsReadOnly"] != null && (bool)ViewData["IsReadOnly"];
+   
+}
+
+@if (TempData["SuccessMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "SectionE")
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null && TempData["Section"] != null && TempData["Section"].ToString() == "SectionE")
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (Model == null || !Model.HasData)
+{
+
+    <button type="button"
+            class="btn btn-success rounded-pill shadow px-5 py-2 d-flex align-items-center gap-2"
+            data-bs-toggle="modal"
+            data-bs-target="#saveSectionEModal">
+        <i class="fa fa-plus-circle"></i>
+        <span>Provide Section Details</span>
+    </button>
+
+
+
+
+}
+else
+{
+
+<div class="mb-3">
+    <label class="form-label">Lawful Basis</label>
+  
+        <select asp-for="ProcessingActivityLawfulBasisId" class="form-select" disabled>
+            @foreach (var c in lookups)
+            {
+                <option value="@c.Id">@c.Text</option>
+
+            }
+        </select>
+</div>
+<div class="mb-3">
+    <label class="form-label">Explanation</label>
+    <textarea asp-for="LawfulBasisExplanation" class="form-control" readonly></textarea>
+       
+</div>
+
+    @if (!string.IsNullOrEmpty(Model.LawfulBasisDocPath))
+    {
+<div class="mb-3">
+    <label class="form-label">Supporting Document</label>
+
+            <a href="?handler=DownloadAttachment&blobPath=@Model.LawfulBasisDocPath" data-no-loader>
+                <i class="fa fa-download me-1"></i> Download Attachment
+            </a>
+        
+</div>
+    }
+
+<div class="mb-3">
+    <label class="form-label">Initial Data Collection Explanation</label>
+        <textarea asp-for="InitialDataCollectionExplanation" class="form-control" readonly></textarea>
+</div>
+    @if (!string.IsNullOrEmpty(Model.InitialDataCollectionDocPath))
+    {
+<div class="mb-3">
+    <label class="form-label">Initial Data Collection Document</label>
+            <a href="?handler=DownloadAttachment&blobPath=@Model.InitialDataCollectionDocPath" data-no-loader>
+                <i class="fa fa-download me-1"></i> Download Attachment
+            </a>
+</div>
+    }
+<div class="mb-3">
+    <label class="form-label">Ongoing Data Management</label>
+        <textarea asp-for="OngoingDataManagementExplanation" class="form-control" readonly></textarea>
+</div>
+
+    @if (!string.IsNullOrEmpty(Model.OngoingDataManagementDocPath))
+    {
+<div class="mb-3">
+    <label class="form-label">Ongoing Management Document</label>
+            <a href="?handler=DownloadAttachment&blobPath=@Model.OngoingDataManagementDocPath" data-no-loader>
+                <i class="fa fa-download me-1"></i> Download Attachment
+            </a>
+</div>
+    }
+<div class="mb-3">
+    <label class="form-label">Data Sharing Explanation</label>
+        <textarea asp-for="DataSharingExplanation" class="form-control" readonly></textarea>
+</div>
+
+    @if (!string.IsNullOrEmpty(Model.DataSharingDocPath))
+    {
+<div class="mb-3">
+    <label class="form-label">Data Sharing Document</label>
+            <a href="?handler=DownloadAttachment&blobPath=@Model.DataSharingDocPath" data-no-loader>
+                <i class="fa fa-download me-1"></i> Download Attachment
+            </a>
+</div>
+    }
+
+    @if (!IsReadOnly)
+    {
+        
+        <div class="d-flex justify-content-end my-3">
+            <button type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#saveSectionEModal"
+                    data-lawfulbasis-path="@Model.LawfulBasisDocPath"
+                    data-initialcollection-path="@Model.InitialDataCollectionDocPath"
+                    data-ongoing-path="@Model.OngoingDataManagementDocPath"
+                    data-datasharing-path="@Model.DataSharingDocPath">
+                Edit Details
+            </button>
+
+        </div>   
+    
+    }
+    
+
+}

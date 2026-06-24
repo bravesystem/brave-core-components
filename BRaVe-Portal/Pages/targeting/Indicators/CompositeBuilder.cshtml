@@ -1,0 +1,823 @@
+﻿@page "{id:int?}"
+@model BRaVe_Portal.Pages.Targeting.Indicators.CompositeBuilderModel
+
+@{
+    var isEdit = Model.Id > 0;
+    var programSelected = Model.SelectedProgramId.HasValue;
+}
+
+<div class="container-fluid">
+
+    <!-- ================= HEADER ================= -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <div>
+            <h4 class="fw-bold mb-0">
+                @(isEdit ? "Edit Custom Indicator" : "Create Custom Indicator")
+            </h4>
+
+            @if (isEdit)
+            {
+                <div class="text-muted small">
+                    @Model.Indicator.Code — @Model.Indicator.Name
+                </div>
+            }
+        </div>
+
+        <a class="btn btn-sm btn-outline-secondary"
+           style="background-color:#198754;color:white"
+           asp-page="/Targeting/Indicators/Indicators">
+            Back to Indicators
+        </a>
+
+    </div>
+
+    <!-- ================= PROGRAM SELECTOR (GET) ================= -->
+    @if (!isEdit)
+    {
+        <form method="get" class="mb-4">
+
+            <input type="hidden" name="id" value="@Model.Id" />
+
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+
+                    <label class="form-label fw-semibold">Select Program</label>
+
+                    <select name="SelectedProgramId"
+                            class="form-select shadow-sm rounded-pill border-0 px-3 py-2"
+                            onchange="this.form.submit()">
+
+                        <option value="">-- Select Program --</option>
+
+                        @foreach (var program in Model.Programs)
+                        {
+                            <option value="@program.ProgramId"
+                                    selected="@(program.ProgramId == Model.SelectedProgramId)">
+                                @program.Title
+                            </option>
+                        }
+                    </select>
+
+                </div>
+            </div>
+
+        </form>
+    }
+
+    <!-- ================= MAIN FORM (POST) ================= -->
+    @if (isEdit || programSelected)
+    {
+        <form method="post">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Indicator.IndicatorId" />
+            <input type="hidden" asp-for="SelectedProgramId" />
+
+            <div class="card shadow-sm">
+
+                <div class="card-header bg-primary text-white">
+                    Indicator Information
+                </div>
+
+                <div class="card-body">
+
+                    <!-- BASIC INFO -->
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label">Code</label>
+
+                            @if (isEdit)
+                            {
+                                <input asp-for="Indicator.Code" class="form-control" readonly />
+                                <input type="hidden" asp-for="Indicator.Code" />
+                            }
+                            else
+                            {
+                                <input asp-for="Indicator.Code" class="form-control" required />
+                            }
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <input asp-for="Indicator.Name" class="form-control" required />
+                        </div>
+
+                    </div>
+
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label">Level</label>
+                            <select asp-for="Indicator.Level"
+                                    id="levelSelector"
+                                    class="form-select">
+                                <option value="Individual">Individual</option>
+                                <option value="Household">Household</option>
+                               @*  <option value="Group">Group</option> *@
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Data Type</label>
+                            <select asp-for="Indicator.DataType" class="form-select">
+                                <option value="Number">Number</option>
+                                <option value="Numeric">Numeric</option>
+                                <option value="String">String</option>
+                                <option value="Boolean">Boolean</option>
+                                <option value="Date">Date</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea asp-for="Indicator.Description" class="form-control"></textarea>
+                    </div>
+
+                    <!-- EXPRESSION -->
+                    <hr />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Calculated Expression</label>
+
+                        <textarea asp-for="Expression"
+                                  id="expressionBox"
+                                  class="form-control"
+                                  rows="4"></textarea>
+
+                        @if (TempData["ValidationMessage"] != null)
+                        {
+                            var status = TempData["ValidationStatus"]?.ToString();
+
+                            <div class="alert @(status == "success" ? "alert-success" : "alert-danger")">
+                                @TempData["ValidationMessage"]
+                            </div>
+                        }
+                    </div>
+
+                    <!-- ================= FIELD SELECTOR ================= -->
+
+                    <div class="row mb-3 align-items-end g-2">
+
+                        <!-- Indicator Dropdown -->
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label small">Indicator</label>
+                            <select id="fieldSelector" class="form-select">
+                                <option value="">-- Select Indicator --</option>
+                                @foreach (var item in Model.IndicatorOptions)
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Add Indicator Button -->
+                        <div class="col-md-2 col-sm-6">
+                            <button type="button"
+                                    class="btn btn-outline-primary w-100"
+                                    onclick="addField()">
+                                Add Indicator
+                            </button>
+                        </div>
+
+                        <!-- Lookup Dropdown -->
+                        <div class="col-md-3 col-sm-6 d-none" id="lookup-container">
+                            <label class="form-label small">Lookup Value</label>
+                            <select id="lookupValues" class="form-select">
+                            </select>
+                        </div>
+
+                        <!-- Add Lookup Button -->
+                        <div class="col-md-2 col-sm-6 d-none" id="addLookupButtonContainer">
+                            <button type="button"
+                                    class="btn btn-outline-primary w-100"
+                                    onclick="addLookUp()">
+                                Add Value
+                            </button>
+                        </div>
+
+                    </div>
+
+
+
+
+                    <div class="row mb-3 align-items-end g-2">
+
+                        <!-- Survey -->
+                        <div class="col-md-2 col-sm-6">
+                            <label class="form-label">Select Survey</label>
+                            <select id="surveySelector" name="SurveyId" class="form-select">
+                                <option value="">-- Select Survey --</option>
+                                @foreach (var survey in Model.Surveys)
+                                {
+                                    <option value="@survey.SurveyId"
+                                            data-surveytype="@survey.SurveyType">
+                                        @survey.Title
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Survey Questions -->
+                        <div class="col-md-2 col-sm-6 d-none" id="surveyQuestionContainer">
+                            <label class="form-label small">Survey Questions</label>
+                            <select id="surveyQuestionSelector" class="form-select">
+                                <option value="">-- Survey Questions --</option>
+                            </select>
+                        </div>
+
+
+
+                        <!-- Add Lookup Button -->
+                        <div class="col-md-2 col-sm-6 d-none" id="addSurveyButton">
+                            <button type="button"
+                                    class="btn btn-outline-primary w-100"
+                                    onclick="addSurveyQuestion()">
+                                Add Survey Details
+                            </button>
+                        </div>
+
+                        <!-- Survey Answear -->
+                        <div class="col-md-2 col-sm-6 d-none" id="lookup-Answear_container">
+                            <label class="form-label small">Lookup Value</label>
+                            <select id="lookupAnswearValues" class="form-select">
+                            </select>
+                        </div>
+
+                        <!-- Add Lookup Button -->
+                        <div class="col-md-2 col-sm-6 d-none" id="surveyLookupBtnContainer">
+                            <button type="button"
+                                    class="btn btn-outline-primary w-100"
+                                    onclick="addLookUpAnswear()">
+                                Add Value
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <!-- ================= OPERATORS ================= -->
+
+                    <div class="mb-3">
+
+                        <div class="btn-group flex-wrap">
+
+                            @foreach (var op in new[] { "+", "-", "*", "/", "%", "(", ")" })
+                            {
+                                <button type="button"
+                                        class="btn btn-outline-secondary m-1"
+                                        onclick="insert('@op')">
+                                    @op
+                                </button>
+                            }
+
+                        </div>
+
+
+                        <div class="btn-group flex-wrap mt-2">
+
+                            @foreach (var op in new[] { ">", ">=", "<", "<=", "==", "!=" })
+                            {
+                                <button type="button"
+                                        class="btn btn-outline-secondary m-1"
+                                        onclick="insert(' @op ')">
+                                    @op
+                                </button>
+                            }
+
+                        </div>
+                        <div class="btn-group flex-wrap mt-2">
+
+                            <button type="button"
+                                    class="btn btn-outline-info m-1"
+                                    onclick="insert('IF(')">
+                                IF(
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-outline-info m-1"
+                                    onclick="insert(',')">
+                                ,
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-outline-info m-1"
+                                    onclick="insert(')')">
+                                )
+                            </button>
+
+                        </div>
+
+                        <!-- String Literals / Function Keywords -->
+                        <div class="mt-3 mb-1">
+                            <strong>String custom operators:</strong>
+                        </div>
+                        <div class="btn-group flex-wrap mt-2">
+                            @foreach (var op in new[] { "AND", "OR", "NOT", "FUZZY", "LIKE", "STARTSWITH", "ENDSWITH", "CONTAINS" })
+                            {
+                                <button type="button"
+                                        class="btn btn-outline-secondary m-1"
+                                        onclick="insert(' @op ')">
+                                    @op
+                                </button>
+                            }
+                        </div>
+
+
+
+                        <!-- ================= HELP ================= -->
+
+                        <div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+                            <strong style="color:#2196F3;">ℹ Note:</strong> Use square brackets for fields. Example: <code>([HH_INCOME] + [HH_SIZE]) / 2</code>. Weighted score: <code>[HH_INCOME] * 0.4 + [HH_SIZE] * 0.6</code>. Comparison: <code>[AGE] &gt;= 18</code>. Parentheses: <code>([A] + [B]) * ([C] - [D])</code>. IF statement: <code>[AGE] &gt;= 18 ? 'Adult' : 'Minor'</code>. Safe division: <code>[HH_SIZE] != 0 ? [HH_INCOME] / [HH_SIZE] : 0</code>.
+                            <br />
+                        </div>
+                        <div style="background-color:#e8f4fd; border-left:4px solid #2196F3; padding:10px; margin-top:10px; font-size:14px; color:#333;">
+                            <strong style="color:#2196F3;">ℹ Note:</strong>
+                            For text matching functions — <code>fuzzy</code>, <code>like</code>, <code>contains</code>, <code>startswith</code>, and <code>endswith</code> — use the format:
+                            <code>func([FIELD_NAME], 'string value')</code>.
+                            Example: <code>fuzzy([FIRST_NAME], 'j4mes')</code>,
+                            <code>contains([LAST_NAME], 'son')</code>,
+                            <code>startswith([CITY], 'jo')</code>.
+                            <br />
+                        </div>
+
+                        <input type="hidden" asp-for="IsValidated" />
+
+                        <!-- ================= ACTIONS ================= -->
+
+                        <div class="d-flex gap-2">
+
+                            <button type="submit"
+                                    asp-page-handler="Validate"
+                                    id="validateBtn"
+                                    class="btn btn-primary">
+                                Validate
+                            </button>
+
+                            @if (Model.IsValidated)
+                            {
+                                <button type="submit"
+                                        asp-page-handler="GenerateJson"
+                                        class="btn btn-primary">
+                                    Generate Json
+                                </button>
+
+                                <button type="submit"
+                                        asp-page-handler="Save"
+                                        class="btn btn-success">
+                                    @(isEdit ? "Update" : "Create")
+                                </button>
+                            }
+
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <!-- ================= JSON PREVIEW ================= -->
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-semibold">
+                            Parsed Rule (JSON)
+                        </label>
+
+                        <textarea asp-for="Indicator.JsonRule"
+                                  id="jsonBox"
+                                  class="form-control auto-resize"
+                                  rows="4"
+                                  readonly></textarea>
+
+                    </div>
+
+                </div>
+            </div>
+
+        </form>
+
+        @section Scripts {
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+
+                    // ================= ELEMENTS =================
+
+                    const expressionBox = document.getElementById("expressionBox");
+                    const jsonBox = document.getElementById("jsonBox");
+
+                    const fieldSelector = document.getElementById("fieldSelector");
+                    const lookupContainer = document.getElementById("lookup-container");
+                    const lookupValues = document.getElementById("lookupValues");
+                    const addLookupButtonContainer = document.getElementById("addLookupButtonContainer");
+
+                    const validateBtn = document.getElementById("validateBtn");
+                    const isValidatedHidden = document.querySelector('input[name="IsValidated"]');
+
+                    const surveySelector = document.getElementById("surveySelector");
+                    const surveyQuestionSelector = document.getElementById("surveyQuestionSelector");
+
+                    const surveyQuestionContainer = document.getElementById("surveyQuestionContainer");
+                    const addSurveyButton = document.getElementById("addSurveyButton");
+
+                    const surveyLookupContainer = document.getElementById("lookup-Answear_container");
+                    const surveyLookupValues = document.getElementById("lookupAnswearValues");
+                    const surveyLookupBtnContainer = document.getElementById("surveyLookupBtnContainer");
+
+                    const levelSelector = document.getElementById("levelSelector");
+
+                    // ================= AUTO RESIZE =================
+
+                    function autoResize(el) {
+
+                        if (!el) return;
+
+                        el.style.height = "auto";
+                        el.style.height = el.scrollHeight + "px";
+                    }
+
+                    if (jsonBox) {
+
+                        autoResize(jsonBox);
+
+                        jsonBox.addEventListener("input", () => autoResize(jsonBox));
+                    }
+
+                    // ================= INSERT HELPER =================
+
+                    function insertAtCursor(textbox, text) {
+
+                        if (!textbox) return;
+
+                        const start = textbox.selectionStart;
+                        const end = textbox.selectionEnd;
+
+                        textbox.value =
+                            textbox.value.substring(0, start) +
+                            text +
+                            textbox.value.substring(end);
+
+                        textbox.focus();
+
+                        textbox.selectionStart =
+                            textbox.selectionEnd =
+                            start + text.length;
+                    }
+
+                    window.insert = function (text) {
+
+                        insertAtCursor(expressionBox, text);
+                    };
+
+                    window.addField = function () {
+
+                        if (!fieldSelector.value) return;
+
+                        insertAtCursor(expressionBox, `[${fieldSelector.value}]`);
+                    };
+
+                    window.addLookUp = function () {
+
+                        if (!lookupValues.value) return;
+
+                        const selectedText =
+                            lookupValues.options[
+                                lookupValues.selectedIndex
+                            ].text;
+
+                        insertAtCursor(expressionBox, `'${selectedText}'`);
+                    };
+
+                    // ================= LOOKUP VALUES =================
+
+                    if (fieldSelector) {
+
+                        fieldSelector.addEventListener("change", async function () {
+
+                            lookupContainer.classList.add("d-none");
+                            addLookupButtonContainer.classList.add("d-none");
+
+                            lookupValues.innerHTML = "";
+
+                            if (!this.value) return;
+
+                            try {
+
+                                const response = await fetch(
+                                    `?handler=LookupValues&indicatorCode=${this.value}`
+                                );
+
+                                if (!response.ok) return;
+
+                                const data = await response.json();
+
+                                if (!data || data.length === 0) return;
+
+                                lookupContainer.classList.remove("d-none");
+                                addLookupButtonContainer.classList.remove("d-none");
+
+                                data.forEach(item => {
+
+                                    const option = document.createElement("option");
+
+                                    option.value = item.code;
+                                    option.text = item.name;
+
+                                    lookupValues.appendChild(option);
+                                });
+
+                            } catch (err) {
+
+                                console.error("Lookup load failed:", err);
+                            }
+                        });
+                    }
+
+                    // ================= VALIDATION RESET =================
+
+                    function resetValidation() {
+
+                        if (isValidatedHidden) {
+                            isValidatedHidden.value = "false";
+                        }
+
+                        if (jsonBox) {
+
+                            jsonBox.value = "";
+
+                            autoResize(jsonBox);
+                        }
+                    }
+
+                    if (expressionBox) {
+
+                        expressionBox.addEventListener("input", resetValidation);
+                    }
+
+                    if (validateBtn) {
+
+                        validateBtn.addEventListener("click", function () {
+
+                            if (jsonBox) {
+
+                                jsonBox.value = "";
+
+                                autoResize(jsonBox);
+                            }
+                        });
+                    }
+
+                    // ================= SURVEY FILTER =================
+
+                    function filterSurveysByLevel() {
+
+                        if (!levelSelector || !surveySelector)
+                            return;
+
+                        const level = levelSelector.value;
+
+                        let requiredSurveyType = null;
+
+                        if (level === "Individual")
+                            requiredSurveyType = 2;
+
+                        else if (level === "Household")
+                            requiredSurveyType = 1;
+
+                        else if (level === "Group")
+                            requiredSurveyType = 3;
+
+                        Array.from(surveySelector.options).forEach(option => {
+
+                            // keep placeholder visible
+                            if (!option.value) {
+
+                                option.hidden = false;
+                                return;
+                            }
+
+                            const surveyType =
+                                parseInt(option.dataset.surveytype);
+
+                            option.hidden =
+                                surveyType !== requiredSurveyType;
+                        });
+
+                        // reset survey selection
+                        surveySelector.value = "";
+
+                        // clear survey questions
+                        surveyQuestionSelector.innerHTML =
+                            '<option value="">-- Survey Questions --</option>';
+
+                        surveyQuestionContainer.classList.add("d-none");
+                        addSurveyButton.classList.add("d-none");
+
+                        // clear survey lookup values
+                        surveyLookupContainer.classList.add("d-none");
+                        surveyLookupBtnContainer.classList.add("d-none");
+
+                        surveyLookupValues.innerHTML = "";
+                    }
+
+                    // ================= LEVEL CHANGE =================
+
+                    if (levelSelector) {
+
+                        levelSelector.addEventListener("change", function () {
+
+                            // clear expression
+                            if (expressionBox) {
+                                expressionBox.value = "";
+                            }
+
+                            // reset validation/json
+                            resetValidation();
+
+                            // filter surveys
+                            filterSurveysByLevel();
+                        });
+
+                        // initial load
+                        filterSurveysByLevel();
+                    }
+
+                    // ================= SURVEY QUESTIONS =================
+
+                    if (surveySelector) {
+
+                        surveySelector.addEventListener("change", loadSurveyQuestions);
+                    }
+
+                    async function loadSurveyQuestions() {
+
+                        surveyQuestionSelector.innerHTML =
+                            '<option value="">-- Survey Questions --</option>';
+
+                        surveyQuestionContainer.classList.add("d-none");
+                        addSurveyButton.classList.add("d-none");
+
+                        surveyLookupContainer.classList.add("d-none");
+                        surveyLookupBtnContainer.classList.add("d-none");
+
+                        surveyLookupValues.innerHTML = "";
+
+                        const surveyId = surveySelector.value;
+
+                        if (!surveyId) return;
+
+                        try {
+
+                            const response = await fetch(
+                                `?handler=SurveyQuestions&surveyId=${surveyId}`
+                            );
+
+                            if (!response.ok) return;
+
+                            const data = await response.json();
+
+                            if (!data || data.length === 0) return;
+
+                            data.forEach(item => {
+
+                                const option = document.createElement("option");
+
+                                option.value =
+                                    item.questionId ??
+                                    item.id ??
+                                    item.surveyQuestionId;
+
+                                option.text =
+                                    item.text ??
+                                    item.questionText ??
+                                    item.label ??
+                                    item.name;
+
+                                option.dataset.lookupid =
+                                    item.lookupId ??
+                                    item.lookUpId ??
+                                    item.lookupID;
+
+                                surveyQuestionSelector.appendChild(option);
+                            });
+
+                            surveyQuestionContainer.classList.remove("d-none");
+                            addSurveyButton.classList.remove("d-none");
+
+                        } catch (err) {
+
+                            console.error("Survey question load failed:", err);
+                        }
+                    }
+
+                    // ================= SURVEY LOOKUPS =================
+
+                    if (surveyQuestionSelector) {
+
+                        surveyQuestionSelector.addEventListener("change", loadSurveyAnswers);
+                    }
+
+                    async function loadSurveyAnswers() {
+
+                        surveyLookupContainer.classList.add("d-none");
+                        surveyLookupBtnContainer.classList.add("d-none");
+
+                        surveyLookupValues.innerHTML = "";
+
+                        const selectedOption =
+                            surveyQuestionSelector.options[
+                                surveyQuestionSelector.selectedIndex
+                            ];
+
+                        const lookupId =
+                            selectedOption?.dataset?.lookupid;
+
+                        if (!lookupId || lookupId === "undefined")
+                            return;
+
+                        try {
+
+                            const response = await fetch(
+                                `?handler=SurveyLookupValues&lookupId=${lookupId}`
+                            );
+
+                            if (!response.ok) return;
+
+                            const data = await response.json();
+
+                            if (!data || data.length === 0) return;
+
+                            data.forEach(item => {
+
+                                const option = document.createElement("option");
+
+                                option.value =
+                                    item.code ??
+                                    item.value ??
+                                    item.id;
+
+                                option.text =
+                                    item.name ??
+                                    item.text ??
+                                    item.label;
+
+                                surveyLookupValues.appendChild(option);
+                            });
+
+                            surveyLookupContainer.classList.remove("d-none");
+                            surveyLookupBtnContainer.classList.remove("d-none");
+
+                        } catch (err) {
+
+                            console.error("Survey lookup load failed:", err);
+                        }
+                    }
+
+                    // ================= INSERT SURVEY =================
+
+                    window.addSurveyQuestion = function () {
+
+                        if (!surveyQuestionSelector.value)
+                            return;
+
+                        if (!surveySelector.value)
+                            return;
+
+                        insertAtCursor(
+                            expressionBox,
+                            `[survey_${surveySelector.value}_q_${surveyQuestionSelector.value}]`
+                        );
+                    };
+
+                    window.addLookUpAnswear = function () {
+
+                        if (!surveyLookupValues.value)
+                            return;
+
+                        const selectedText =
+                            surveyLookupValues.options[
+                                surveyLookupValues.selectedIndex
+                            ].text;
+
+                        insertAtCursor(expressionBox, `'${selectedText}'`);
+                    };
+
+                });
+            </script>
+        }
+
+    }
+    else
+    {
+        <div class="alert alert-info">
+            Please select a program to continue.
+        </div>
+    }
+
+</div>

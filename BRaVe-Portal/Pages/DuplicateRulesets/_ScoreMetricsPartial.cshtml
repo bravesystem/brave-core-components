@@ -1,0 +1,60 @@
+﻿@model BRaVe_Portal.Models.PredicateEvaluationViewModel
+
+@{
+    var matchedRules = Model?.Evaluations?
+        .Where(x => x.EvaluationResult)
+        .OrderByDescending(x => x.rule.Score)
+        .ToList();
+}
+
+@if (matchedRules != null && matchedRules.Any())
+{
+    var totalScore = matchedRules.Sum(x => (int)x.rule.Score);
+
+    <ul class="list-group">
+
+        @foreach (var item in matchedRules)
+        {
+            var score = (int)item.rule.Score;
+
+            <li class="list-group-item d-flex align-items-center">
+
+                <!-- Rule -->
+                <div class="flex-grow-1">
+                    @item.rule.Description
+                </div>
+
+                <!-- Score -->
+                <div style="width:80px;" class="text-end">
+                    <span class="badge-secondary">
+                        @score
+                    </span>
+                </div>
+
+
+            </li>
+        }
+
+        <!-- TOTAL ROW -->
+        <li class="list-group-item d-flex align-items-center fw-bold border-top">
+
+            <div class="flex-grow-1">
+                Total Score
+            </div>
+
+            <div style="width:80px;" class="text-end">
+                <span class="badge bg-primary">
+                    @totalScore
+                </span>
+            </div>
+
+            <div style="width:40px;"></div>
+        </li>
+
+    </ul>
+}
+else
+{
+    <div class="text-muted text-center">No matching rules</div>
+}
+

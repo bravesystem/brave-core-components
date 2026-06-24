@@ -1,0 +1,76 @@
+﻿
+<!-- Request Temp Access Modal -->
+@using BRaVe_Portal.Models
+@using BRaVe_Portal.Helpers
+@using BRaVe_Portal.Models.DTOs
+@{
+
+    CoreLookups coreLookups = (CoreLookups)ViewData["CoreLookups"];
+    var lookups = coreLookups?.Roles ?? new List<LookupItemDto>();
+
+}
+
+@model BRaVe_Portal.Pages.Setup.TempAccess.IndexModel
+
+<div class="modal fade" id="requestTempAccess" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-user-plus me-2"></i> Temporary Mission Access
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- point to the ADD handler -->
+            <form method="post" asp-page-handler="AddTempAccess" id="requestTempAccessForm">
+                <div class="modal-body bg-light">
+                    <div class="alert alert-info d-flex align-items-center py-2 small mb-3" role="alert">
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        <span>
+                            Select a mission and role to assume for one session. Access expires if not used within an hour. <br />
+                            Sign out and sign in again to assume new role.
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mission</label>
+                        <select class="form-select shadow-sm" asp-for="NewRequest.MissionId" asp-items="Model.Missions" required>
+                            <option value="" disabled selected hidden>-- Select Mission --</option>
+                        </select>
+                     
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Role</label>
+                        <select class="form-select shadow-sm" asp-for="NewRequest.RoleId" required>
+                            <option value="" disabled selected hidden>-- Select Role --</option>
+                            @foreach (var lookup in lookups)
+                            {
+                                <option value="@lookup.Id">@lookup.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Access Reason</label>
+                        <input class="form-control shadow-sm"
+                               asp-for="NewRequest.Reason"
+                               style="height: 48px; font-size: 0.95rem;"
+                               placeholder="Enter reason for access..."
+                               required />
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-white">
+                    <button type="submit" id="requestButton" class="btn btn-success rounded-pill px-4 fw-semibold">
+                        Submit
+                    </button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

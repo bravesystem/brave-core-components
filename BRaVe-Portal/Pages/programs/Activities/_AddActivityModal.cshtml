@@ -1,0 +1,157 @@
+﻿@using BRaVe_Portal.Models.ViewModels
+@model ActivityViewModel
+
+@{
+    var programId = ViewData["ProgramId"] as int? ?? 0;
+    var locationCascadeViewModel = ViewData["LocationCascade"] as LocationCascadeViewModel;
+}
+<div class="modal fade" id="addActivityModal" tabindex="-1" aria-labelledby="addActivityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="CreateActivity">
+
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Setup Field Activity</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" asp-for="ActivityId" />
+                    <input type="hidden" asp-for="ProgramId" value="@programId" />
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">Title</label>
+                        <input asp-for="Title" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="StartDate" class="form-label">Start Date</label>
+                        <input asp-for="StartDate"
+                               class="form-control"
+                               type="date"
+                               value="@DateTime.Now.ToString("yyyy-MM-dd")"
+                               required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EndDate" class="form-label">End Date</label>
+                        <input asp-for="EndDate" class="form-control"
+                               type="date"
+                               value="@DateTime.Now.ToString("yyyy-MM-dd")"
+                               required />
+                    </div>
+
+                    <partial name="PartialViews/_LocationCascadePartial"
+                             model="locationCascadeViewModel" />
+
+
+                    <div class="form-check mb-3">
+                        <input asp-for="RestrictToEnumerator" class="form-check-input" />
+                        <label asp-for="RestrictToEnumerator" class="form-check-label">Restricted to enumerator</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="AllowRegistration" class="form-check-input" />
+                        <label asp-for="AllowRegistration" class="form-check-label">Allow Registration</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input asp-for="AllowBiometricRecordCheck" class="form-check-input" />
+                        <label asp-for="AllowBiometricRecordCheck" class="form-check-label">Allow Biometric Record Check</label>
+                    </div>
+
+                    <p>Data collection central point</p>
+
+                    <div class="mb-3">
+                        <label asp-for="latitude" class="form-label">Latitude</label>
+                        <input asp-for="latitude" id="latInput" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Longitude" class="form-label">Longitude</label>
+                        <input asp-for="Longitude" id="lngInput" class="form-control" required />
+                    </div>
+
+                    <!-- MAP -->
+                    <div id="map" style="height: 350px; width: 100%; border: 1px solid #ccc;"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Activity</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CDN -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    let map, marker;
+
+    function initMap(lat, lng) {
+        if (!map) {
+            map = L.map('map').setView([lat, lng], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+            // CLICK TO SET COORDINATES
+            map.on("click", function (e) {
+                const clickedLat = e.latlng.lat;
+                const clickedLng = e.latlng.lng;
+
+                // update inputs
+                document.getElementById("latInput").value = clickedLat.toFixed(6);
+                document.getElementById("lngInput").value = clickedLng.toFixed(6);
+
+                // move marker
+                marker.setLatLng([clickedLat, clickedLng]);
+            });
+
+            // DRAG MARKER TO UPDATE INPUTS
+            marker.on("dragend", function (e) {
+                const pos = marker.getLatLng();
+                document.getElementById("latInput").value = pos.lat.toFixed(6);
+                document.getElementById("lngInput").value = pos.lng.toFixed(6);
+            });
+
+        } else {
+            map.setView([lat, lng]);
+            marker.setLatLng([lat, lng]);
+        }
+    }
+
+    function updateMap() {
+        const lat = parseFloat(document.getElementById("latInput").value);
+        const lng = parseFloat(document.getElementById("lngInput").value);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+            initMap(lat, lng);
+        }
+    }
+
+    document.getElementById("latInput").addEventListener("input", updateMap);
+    document.getElementById("lngInput").addEventListener("input", updateMap);
+
+    // Ensure map loads correctly when the modal is opened
+    const modal = document.getElementById('addActivityModal');
+    modal.addEventListener('shown.bs.modal', function () {
+        setTimeout(updateMap, 200);
+    });
+
+
+
+</script>
+
