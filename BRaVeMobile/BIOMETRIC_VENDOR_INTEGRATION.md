@@ -50,6 +50,31 @@ Reference files:
    - Template export as `byte[]` for batch enrollment
 3. Add the vendor SDK to the project (JARs/AARs, native libs, scanner files) per that vendor’s documentation — analogous to the Neurotec layout described in `ANDROID_APP_README.md`, but paths and file names will differ.
 
+### Neurotechnology — required JARs, libraries, and scanners (default vendor)
+
+If you are using the reference implementation (`ClientBiometricFlow`), download the following archives and place the contents as shown.
+
+**Libraries** (JARs, DLLs, and related Neurotec library files)
+
+Download: [neurotec-libs.zip](https://iompwesabrave002.blob.core.windows.net/build-artifacts/neurotec-libs.zip)
+
+Extract to: `app/libs/neurotec/` (root of that folder — not in a subfolder)
+
+**Scanners**
+
+Download: [scanners.zip](https://iompwesabrave002.blob.core.windows.net/build-artifacts/scanners.zip)
+
+Extract to: `app/libs/neurotec/scanners/`
+
+```
+app/libs/neurotec/          ← contents of neurotec-libs.zip
+app/libs/neurotec/scanners/ ← contents of scanners.zip
+```
+
+> A valid Neurotechnology license is still required for activation at runtime. These archives supply the binaries needed to build; they are not included in the git repository.
+
+For other biometric vendors, obtain equivalent libraries and scanner drivers from that vendor and place them in your own layout (see Step 4.3).
+
 ---
 
 ## Step 1 — Create your implementation class
@@ -263,7 +288,10 @@ Then use `BiometricFlowFactory.create()` everywhere the app obtains a `Biometric
 
 ### 4.3 Dependencies and Gradle
 
-- Remove or make optional Neurotec JARs under `app/libs/neurotec/` when not using Neurotechnology.
+- **Neurotechnology (default):** place JARs and libraries in `app/libs/neurotec/` and scanner files in `app/libs/neurotec/scanners/`. Download:
+  - Libraries: [neurotec-libs.zip](https://iompwesabrave002.blob.core.windows.net/build-artifacts/neurotec-libs.zip)
+  - Scanners: [scanners.zip](https://iompwesabrave002.blob.core.windows.net/build-artifacts/scanners.zip)
+- **Other vendors:** remove or make optional Neurotec JARs under `app/libs/neurotec/` when not using Neurotechnology.
 - Add your vendor’s libraries to `app/build.gradle` (or a dedicated `app-vendor-acme` module).
 - Keep `BiometricFlow.java` in a small shared module with **no** vendor dependencies if possible, so the interface stays vendor-neutral.
 
