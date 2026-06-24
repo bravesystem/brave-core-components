@@ -1,0 +1,21 @@
+sequenceDiagram
+    autonumber
+    participant Mobile as Android App
+    participant MobileAPI as Mobile API
+    participant DB as BRaVe DB
+    participant SB as Azure Service Bus (Queue)
+    participant Dedupe as Deduplication Service
+    participant Match as Matching Server
+
+    Mobile->>MobileAPI: Push beneficiary + biometric payload
+    MobileAPI->>DB: Write/Update records
+    alt biometric present
+        MobileAPI-->>SB: Publish job message (biometric dedupe needed)
+        Dedupe->>SB: Dequeue job message
+        Dedupe->>DB: Fetch biometric data (by job/beneficiary ids)
+        Dedupe->>Match: Send processed biometric payload for duplication check
+        Match-->>Dedupe: Return match result (duplicate/no-duplicate + scores)
+        Dedupe->>DB: Update dedupe status + results
+    else no biometric
+        MobileAPI-->>Mobile: Ack saved (no dedupe job)
+    end

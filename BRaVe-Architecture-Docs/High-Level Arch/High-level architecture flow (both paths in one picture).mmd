@@ -1,0 +1,20 @@
+flowchart LR
+    Portal[Portal] <--> MgmtAPI[Management API]
+    Mobile[Android App] <--> MobileAPI[Mobile API]
+
+    MgmtAPI <--> DB[(BRaVe DB)]
+    MobileAPI <--> DB
+	
+	%% Elastic Cloud for search
+    MgmtAPI <--> Elastic[(Elastic Cloud)]
+    MgmtAPI -- "Index / Update documents" --> Elastic
+    MgmtAPI -- "Search / Query" --> Elastic
+
+    MgmtAPI -- "Publish job (biometric only)" --> SB[(Azure Service Bus Queue)]
+    MobileAPI -- "Publish job (biometric only)" --> SB
+
+    SB --> Dedupe[Deduplication Service]
+    Dedupe <--> DB
+    Dedupe <--> Match[Matching Server]
+
+    Dedupe -- "Update results/status" --> DB

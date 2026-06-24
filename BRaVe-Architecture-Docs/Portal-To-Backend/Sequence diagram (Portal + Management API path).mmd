@@ -1,0 +1,28 @@
+sequenceDiagram
+    autonumber
+    participant Portal
+    participant MgmtAPI as Management API
+    participant DB as BRaVe DB
+    participant Elastic as Elastic Cloud
+    participant SB as Azure Service Bus (Queue)
+    participant Dedupe as Deduplication Service
+    participant Match as Matching Server
+
+    %% Data update flow
+    Portal->>MgmtAPI: Create / Update data
+    MgmtAPI->>DB: Write / Update records
+    MgmtAPI->>Elastic: Index / Update search documents
+    MgmtAPI-->>SB: Publish job message (biometric dedupe needed)
+
+    %% Async deduplication flow
+    Dedupe->>SB: Dequeue job message
+    Dedupe->>DB: Fetch biometric data
+    Dedupe->>Match: Send biometric payload for duplication check
+    Match-->>Dedupe: Match result (scores / duplicates)
+    Dedupe->>DB: Update dedupe results & status
+
+    %% Search flow
+    Portal->>MgmtAPI: Search request
+    MgmtAPI->>Elastic: Execute search query
+    Elastic-->>MgmtAPI: Search results
+    MgmtAPI-->>Portal: Search response
