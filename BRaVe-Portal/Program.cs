@@ -85,11 +85,14 @@ Log.Information(
     isLocalOnly);
 
 // Manually create and populate AzureAdOptions from environment variables
+var homeTenantId = Environment.GetEnvironmentVariable(KeyVaultSecretNames.AzureAd.Fe_Tenant_Id) ?? "";
+var oidcTenantId = ResolveOidcTenantId(homeTenantId, isPartner);
+
 var azureAdOptions = new AzureAdOptions
 {
     Instance = Environment.GetEnvironmentVariable(KeyVaultSecretNames.AzureAd.Fe_Instance)
                         ?? "https://login.microsoftonline.com/",
-    TenantId = Environment.GetEnvironmentVariable(KeyVaultSecretNames.AzureAd.Fe_Tenant_Id) ?? "",
+    TenantId = homeTenantId,
     ClientId = Environment.GetEnvironmentVariable(KeyVaultSecretNames.AzureAd.Fe_Client_Id) ?? "",
     ClientSecret = Environment.GetEnvironmentVariable(KeyVaultSecretNames.AzureAd.Fe_Client_Secret) ?? "",
     ApplicationUri = "",
@@ -104,29 +107,36 @@ var azureAdOptions = new AzureAdOptions
 // Register the options instance into DI
 builder.Services.AddSingleton(Options.Create(azureAdOptions));
 
+var isMultiTenant = IsMultiTenantAuthority(oidcTenantId);
 
 Log.Information(
-    "Microsoft Identity Web config: Instance={Instance}, TenantId={TenantId}, ClientId={ClientId}, CallbackPath={CallbackPath}, ClientSecretConfigured={HasClientSecret}, ScopeCount={ScopeCount}, AppEnvironment={AppEnvironment}",
+    "Microsoft Identity Web config: Instance={Instance}, HomeTenantId={HomeTenantId}, OidcTenantId={OidcTenantId}, ClientId={ClientId}, CallbackPath={CallbackPath}, ClientSecretConfigured={HasClientSecret}, ScopeCount={ScopeCount}, MultiTenant={MultiTenant}, AppEnvironment={AppEnvironment}",
     azureAdOptions.Instance,
-    azureAdOptions.TenantId,
+    homeTenantId,
+    oidcTenantId,
     MaskClientId(azureAdOptions.ClientId),
     azureAdOptions.CallbackPath,
     !string.IsNullOrEmpty(azureAdOptions.ClientSecret),
     azureAdOptions.Scopes.Length,
+    isMultiTenant,
     appEnvironment);
 
-if (IsMultiTenantAuthority(azureAdOptions.TenantId))
+if (isMultiTenant)
 {
     Log.Information(
-        "OIDC tenant '{TenantId}' supports Any Entra org + personal Microsoft accounts. Authority: {Authority}",
-        azureAdOptions.TenantId,
-        BuildOidcAuthority(azureAdOptions.Instance, azureAdOptions.TenantId));
+        "OIDC multi-tenant authority '{OidcTenantId}'. Expected login URL: {Authority}",
+        oidcTenantId,
+        BuildOidcAuthority(azureAdOptions.Instance, oidcTenantId));
 }
-else if (!string.IsNullOrEmpty(azureAdOptions.TenantId))
+else if (Guid.TryParse(oidcTenantId, out _))
 {
-    Log.Warning(
-        "OIDC tenant '{TenantId}' is a fixed tenant GUID. If the app registration is 'Any Entra ID tenant + Personal Microsoft accounts', Fe_Tenant_Id should usually be 'common'.",
-        azureAdOptions.TenantId);
+    Log.Information(
+        "OIDC single-tenant authority '{OidcTenantId}'.",
+        oidcTenantId);
+}
+else if (!string.IsNullOrEmpty(oidcTenantId))
+{
+    Log.Warning("OIDC tenant '{OidcTenantId}' is not recognized. Use a tenant GUID, 'organizations', 'common', or 'consumers'.", oidcTenantId);
 }
 
 // Cookies for both OIDC and form-login users; OIDC challenge for Entra sign-in.
@@ -140,10 +150,17 @@ builder.Services.AddAuthentication(options =>
 {
 
     options.Instance = azureAdOptions.Instance;
-    options.TenantId = azureAdOptions.TenantId;
+    options.TenantId = oidcTenantId;
     options.ClientId = azureAdOptions.ClientId;
     options.ClientSecret = azureAdOptions.ClientSecret;
     options.CallbackPath = azureAdOptions.CallbackPath;
+
+    if (isMultiTenant)
+    {
+        // Tokens are issued per-user tenant; issuer is not a single fixed tenant.
+        options.TokenValidationParameters.ValidateIssuer = false;
+        options.Prompt = Environment.GetEnvironmentVariable("Fe_Oidc_Prompt") ?? "select_account";
+    }
 
     options.Events.OnRedirectToIdentityProvider = context =>
     {
@@ -323,6 +340,21 @@ builder.Services.AddAuthentication(options =>
 .EnableTokenAcquisitionToCallDownstreamApi()
 .AddInMemoryTokenCaches();
 
+var cookieHours = int.TryParse(Environment.GetEnvironmentVariable("Auth_Cookie_Hours"), out var parsedCookieHours)
+    ? parsedCookieHours
+    : 8;
+
+builder.Services.Configure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromHours(cookieHours);
+    options.SlidingExpiration = true;
+    options.LoginPath = "/Login";
+    options.AccessDeniedPath = "/Login";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
 
 static string MaskClientId(string? clientId) =>
     string.IsNullOrEmpty(clientId) ? "(not set)" :
@@ -330,6 +362,9 @@ static string MaskClientId(string? clientId) =>
 
 static bool IsMultiTenantAuthority(string? tenantId) =>
     tenantId is "common" or "organizations" or "consumers";
+
+static string ResolveOidcTenantId(string homeTenantId, bool isPartner) =>
+    isPartner ? "organizations" : homeTenantId;
 
 static string BuildOidcAuthority(string instance, string tenantId)
 {
@@ -536,6 +571,16 @@ app.Use(async (context, next) =>
 
 app.MapControllers();
 app.MapRazorPages();
+
+app.MapGet("/api/auth/session", (HttpContext ctx) =>
+{
+    if (ctx.User.Identity?.IsAuthenticated == true)
+        return Results.Ok(new { authenticated = true });
+
+    return Results.Json(
+        new { authenticated = false },
+        statusCode: StatusCodes.Status401Unauthorized);
+});
 
 app.MapGet("/health", () => Results.Ok(new
 {
