@@ -218,6 +218,7 @@ builder.Services.AddSingleton<IDeduplicationJobService, SqlDeduplicationJobServi
 builder.Services.AddSingleton<IDuplicateRulesetService, SqlDuplicateRulesetService>();
 builder.Services.AddScoped<ISqlBiometricService, SqlBiometricService>();
 
+builder.Services.AddSingleton<IFileBasedDeduplicationService, SqlFileBasedDeduplicationService>();
 builder.Services.AddSingleton<IDeduplicationJobService, SqlDeduplicationJobService>();
 builder.Services.AddSingleton<ITargetingJob, SqlTargetingJobService>();
 builder.Services.AddSingleton<ITargetingJobQueue, TargetingJobQueue>();

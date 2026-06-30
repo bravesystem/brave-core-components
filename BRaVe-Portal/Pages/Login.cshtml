@@ -1,10 +1,8 @@
 ﻿@page
 @model BRaVe_Portal.Pages.LoginModel
-@inject string appEnvironment
 @{
     ViewData["Title"] = "Welcome";
     Layout = null;
-    var isPartner = string.Equals(appEnvironment, "PARTNER", System.StringComparison.OrdinalIgnoreCase);
 }
 
 <!DOCTYPE html>
@@ -115,58 +113,66 @@
                     background: #E0A800;
                     transform: scale(1.05);
                 }
+
+        .login-notice {
+            background: #fff3cd;
+            color: #664d03;
+            border: 1px solid #ffecb5;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            text-align: left;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
-    @if (isPartner)
-    {
-        <div class="login-container">
+    <div class="login-container">
+        @if (Model.AppEnvironment == "DEV" || Model.AppEnvironment == "UAT")
+        {
+            <span class="env-box-badge @(Model.AppEnvironment == "DEV" ? "dev-badge" : "uat-badge")">
+                @Model.AppEnvironment ENVIRONMENT
+            </span>
+        }
+
+        @if (Model.IsPartner)
+        {
             <span class="env-box-badge partner-badge">PARTNER</span>
-            <img src="Images/iombrave_logo.png" alt="BRaVe Logo" style="max-width:300px; margin-bottom:1rem;" />
-            <h1>Welcome to the BRaVe Partner Portal</h1>
-            <p>Secure access for IOM partners</p>
-            <a href="/FormLoginUser" class="login-btn azure-b2c">
-                <i class="fa-solid fa-users"></i> Login
+        }
+
+        <img src="Images/iombrave_logo.png" alt="BRaVe Logo" style="max-width:300px; margin-bottom:1rem;" />
+        <h1>Welcome to the BRaVe Management Portal</h1>
+        <p>Please choose a login method to continue</p>
+
+        <form method="get" action="/auth-login">
+            <button type="submit" class="login-btn azure-ad">
+                <i class="fa-solid fa-building"></i> @Model.PrimaryLoginButtonText
+            </button>
+        </form>
+
+        @if (Model.AppEnvironment == "DEV" || Model.AppEnvironment == "UAT")
+        {
+            <a href="@Model.PartnerAccessUrl" class="login-btn azure-b2c">
+                <i class="fa-solid fa-users"></i> Partner Test Login
             </a>
-            <div class="alert alert-warning py-2 px-3 mt-n2 mb-3 small" role="alert">
-                <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                <strong>Temporary Access Method until the External ID sign-in service is restored.</strong>
+        }
+        else if (Model.IsPartner)
+        {
+            <a href="@Model.PartnerAccessUrl" class="login-btn azure-b2c">
+                <i class="fa-solid fa-users"></i> Form Login
+            </a>
+            <div class="login-notice" role="alert">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>Temporary access:</strong> Form login is available until non-Microsoft provider sign-in to BRaVe is restored.
             </div>
-        </div>
-    }
-    else
-    {
-        <div class="login-container">
-            @if (appEnvironment == "DEV" || appEnvironment == "UAT")
-            {
-                <span class="env-box-badge @(appEnvironment == "DEV" ? "dev-badge" : "uat-badge")">
-                    @appEnvironment ENVIRONMENT
-                </span>
-            }
-
-            <img src="Images/iombrave_logo.png" alt="BRaVe Logo" style="max-width:300px; margin-bottom:1rem;" />
-            <h1>Welcome to the BRaVe Management Portal</h1>
-            <p>Please choose a login method to continue</p>
-
-            <form method="get" action="/auth-login">
-                <button type="submit" class="login-btn azure-ad">
-                    <i class="fa-solid fa-building"></i> IOM Staff Login
-                </button>
-            </form>
-
-            @if (appEnvironment == "DEV" || appEnvironment == "UAT")
-            {
-                <a href="@Model.PartnerAccessUrl" class="login-btn azure-b2c">
-                    <i class="fa-solid fa-users"></i> Partner Login
-                </a>
-            }
-            else
-            {
-                <a href="https://iom-ptr-we-webapp-brave-002.azurewebsites.net/Login" class="login-btn azure-b2c">
-                    <i class="fa-solid fa-users"></i> Partner Portal
-                </a>
-            }
-        </div>
-    }
+        }
+        else
+        {
+            <a href="https://iom-ptr-we-webapp-brave-002.azurewebsites.net/Login" class="login-btn azure-b2c">
+                <i class="fa-solid fa-users"></i> Partner Portal
+            </a>
+        }
+    </div>
 </body>
 </html>

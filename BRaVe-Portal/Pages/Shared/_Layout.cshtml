@@ -3,11 +3,13 @@
 @using System.Net.Http.Headers
 @using System.Net.Http.Json
 @inject string appEnvironment
+@inject bool isLocalOnly
 @using BRaVe_Portal.Models;
 
 
 @{
-    var env = Environment.GetEnvironmentVariable("Environment")?.ToUpper();
+    //var env = Environment.GetEnvironmentVariable("Environment")?.ToUpper();
+    //bool isLocalOnly = true;
 }
 
 
@@ -833,7 +835,12 @@
                                 <li><a class="nav-link" asp-page="/Monitoring/Verifications"><i class="fas fa-user-shield"></i> Biometric Verification</a></li>
                                 <li><a class="nav-link" asp-page="/DuplicateRulesets/Index"><i class="fa-solid fa-list-check"></i> Deduplication Rules (Manual) </a></li>
                                 <li><a class="nav-link" asp-page="/DuplicateRulesets/DeduplicationJobs"><i class="fa-solid fa-spinner"></i> Run Deduplication (Manual)</a></li>
-                                <li><a class="nav-link" asp-page="/Monitoring/AdjudicationHistory"><i class="fa-solid fa-history"></i> Adjudication History</a></li> 
+                                @if (isLocalOnly)
+                                {
+                                    <li><a class="nav-link" asp-page="/FileBasedDeduplication/Index"><i class="fa-solid fa-file-import"></i> File-Based Deduplication</a></li>
+                                    <li><a class="nav-link" asp-page="/CrossMissionDeduplication/Index"><i class="fa-solid fa-earth-americas"></i> Cross-Mission Biometric Deduplication Request</a></li>
+                                }
+                                <li><a class="nav-link" asp-page="/Monitoring/AdjudicationHistory"><i class="fa-solid fa-history"></i> Adjudication History</a></li>
 
                             </ul>
                         </div>
@@ -1021,7 +1028,7 @@
                                 {
                                     <li><a class="nav-link" asp-page="/Consents/Index"><i class="fa-solid fa-check-circle me-2"></i> Consents</a></li>
                                     <li><a class="nav-link" asp-page="/DataPoints/Index"><i class="fa-solid fa-circle"></i> Data points</a></li>
-                                   
+
                                 }
 
                             </ul>

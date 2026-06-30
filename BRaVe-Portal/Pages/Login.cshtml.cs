@@ -15,12 +15,28 @@ namespace BRaVe_Portal.Pages
 
         public string PartnerAccessUrl { get; set; } = "/FormLoginUser";
 
+        public string AppEnvironment { get; private set; } = "";
+
+        public bool IsPartner =>
+            string.Equals(AppEnvironment, "PARTNER", StringComparison.OrdinalIgnoreCase);
+
+        public string PrimaryLoginButtonText =>
+            IsPartner ? "Partner Login" : "IOM Staff Login";
+
         public void OnGet()
         {
+            AppEnvironment = Environment.GetEnvironmentVariable("Environment") ?? "";
+            var hostname = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "";
+
+            if (string.IsNullOrEmpty(AppEnvironment))
+            {
+                AppEnvironment = "PARTNER";
+            }
+
             _logger.LogInformation(
                 "Login page requested. Environment={Environment}, Hostname={Hostname}",
-                Environment.GetEnvironmentVariable("Environment"),
-                Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME"));
+                AppEnvironment,
+                hostname);
         }
     }
 }
