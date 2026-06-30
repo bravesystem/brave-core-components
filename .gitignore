@@ -23,6 +23,8 @@ obj/
 **/Debug/net8.0/*
 Neurotec_Biometric_12_4_SDK/
 Neurotec_Biometric_2025_2_SDK/
+.gradle/
+**/.gradle/
 DevResources/
 BRaVeMobile/app/libs/neurotec/sdk_12_4/
 BRaVeMobile/app/libs/neurotec/aar_bk/
