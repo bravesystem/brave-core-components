@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.Json;
 
-namespace BRaVe_Portal.Pages.FileBasedDeduplication;
+namespace BRaVe_Portal.Helpers;
 
 public static class FileBasedDeduplicationUploadValidator
 {
@@ -43,6 +43,7 @@ public static class FileBasedDeduplicationUploadValidator
         "RegisteredOn",
         "RegisteredBy",
         "source",
+        "token",
         "additionalInfo",
         "householdMembers"
     ];
@@ -318,10 +319,16 @@ public static class FileBasedDeduplicationUploadValidator
         }
 
         var allAgesNull = !ageInYears.HasValue && !ageInMonts.HasValue && !ageInDays.HasValue;
+        var hasAnyAge = ageInYears.HasValue || ageInMonts.HasValue || ageInDays.HasValue;
 
         if (allAgesNull && !dob.HasValue)
         {
             return $"{path}: provide dob when all age fields are null, or provide at least one age field when dob is null.";
+        }
+
+        if (hasAnyAge && dob.HasValue)
+        {
+            return $"{path}: provide either dob (with all age fields null) or at least one age field (with dob null); age fields and dob cannot both be set.";
         }
 
         return null;

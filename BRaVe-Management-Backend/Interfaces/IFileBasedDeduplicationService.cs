@@ -1,4 +1,5 @@
 ﻿using BRaVe_Management_Backend.DTOs;
+using BRaVe_Management_Backend.Models;
 
 namespace BRaVe_Management_Backend.Interfaces
 {
@@ -9,6 +10,11 @@ namespace BRaVe_Management_Backend.Interfaces
         string json,
         string filename,
         string uploadedBy,
+        CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<UploadedFile>> GetUploadJobsAsync(
+        int tenantId,
+        int maxCount = 10,
         CancellationToken cancellationToken = default);
     }
 }

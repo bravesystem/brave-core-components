@@ -1,7 +1,7 @@
 ﻿using BRaVe_Biometric_Matching_Webjob.Extensions;
 using BRaVe_Biometric_Matching_Webjob.Interfaces;
 using BRaVe_Biometric_Matching_Webjob.Models;
-using Microsoft.Identity.Client;
+//using Microsoft.Identity.Client;
 using Neurotec.Biometrics;
 using System;
 using System.Collections.Generic;
@@ -17,7 +17,7 @@ namespace BRaVe_Biometric_Matching_Webjob.Services
     public class JobProcessor
     {
 
-        public async Task<bool> ProcessAsync(IMatchingServerService matchingService, string jobId, CancellationToken ct)
+        public async Task<bool> ProcessAsync(ISecretProvider secrerProvider, IEncryptionService encryptionService,IMatchingServerService matchingService, string jobId, CancellationToken ct)
         {
             try
             {
@@ -27,9 +27,20 @@ namespace BRaVe_Biometric_Matching_Webjob.Services
                 // Simulate work
                 await Task.Delay(TimeSpan.FromSeconds(1), ct);
 
-                IBiometricService biometricService = new BiometricService();
+                IBiometricService biometricService = new BiometricService(secrerProvider);
 
                 List<Biometric> biometrics = await biometricService.GetBiometrics(jobId, ct);
+
+                //check if biometric is encrypted at rest
+                //decrypt before pushing to mma
+                foreach(Biometric b in biometrics)
+                {
+                    if (b.IsEncrypted)
+                    {
+                        b.Template = encryptionService.Decrypt(b.Template); 
+                        b.IsEncrypted = false;
+                    }
+                }
 
                 List<BiometricMatch> biometricMatches = await FindMatchedBiometrics(matchingService, biometrics, batchSize: 256);
 

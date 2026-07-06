@@ -19,9 +19,11 @@ namespace BRaVe_Biometric_Matching_Webjob.Services
     {
         private readonly string connectionString;
 
-        public BiometricService()
+        public BiometricService(ISecretProvider secrerProvider)
         {
-            connectionString = Environment.GetEnvironmentVariable(KeyVaultSecretNames.Sql.PrimaryConnection);
+            //connectionString = Environment.GetEnvironmentVariable(KeyVaultSecretNames.Sql.PrimaryConnection);
+
+            connectionString = secrerProvider.GetSecret(KeyVaultSecretNames.Sql.PrimaryConnection);
         }
 
         public async Task<List<Biometric>> GetBiometrics(string jobId, CancellationToken ct)
@@ -51,7 +53,8 @@ namespace BRaVe_Biometric_Matching_Webjob.Services
                             TenantId = int.Parse(reader["TenantId"].ToString()),
                             Template = reader["Template"] as byte[],
                             Gender = int.Parse(reader["Gender"].ToString()),
-                            MatchingAction = reader["MatchingAction"].ToString()
+                            MatchingAction = reader["MatchingAction"].ToString(),
+                            IsEncrypted = (bool)reader["IsEncrypted"]
                         };
 
                         biometrics.Add(biometric);

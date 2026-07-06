@@ -1,11 +1,13 @@
 ﻿using BRaVe_Management_Backend.DTOs;
 using BRaVe_Management_Backend.Extensions;
 using BRaVe_Management_Backend.Interfaces;
+using BRaVe_Management_Backend.Models;
 using BRaVe_Management_Backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BRaVe_Management_Backend.Controllers.mission_operation.v1
+
+namespace BRaVe_Management_Backend.Controllers.mission_operation
 {
     [Route("api/v1/[controller]")]
     [ApiController]
@@ -15,7 +17,22 @@ namespace BRaVe_Management_Backend.Controllers.mission_operation.v1
 
         public FileBasedDeduplicationController(IFileBasedDeduplicationService fileBasedDeduplicationService)
         {
+            
             _fileBasedDeduplicationService = fileBasedDeduplicationService;
+        }
+
+        [HttpGet("uploads")]
+        public async Task<ActionResult<IReadOnlyList<UploadedFile>>> GetUploadsAsync(
+       [FromQuery] int maxCount = 10,
+       CancellationToken cancellationToken = default)
+        {
+            var tenantId = User.Tenant();
+            var uploads = await _fileBasedDeduplicationService.GetUploadJobsAsync(
+                tenantId,
+                maxCount,
+                cancellationToken);
+
+            return Ok(uploads);
         }
 
         [HttpPost("process")]
@@ -47,16 +64,25 @@ namespace BRaVe_Management_Backend.Controllers.mission_operation.v1
                 return BadRequest(new { error = validationResult.ErrorMessage });
             }
 
-            var uploadedBy = User.Identity?.Name ?? string.Empty;
-            int TenantId = User.Tenant();
-            var result = await _fileBasedDeduplicationService.ProcessUploadAsync(
-                TenantId,
-                json,
-                file.FileName,
-                uploadedBy,
-                cancellationToken);
+            try
+            {
 
-            return Ok(result);
+                var uploadedBy = User.Identity?.Name ?? string.Empty;
+                int TenantId = User.Tenant();
+                var result = await _fileBasedDeduplicationService.ProcessUploadAsync(
+                    TenantId,
+                    json,
+                    file.FileName,
+                    uploadedBy,
+                    cancellationToken);
+
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new { error = e.Message });
+            }
+            
         }
     }
 

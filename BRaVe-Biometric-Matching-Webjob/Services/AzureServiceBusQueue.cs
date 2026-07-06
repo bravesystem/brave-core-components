@@ -16,12 +16,13 @@ namespace BRaVe_Biometric_Matching_Webjob.Services
         private readonly QueueClient _client;
         private BrokeredMessage _currentMessage;
 
-        public AzureServiceBusQueue()
+        public AzureServiceBusQueue(ISecretProvider secrerProvider)
         {
             string connectionStringName = KeyVaultSecretNames.SBQ.ServiceBusConnection;
             string queueNameAppSetting = KeyVaultSecretNames.SBQ.ServiceBusQueueName;
 
-            var conn = Environment.GetEnvironmentVariable(connectionStringName);
+            var conn = secrerProvider.GetSecret(connectionStringName);
+                //Environment.GetEnvironmentVariable(connectionStringName);
             var queueName = Environment.GetEnvironmentVariable(queueNameAppSetting);
 
             if (string.IsNullOrWhiteSpace(conn)) throw new InvalidOperationException($"Missing connection string '{connectionStringName}'.");

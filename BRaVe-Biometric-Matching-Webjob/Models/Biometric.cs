@@ -13,5 +13,6 @@ namespace BRaVe_Biometric_Matching_Webjob.Models
         public int TenantId { get; set; }
         public int Gender { get; set; }
         public string MatchingAction { get; set; }
+        public bool IsEncrypted { get; set; } = false;
     }
 }

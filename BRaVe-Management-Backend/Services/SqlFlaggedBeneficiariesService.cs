@@ -285,8 +285,7 @@ namespace BRaVe_Management_Backend.Services
 
 
 
-        private async Task<List<FlaggedBeneficiary>>
-    GetUngroupedFlaggedBeneficiaries(int tenantId)
+        private async Task<List<FlaggedBeneficiary>> GetUngroupedFlaggedBeneficiaries(int tenantId)
         {
             var results = new List<FlaggedBeneficiary>();
 

@@ -5,28 +5,51 @@ using BRaVe_Portal.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
+using System.Threading;
 
 namespace BRaVe_Portal.Pages.FileBasedDeduplication
 {
     public class IndexModel : PageModel
     {
-        private const string ProcessUploadPath = "v1/FileBasedDeduplication/process";
+        //private const string ProcessUploadPath = "v1/FileBasedDeduplication/process";
 
         private readonly IRestApiService _api;
+        private readonly ILogger<IndexModel> _logger;
 
-        public IndexModel(IRestApiService api)
+        private const int RecentUploadsLimit = 10;
+
+        public IndexModel(IRestApiService api, ILogger<IndexModel> logger)
         {
             _api = api;
+            _logger = logger;
         }
 
         public IList<UploadedFile> RecentUploads { get; private set; } = [];
 
+
         [BindProperty]
         public IFormFile? Upload { get; set; }
 
-        public void OnGet()
+        public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
         {
-            RecentUploads = GetMockUploads().Take(10).ToList();
+            try
+            {
+                //RecentUploads = GetMockUploads().Take(10).ToList();
+                var uploads = await _api.GetAsync<List<UploadedFile>>(
+                $"v1/FileBasedDeduplication/uploads?maxCount={RecentUploadsLimit}",
+                cancellationToken);
+
+                RecentUploads = uploads ?? [];
+            }
+            catch (Exception ex) 
+            {
+                _logger.LogError(ex, "Unexpected error during upload.");
+                TempData["ErrorMessage"] = "An unexpected error occurred while uploading the file.";
+                RecentUploads = [];
+            }
+
+            return Page();
+            
         }
 
         public async Task<IActionResult> OnPostUploadAsync(CancellationToken cancellationToken)
@@ -43,7 +66,7 @@ namespace BRaVe_Portal.Pages.FileBasedDeduplication
                 return RedirectToPage();
             }
 
-            var response = await _api.PostFileAsync(ProcessUploadPath, Upload, cancellationToken);
+            var response = await _api.PostFileAsync("v1/FileBasedDeduplication/process", Upload, cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {

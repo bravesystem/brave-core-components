@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,16 +34,27 @@ namespace BRaVe_Biometric_Matching_Webjob
 
             try
             {
-                Log("Biometric Matching Worker | Build date: June 4th, 2026");
+
+                var buildDate = File.GetLastWriteTime(Assembly.GetExecutingAssembly().Location);
+
+                Log($"Biometric Matching Worker | Build date: {buildDate:MMMM d, yyyy}");
+
+                //Log($"Tenant: {Environment.GetEnvironmentVariable("AZURE_TENANT_ID")}");
+                //Log($"Client: {Environment.GetEnvironmentVariable("AZURE_CLIENT_ID")}");
+                //Log($"Secret Present: {!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AZURE_CLIENT_SECRET"))}");
+
+                ISecretProvider secrerProvider = new AzureSecretProvider();
+
+                IEncryptionService encryptionService = new AzureEncryptionService();
 
                 // Choose the queue type you use (Storage or Service Bus)
-                IJobQueue queue = CreateQueueFromConfig(); // pick one below
-
+                IJobQueue queue = CreateQueueFromConfig(secrerProvider); // pick one below    
+                
                 IMatchingServerService server = new MatchingServerService();
 
                 var processor = new JobProcessor();
 
-                RunAsync(server, queue, processor, cts.Token).Wait();
+                RunAsync(secrerProvider,encryptionService, server, queue, processor, cts.Token).Wait();
                 return 0;
             }
             catch (MatchingErrors.PingError e)
@@ -62,12 +74,14 @@ namespace BRaVe_Biometric_Matching_Webjob
             }
         }
 
-        private static IJobQueue CreateQueueFromConfig()
+        private static IJobQueue CreateQueueFromConfig(ISecretProvider secrerProvider)
         {
-            return new AzureServiceBusQueue();
+            return new AzureServiceBusQueue(secrerProvider);
         }
 
         private static async Task RunAsync(
+            ISecretProvider secrerProvider,
+            IEncryptionService encryptionService,
             IMatchingServerService server,
             IJobQueue queue,
             JobProcessor processor,
@@ -102,7 +116,7 @@ namespace BRaVe_Biometric_Matching_Webjob
                     Log("[INFO] Received jobId: " + jobId);
 
                     // 3) Process the job
-                    var success = await processor.ProcessAsync(server, jobId, ct);
+                    var success = await processor.ProcessAsync(secrerProvider, encryptionService,server, jobId, ct);
 
                     // 4) Complete or abandon message
                     if (success)
